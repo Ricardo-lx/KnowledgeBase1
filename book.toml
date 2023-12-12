@@ -1,6 +1,9 @@
-[docs]
+[book]
 authors = ["Ricardo"]
 language = "en"
 multilingual = false
 src = "src"
 title = "KnowledgeBase"
+
+[output.html.search]
+enable = false

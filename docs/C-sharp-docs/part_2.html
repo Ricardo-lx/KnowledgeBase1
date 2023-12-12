@@ -1,0 +1,396 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Csharp2 - KnowledgeBase</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = null;
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../Scrapy/Scrapy.html"><strong aria-hidden="true">1.</strong> Scrapy</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Scrapy/Scrapy1.html"><strong aria-hidden="true">1.1.</strong> Scrapy1</a></li><li class="chapter-item expanded "><a href="../Scrapy/Scrapy2.html"><strong aria-hidden="true">1.2.</strong> Scrapy2</a></li><li class="chapter-item expanded "><a href="../Scrapy/Scrapy3.html"><strong aria-hidden="true">1.3.</strong> Scrapy3</a></li><li class="chapter-item expanded "><a href="../Scrapy/Scrapy4.html"><strong aria-hidden="true">1.4.</strong> Scrapy4</a></li><li class="chapter-item expanded "><a href="../Scrapy/Scrapy5.html"><strong aria-hidden="true">1.5.</strong> Scrapy5</a></li><li class="chapter-item expanded "><a href="../Scrapy/Scrapy6.html"><strong aria-hidden="true">1.6.</strong> Scrapy6</a></li><li class="chapter-item expanded "><a href="../Scrapy/Scrapy7.html"><strong aria-hidden="true">1.7.</strong> Scrapy7</a></li><li class="chapter-item expanded "><a href="../Scrapy/Scrapy8.html"><strong aria-hidden="true">1.8.</strong> Scrapy8</a></li><li class="chapter-item expanded "><a href="../Scrapy/Scrapy9.html"><strong aria-hidden="true">1.9.</strong> Scrapy9</a></li><li class="chapter-item expanded "><a href="../Scrapy/Scrapy10.html"><strong aria-hidden="true">1.10.</strong> Scrapy10</a></li></ol></li><li class="chapter-item expanded "><a href="../ThinkPython/ThinkPython.html"><strong aria-hidden="true">2.</strong> ThinkPython</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../ThinkPython/part_1.html"><strong aria-hidden="true">2.1.</strong> ThinkPython1</a></li><li class="chapter-item expanded "><a href="../ThinkPython/part_2.html"><strong aria-hidden="true">2.2.</strong> ThinkPython2</a></li><li class="chapter-item expanded "><a href="../ThinkPython/part_3.html"><strong aria-hidden="true">2.3.</strong> ThinkPython3</a></li><li class="chapter-item expanded "><a href="../ThinkPython/part_4.html"><strong aria-hidden="true">2.4.</strong> ThinkPython4</a></li><li class="chapter-item expanded "><a href="../ThinkPython/part_5.html"><strong aria-hidden="true">2.5.</strong> ThinkPython5</a></li><li class="chapter-item expanded "><a href="../ThinkPython/part_6.html"><strong aria-hidden="true">2.6.</strong> ThinkPython6</a></li><li class="chapter-item expanded "><a href="../ThinkPython/part_7.html"><strong aria-hidden="true">2.7.</strong> ThinkPython7</a></li><li class="chapter-item expanded "><a href="../ThinkPython/part_8.html"><strong aria-hidden="true">2.8.</strong> ThinkPython8</a></li><li class="chapter-item expanded "><a href="../ThinkPython/part_9.html"><strong aria-hidden="true">2.9.</strong> ThinkPython9</a></li><li class="chapter-item expanded "><a href="../ThinkPython/part_10.html"><strong aria-hidden="true">2.10.</strong> ThinkPython10</a></li></ol></li><li class="chapter-item expanded "><a href="../C-sharp-docs/C-sharp-docs.html"><strong aria-hidden="true">3.</strong> C-sharp-docs</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../C-sharp-docs/part_1.html"><strong aria-hidden="true">3.1.</strong> Csharp1</a></li><li class="chapter-item expanded "><a href="../C-sharp-docs/part_2.html" class="active"><strong aria-hidden="true">3.2.</strong> Csharp2</a></li><li class="chapter-item expanded "><a href="../C-sharp-docs/part_3.html"><strong aria-hidden="true">3.3.</strong> Csharp3</a></li><li class="chapter-item expanded "><a href="../C-sharp-docs/part_4.html"><strong aria-hidden="true">3.4.</strong> Csharp4</a></li><li class="chapter-item expanded "><a href="../C-sharp-docs/part_5.html"><strong aria-hidden="true">3.5.</strong> Csharp5</a></li><li class="chapter-item expanded "><a href="../C-sharp-docs/part_6.html"><strong aria-hidden="true">3.6.</strong> Csharp6</a></li><li class="chapter-item expanded "><a href="../C-sharp-docs/part_7.html"><strong aria-hidden="true">3.7.</strong> Csharp7</a></li><li class="chapter-item expanded "><a href="../C-sharp-docs/part_8.html"><strong aria-hidden="true">3.8.</strong> Csharp8</a></li><li class="chapter-item expanded "><a href="../C-sharp-docs/part_9.html"><strong aria-hidden="true">3.9.</strong> Csharp9</a></li><li class="chapter-item expanded "><a href="../C-sharp-docs/part_10.html"><strong aria-hidden="true">3.10.</strong> Csharp10</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                    </div>
+
+                    <h1 class="menu-title">KnowledgeBase</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <p>.
+A struct type is similar to a class type in that it represents a structure with data
+members and function members. However, unlike classes, structs are value types
+and don't typically require heap allocation. S truct types don't support user-
+specified inheritance, and all struct types implicitly inherit from type object.
+An interface type defines a contract as a named set of public members. A class
+or struct that implements an interface must provide implementations of the
+interface's members. An interface may inherit from multiple base interfaces, and
+a class or struct may implement multiple interfaces.
+A delegate type represents references to methods with a particular parameter list
+and return type. Delegates make it possible to treat methods as entities that can
+be assigned to variables and passed as parameters. Delegates are analogous to
+function types provided by functional languages. They're also similar to the
+concept of function pointers found in some other languages. Unlike function
+pointers, delegates are object-oriented and type-safe.
+The class, struct, interface, and delegate types all support generics, whereby they
+can be parameterized with other types.C# supports single-dimensional and multi-dimensional arrays of any type. Unlike the
+types listed above, array types don't have to be declared before they can be used.
+Instead, array types are constructed by following a type name with square brackets. For
+example, int[] is a single-dimensional array of int, int[,] is a two-dimensional array
+of int, and int[][] is a single-dimensional array of single-dimensional arrays, or a
+&quot;jagged&quot; array, of int.
+Nullable types don't require a separate definition. For each non-nullable type T, there's
+a corresponding nullable type T?, which can hold an additional value, null. For
+instance, int? is a type that can hold any 32-bit integer or the value null, and string?
+is a type that can hold any string or the value null.
+C#'s type system is unified such that a value of any type can be treated as an object.
+Every type in C# directly or indirectly derives from the object class type, and object is
+the ultimate base class of all types. V alues of reference types are treated as objects
+simply by viewing the values as type object. Values of value types are treated as objects
+by performing boxing and unbo xing oper ations . In the following example, an int value is
+converted to object and back again to int.
+C#
+When a value of a value type is assigned to an object reference, a &quot;box&quot; is allocated to
+hold the value. That box is an instance of a reference type, and the value is copied into
+that box. Conversely, when an object reference is cast to a value type, a check is made
+that the referenced object is a box of the correct value type. If the check succeeds, the
+value in the box is copied to the value type.
+C#'s unified type system effectively means that value types are treated as object
+references &quot;on demand.&quot; Because of the unification, general-purpose libraries that use
+type object can be used with all types that derive from object, including both
+reference types and value types.
+There are several kinds of variables  in C#, including fields, array elements, local variables,
+and parameters. V ariables represent storage locations. Every variable has a type that
+determines what values can be stored in the variable, as shown below.
+Non-nullable value type
+A value of that exact typeint i = 123;
+object o = i;    // Boxing
+int j = (int)o;  // UnboxingNullable value type
+A null value or a value of that exact type
+object
+A null reference, a reference to an object of any reference type, or a reference
+to a boxed value of any value type
+Class type
+A null reference, a reference to an instance of that class type, or a reference to
+an instance of a class derived from that class type
+Interface type
+A null reference, a reference to an instance of a class type that implements
+that interface type, or a reference to a boxed value of a value type that
+implements that interface type
+Array type
+A null reference, a reference to an instance of that array type, or a reference to
+an instance of a compatible array type
+Delegate type
+A null reference or a reference to an instance of a compatible delegate type
+The key organizational concepts in C# are programs, namesp aces, types , member s, and
+assemblies . Programs declare types, which contain members and can be organized into
+namespaces. Classes, structs, and interfaces are examples of types. Fields, methods,
+properties, and events are examples of members. When C# programs are compiled,
+they're physically packaged into assemblies. Assemblies typically have the file extension
+.exe or .dll, depending on whether they implement applications  or libraries,
+respectively.
+As a small example, consider the below C# code:
+C#Program structure
+namespace  Acme.Collections ;
+public class Stack<T>
+{
+Entry _top;
+public void Push(T data)
+{
+_top = new Entry(_top, data);
+}
+public T Pop()The fully qualified name of this class is Acme.Collections.Stack. The class contains
+several members: a field named _top, two methods named Push and Pop, and a nested
+class named Entry. The Entry class further contains three members: a property named
+Next, a property named Data, and a constructor. The Stack is a gener ic class. It has one
+type parameter, T that is replaced with a concrete type when it's used.
+A stack is a &quot;first in - last out&quot; (FIL O) collection. New elements are added to the top of
+the stack. When an element is removed, it's removed from the top of the stack. The
+previous example declares the Stack type that defines the storage and behavior for a
+stack. Y ou can declare a variable that refers to an instance of the Stack type to use that
+functionality.
+Assemblies contain executable code in the form of Intermediate Language (IL)
+instructions, and symbolic information in the form of metadata. Before it's executed, the
+Just-In-Time (JIT) compiler of .NET Common Language Runtime converts the IL code in
+an assembly to processor-specific code.
+Because an assembly is a self-describing unit of functionality containing both code and
+metadata, there's no need for #include directives and header files in C#. The public
+types and members contained in a particular assembly are made available in a C#
+program simply by referencing that assembly when compiling the program. For
+example, this program uses the Acme.Collections.Stack class from the acme.dll
+assembly:    {
+if (_top == null)
+{
+throw new InvalidOperationException();
+}
+T result = _top.Data;
+_top = _top.Next;
+return result;
+}
+class Entry
+{
+public Entry Next { get; set; }
+public T Data { get; set; }
+public Entry(Entry next, T data )
+{
+Next = next;
+Data = data;
+}
+}
+}C#
+To compile this program, you would need to reference the assembly containing the stack
+class defined in the earlier example.
+C# programs can be stored in several source files. When a C# program is compiled, all
+of the source files are processed together, and the source files can freely reference each
+other. Conceptually, it's as if all the source files were concatenated into one large file
+before being processed. Forward declarations are never needed in C# because, with few
+exceptions, declaration order is insignificant. C# doesn't limit a source file to declaring
+only one public type nor does it require the name of the source file to match a type
+declared in the source file.
+Further articles in this tour explain these organizational blocks.class Example
+{
+public static void Main()
+{
+var s = new Acme.Collections.Stack&lt; int&gt;();
+s.Push(1); // stack contains 1
+s.Push(10); // stack contains 1, 10
+s.Push(100); // stack contains 1, 10, 100
+Console.WriteLine(s.Pop()); // stack contains 1, 10
+Console.WriteLine(s.Pop()); // stack contains 1
+Console.WriteLine(s.Pop()); // stack is empty
+}
+}
+NextC# types and members
+Article •05/26/2023
+As an object-oriented language, C# supports the concepts of encapsulation, inheritance,
+and polymorphism. A class may inherit directly from one parent class, and it may
+implement any number of interfaces. Methods that override virtual methods in a parent
+class require the override keyword as a way to avoid accidental redefinition. In C#, a
+struct is like a lightweight class; it's a stack-allocated type that can implement interfaces
+but doesn't support inheritance. C# provides record class and record struct types,
+which are types whose purpose is primarily storing data values.
+All types are initialized through a constr uctor, a method responsible for initializing an
+instance. T wo constructor declarations have unique behavior:
+A paramet erless c onstr uctor, which initializes all fields to their default value.
+A primary constr uctor, which declares the required parameters for an instance of
+that type.
+Class es are the most fundamental of C#'s types. A class is a data structure that combines
+state (fields) and actions (methods and other function members) in a single unit. A class
+provides a definition for instances of the class, also known as objects . Classes support
+inher itance and polymorphism , mechanisms whereby derived class es can extend and
+specialize base class es.
+New classes are created using class declarations. A class declaration starts with a header.
+The header specifies:
+The attributes and modifiers of the class
+The name of the class
+The base class (when inheriting from a base class )
+The interfaces implemented by the class.
+The header is followed by the class body, which consists of a list of member declarations
+written between the delimiters { and }.
+The following code shows a declaration of a simple class named Point:
+C#Classes and objectsInstances of classes are created using the new operator, which allocates memory for a
+new instance, invokes a constructor to initialize the instance, and returns a reference to
+the instance. The following statements create two Point objects and store references to
+those objects in two variables:
+C#
+The memory occupied by an object is automatically reclaimed when the object is no
+longer reachable. It's not necessary or possible to explicitly deallocate objects in C#.
+C#
+Applications or tests for algorithms might need to create multiple Point objects. The
+following class generates a sequence of random points. The number of points is set by
+the primary constr uctor parameter. The primary constructor parameter numberOfPoints is
+in scope for all members of the class:
+C#public class Point
+{
+public int X { get; }
+public int Y { get; }</p>
+<pre><code>public Point(int x, int y) =&gt; (X, Y) = (x, y);
+</code></pre>
+<p>}
+var p1 = new Point(0, 0);
+var p2 = new Point(10, 20);
+var p1 = new Point(0, 0);
+var p2 = new Point(10, 20);
+public class PointFactory (int numberOfPoints )
+{
+public IEnumerable<Point> CreatePoints ()
+{
+var generator = new Random();
+for (int i = 0; i &lt; numberOfPoints; i++)
+{
+yield return new Point(generator.Next( ), generator. Next());
+}
+}
+}You can use the class as shown in the following code:
+C#
+Generic classes define type p aramet ers. Type parameters are a list of type parameter
+names enclosed in angle brackets. T ype parameters follow the class name. The type
+parameters can then be used in the body of the class declarations to define the
+members of the class. In the following example, the type parameters of Pair are TFirst
+and TSecond:
+C#
+A class type that is declared to take type parameters is called a gener ic class type . Struct,
+interface, and deleg</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../C-sharp-docs/part_1.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="../C-sharp-docs/part_3.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../C-sharp-docs/part_1.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="../C-sharp-docs/part_3.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

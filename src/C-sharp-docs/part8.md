@@ -1,0 +1,11725 @@
+The statement is the first statement and the statement list itself is reachable.
+The end point of the preceding statement is reachable.
+The statement is a labeled statement and the label is referenced by a reachable
+goto statement.
+The end point of a statement list is reachable if the end point of the last statement in
+the list is reachable.
+An empty_st atement  does nothing.
+ANTLR
+An empty statement is used when there are no operations to perform in a context where
+a statement is required.
+Execution of an empty statement simply transfers control to the end point of the
+statement. Thus, the end point of an empty statement is reachable if the empty
+statement is reachable.
+Example : An empty statement can be used when writing a while statement with a
+null body:
+C#statement_list
+    : statement+
+    ;
+13.4 The empty statement
+empty_statement
+    : ';'
+    ;Also, an empty statement can be used to declare a label just before the closing “ }”
+of a block:
+C#
+end ex ample
+A labeled_st atement  permits a statement to be prefixed by a label. Labeled statements
+are permitted in blocks, but are not permitted as embedded statements.
+ANTLR
+A labeled statement declares a label with the name given by the identi fier. The scope of
+a label is the whole block in which the label is declared, including any nested blocks. It is
+a compile-time error for two labels with the same name to have overlapping scopes.
+A label can be referenced from goto statements ( §13.10.4 ) within the scope of the label.
+Note: This means that goto statements can transfer control within blocks and out of
+blocks, but never into blocks. end not ebool ProcessMessage () {...}
+void ProcessMessages ()
+{
+    while (ProcessMessage())
+        ;
+}
+void F(bool done)
+{
+    ...
+    if (done)
+    {
+        goto exit;
+    }
+    ...
+  exit:
+    ;
+}
+13.5 Labeled statements
+labeled_statement
+    : identifier ':' statement
+    ;Labels have their own declaration space and do not interfere with other identifiers.
+Example : The example
+C#
+is valid and uses the name x as both a parameter and a label.
+end ex ample
+Execution of a labeled statement corresponds exactly to execution of the statement
+following the label.
+In addition to the reachability provided by normal flow of control, a labeled statement is
+reachable if the label is referenced by a reachable goto statement, unless the goto
+statement is inside the try block or a catch block of a try_statement  that includes a
+finally block whose end point is unreachable, and the labeled statement is outside the
+try_statement .
+A declar ation_st atement  declares one or more local variables, one or more local
+constants, or a local function. Declaration statements are permitted in blocks and switch
+blocks, but are not permitted as embedded statements.
+ANTLRint F(int x)
+{
+    if (x >= 0)
+    {
+        goto x;
+    }
+    x = -x;
+  x:
+    return x;
+}
+13.6 Declaration statements
+13.6.1 General
+declaration_statement
+    : local_variable_declaration ';'
+    | local_constant_declaration ';'A local variable is declared using a local_v ariable_declar ation  (§13.6.2 ). A local constant is
+declared using a local_c onstant_declar ation  (§13.6.3 ). A local function is declared using a
+local_f unction_declar ation  (§13.6.4 ).
+The declared names are introduced into the nearest enclosing declaration space ( §7.3).
+A local_v ariable_declar ation  declares one or more local variables.
+ANTLR
+Local variable declarations fall into one of the three categories: implicitly typed, explicitly
+typed, and ref local.
+Implicitly typed declarations contain the contextual keyword ( §6.4.4 ) var resulting in a
+syntactic ambiguity between the three categories which is resolved as follows:
+If there is no type named var in scope and the input matches
+implicitly_typed_local_v ariable_declar ation  then it is chosen;
+Otherwise if a type named var is in scope then
+implicitly_typed_local_v ariable_declar ation  is not considered as a possible match.
+Within a local_v ariable_declar ation  each variable is introduced by a declar ator, which is
+one of implicitly_typed_local_v ariable_declar ator,
+explicitly_typed_local_v ariable_declar ator or ref_local_v ariable_declar ator for implicitly
+typed, explicitly typed and ref local variables respectively. The declarator defines the
+name ( identi fier) and initial value, if any, of the introduced variable.
+If there are multiple declarators in a declaration then they are processed, including any
+initializing expressions, in order left to right ( §9.4.4.5 ).    | local_function_declaration
+    ;
+13.6.2 Local variable declarations
+13.6.2.1 General
+local_variable_declaration
+    : implicitly_typed_local_variable_declaration
+    | explicitly_typed_local_variable_declaration
+    | ref_local_variable_declaration
+    ;Note: For a local_v ariable_declar ation  not occuring as a for_initializer  (§13.9.4 ) or
+resource_acquisition  (§13.14 ) this left to right order is equivalent to each declarator
+being within a separate local_v ariable_declar ation . For example:
+C#
+is equivalent to:
+C#
+end not e
+The value of a local variable is obtained in an expression using a simple_name  (§12.8.4 ).
+A local variable shall be definitely assigned ( §9.4) at each location where its value is
+obtained. Each local variable introduced by a local_v ariable_declar ation  is initially
+unassigned  (§9.4.3 ). If a declarator has an initializing expression then the introduced local
+variable is classified as assigned  at the end of the declarator ( §9.4.4.5 ).
+The scope of a local variable introduced by a local_v ariable_declar ation  is defined as
+follows ( §7.7):
+If the declaration occurs as a for_initializer  then the scope is the for_initializer ,
+for_condition , for_it erator, and embedded_st atement  (§13.9.4 );
+If the declaration occurs as a resource_acquisition  then the scope is the outermost
+block of the semantically equivalent expansion of the using_st atement  (§13.14 );
+Otherwise the scope is the block in which the declaration occurs.
+It is an error to refer to a local variable by name in a textual position that precedes its
+declarator, or within any initializing expression within its declarator. Within the scope of
+a local variable, it is a compile-time error to declare another local variable, local function
+or constant with the same name.void F()
+{
+    int x = 1, y, z = x * 2;
+}
+void F()
+{
+    int x = 1;
+    int y;
+    int z = x * 2;
+}The ref-safe-context ( §9.7.2 ) of a ref local variable is the ref-safe-context of its initializing
+variable_r eference. The ref-safe-context of non-ref local variables is declar ation-block .
+ANTLR
+An implicity_typed_local_v ariable_declar ation  introduces a single local variable, identi fier.
+The expression  or variable_r eference shall have a compile-time type, T. The first
+alternative declares a variable with type T and an initial value of expression . The second
+alternative declares a ref variable with type ref T and an initial value of ref
+variable_r eference.
+Example :
+C#
+The implicitly typed local variable declarations above are precisely equivalent to the
+following explicitly typed declarations:
+C#13.6.2.2 Implicitly typed local variable declarations
+implicitly_typed_local_variable_declaration
+    : 'var' implicitly_typed_local_variable_declarator
+    | ref_kind 'var' ref_local_variable_declarator
+    ;
+implicitly_typed_local_variable_declarator
+    : identifier '=' expression
+    ;
+var i = 5;
+var s = "Hello";
+var d = 1.0;
+var numbers = new int[] {1, 2, 3};
+var orders = new Dictionary< int,Order>();
+ref var j = ref i;
+ref readonly  var k = ref i;
+int i = 5;
+string s = "Hello";
+double d = 1.0;
+int[] numbers = new int[] {1, 2, 3};
+Dictionary< int,Order> orders = new Dictionary< int,Order>();
+ref int j = ref i;
+ref readonly  int k = ref i;The following are incorrect implicitly typed local variable declarations:
+C#
+end ex ample
+ANTLR
+An explicity_typed_local_v ariable_declar ation  introduces one or more local variables with
+the specified type.
+If a local_v ariable_initializer  is present then its type shall be appropriate according to the
+rules of simple assignment ( §12.21.2 ) or array initialization ( §17.7 ) and its value is
+assigned as the initial value of the variable.
+ANTLRvar x;                  // Error, no initializer to infer type from
+var y = {1, 2, 3};      // Error, array initializer not permitted
+var z = null;           // Error, null does not have a type
+var u = x => x + 1;     // Error, anonymous functions do not have a type
+var v = v++;            // Error, initializer cannot refer to v itself
+13.6.2.3 Explicitly typed local variable declarations
+explicitly_typed_local_variable_declaration
+    : type explicitly_typed_local_variable_declarators
+    ;
+explicitly_typed_local_variable_declarators
+    : explicitly_typed_local_variable_declarator
+      (',' explicitly_typed_local_variable_declarator)*
+    ;
+explicitly_typed_local_variable_declarator
+    : identifier ( '=' local_variable_initializer)?
+    ;
+local_variable_initializer
+    : expression
+    | array_initializer
+    ;
+13.6.2.4 Ref local variable declarations
+ref_local_variable_declaration
+    : ref_kind type ref_local_variable_declaratorsThe initializing variable_r eference shall have type type and meet the same requirements
+as for a ref assignment  (§12.21.3 ).
+If ref_kind  is ref readonly, the identi fier(s) being declared are references to variables
+that are treated as read-only. Otherwise, if ref_kind  is ref, the identi fier(s) being
+declared are references to variables that shall be writable.
+It is a compile-time error to declare a ref local variable, or a variable of a ref struct
+type, within a method declared with the method_modi fier async, or within an iterator
+(§15.14 ).
+A local_c onstant_declar ation  declares one or more local constants.
+ANTLR
+The type of a local_c onstant_declar ation  specifies the type of the constants introduced
+by the declaration. The type is followed by a list of constant_declar ators, each of which
+introduces a new constant. A constant_declar ator consists of an identi fier that names the
+constant, followed by an “ =” token, followed by a constant_expr ession  (§12.23 ) that gives
+the value of the constant.    ;
+ref_local_variable_declarators
+    : ref_local_variable_declarator ( ',' ref_local_variable_declarator)*
+    ;
+ref_local_variable_declarator
+    : identifier '=' 'ref' variable_reference
+    ;
+13.6.3 Local constant declarations
+local_constant_declaration
+    : 'const' type constant_declarators
+    ;
+constant_declarators
+    : constant_declarator ( ',' constant_declarator)*
+    ;
+constant_declarator
+    : identifier '=' constant_expression
+    ;The type and constant_expr ession  of a local constant declaration shall follow the same
+rules as those of a constant member declaration ( §15.4 ).
+The value of a local constant is obtained in an expression using a simple_name  (§12.8.4 ).
+The scope of a local constant is the block in which the declaration occurs. It is an error
+to refer to a local constant in a textual position that precedes the end of its
+constant_declar ator. Within the scope of a local constant, it is a compile-time error to
+declare another local variable, local function or constant with the same name.
+A local constant declaration that declares multiple constants is equivalent to multiple
+declarations of single constants with the same type.
+A local_f unction_declar ation  declares a local function.
+ANTLR13.6.4 Local function declarations
+local_function_declaration
+    : local_function_modifier* return_type local_function_header
+      local_function_body
+    | ref_local_function_modifier* ref_kind ref_return_type
+      local_function_header ref_local_function_body
+    ;
+local_function_header
+    : identifier '(' formal_parameter_list? ')'
+    | identifier type_parameter_list '(' formal_parameter_list? ')'
+      type_parameter_constraints_clause*
+    ;
+local_function_modifier
+    : ref_local_function_modifier
+    | 'async'
+    ;
+ref_local_function_modifier
+    : unsafe_modifier   // unsafe code support
+    ;
+local_function_body
+    : block
+    | '=>' null_conditional_invocation_expression ';'
+    | '=>' expression ';'
+    ;
+ref_local_function_body
+    : blockGrammar note: When recognising a local_f unction_body  if both the
+null_c onditional_in vocation_expr ession  and expression  alternatives are applicable then
+the former shall be chosen. ( §15.6.1 )
+Example : There are two common use cases for local functions: iterator methods and
+async methods. In iterator methods, any exceptions are observed only when calling
+code that enumerates the returned sequence. In async methods, any exceptions are
+only observed when the returned T ask is awaited. The following example
+demonstrates separating parameter validation from the iterator implementation
+using a local function:
+C#
+end ex ample
+Unless specified otherwise below, the semantics of all grammar elements is the same as
+for method_declar ation  (§15.6.1 ), read in the context of a local function instead of a    | '=>' 'ref' variable_reference ';'
+    ;
+public static IEnumerable< char> AlphabetSubset (char start, char end)
+{
+    if (start < 'a' || start > 'z')
+    {
+        throw new ArgumentOutOfRangeException(paramName: nameof(start),
+            message: "start must be a letter" );
+    }
+    if (end < 'a' || end > 'z')
+    {
+        throw new ArgumentOutOfRangeException(paramName: nameof(end),
+            message: "end must be a letter" );
+    }
+    if (end <= start)
+    {
+        throw new ArgumentException(
+            $"{nameof(end)} must be greater than {nameof(start)} ");
+    }
+    return AlphabetSubsetImplementation();
+    IEnumerable< char> AlphabetSubsetImplementation ()
+    {
+        for (var c = start; c < end; c++)
+        {
+            yield return c;
+        }
+    }
+}method.
+The identi fier of a local_f unction_declar ation  shall be unique in its declared block scope,
+including any enclosing local variable declaration spaces. One consequence of this is
+that overloaded local_f unction_declar ation s are not allowed.
+A local_f unction_declar ation  may include one async (§15.15 ) modifier and one unsafe
+(§23.1 ) modifier. If the declaration includes the async modifier then the return type shall
+be void or a «TaskType» type ( §15.15.1 ). The unsafe modifier uses the containing lexical
+scope. The async modifier does not use the containing lexical scope. It is a compile-time
+error for type_p aramet er_list  or formal_p aramet er_list  to contain attributes.
+A local function is declared at block scope, and that function may capture variables from
+the enclosing scopes. It is a compile-time error if a captured variable is read by the body
+of the local function but is not definitely assigned before each call to the function. The
+compiler shall determine which variables are definitely assigned on return ( §9.4.4.33 ).
+When the type of this is a struct type, it is a compile-time error for the body of a local
+function to access this. This is true whether the access is explicit (as in this.x) or
+implicit (as in x where x is an instance member of the struct). This rule only prohibits
+such access and does not affect whether member lookup results in a member of the
+struct.
+It is a compile-time error for the body of the local function to contain a goto statement,
+a break statement, or a continue statement whose target is outside the body of the
+local function.
+Note: the above rules for this and goto mirror the rules for anonymous functions
+in §12.19.3 . end not e
+A local function may be called from a lexical point prior to its declaration. However, it is
+a compile-time error for the function to be declared lexically prior to the declaration of a
+variable used in the local function ( §7.7).
+It is a compile-time error for a local function to declare a parameter, type parameter or
+local variable with the same name as one declared in any enclosing local variable
+declaration space.
+Local function bodies are always reachable. The endpoint of a local function declaration
+is reachable if the beginning point of the local function declaration is reachable.Example : In the following example, the body of L is reachable even though the
+beginning point of L is not reachable. Because the beginning point of L isn’t
+reachable, the statement following the endpoint of L is not reachable:
+C#
+In other words, the location of a local function declaration doesn’t affect the
+reachability of any statements in the containing function. end ex ample
+If the type of the argument to a local function is dynamic, the function to be called shall
+be resolved at compile time, not runtime.
+An expression_st atement  evaluates a given expression. The value computed by the
+expression, if any, is discarded.
+ANTLRclass C
+{
+    int M()
+    {
+        L();
+        return 1;
+        // Beginning of L is not reachable
+        int L()
+        {
+            // The body of L is reachable
+            return 2;
+        }
+        // Not reachable, because beginning point of L is not reachable
+        return 3;
+    }
+}
+13.7 Expression statements
+expression_statement
+    : statement_expression ';'
+    ;
+statement_expression
+    : null_conditional_invocation_expression
+    | invocation_expression
+    | object_creation_expression
+    | assignment
+    | post_increment_expressionNot all expressions are permitted as statements.
+Note: In particular, expressions such as x + y and x == 1, that merely compute a
+value (which will be discarded), are not permitted as statements. end not e
+Execution of an expression_st atement  evaluates the contained expression and then
+transfers control to the end point of the expression_st atement . The end point of an
+expression_st atement  is reachable if that expression_st atement  is reachable.
+Selection statements select one of a number of possible statements for execution based
+on the value of some expression.
+ANTLR
+The if statement selects a statement for execution based on the value of a Boolean
+expression.
+ANTLR    | post_decrement_expression
+    | pre_increment_expression
+    | pre_decrement_expression
+    | await_expression
+    ;
+13.8 Selection statements
+13.8.1 General
+selection_statement
+    : if_statement
+    | switch_statement
+    ;
+13.8.2 The if statement
+if_statement
+    : 'if' '(' boolean_expression ')' embedded_statement
+    | 'if' '(' boolean_expression ')' embedded_statement
+      'else' embedded_statement
+    ;An else part is associated with the lexically nearest preceding if that is allowed by the
+syntax.
+Example : Thus, an if statement of the form
+C#
+is equivalent to
+C#
+end ex ample
+An if statement is executed as follows:
+The boolean_expr ession  (§12.24 ) is evaluated.
+If the Boolean expression yields true, control is transferred to the first embedded
+statement. When and if control reaches the end point of that statement, control is
+transferred to the end point of the if statement.
+If the Boolean expression yields false and if an else part is present, control is
+transferred to the second embedded statement. When and if control reaches the
+end point of that statement, control is transferred to the end point of the if
+statement.
+If the Boolean expression yields false and if an else part is not present, control is
+transferred to the end point of the if statement.
+The first embedded statement of an if statement is reachable if the if statement is
+reachable and the Boolean expression does not have the constant value false.if (x) if (y) F(); else G();
+if (x)
+{
+    if (y)
+    {
+        F();
+    }
+    else
+    {
+        G();
+    }
+}The second embedded statement of an if statement, if present, is reachable if the if
+statement is reachable and the Boolean expression does not have the constant value
+true.
+The end point of an if statement is reachable if the end point of at least one of its
+embedded statements is reachable. In addition, the end point of an if statement with
+no else part is reachable if the if statement is reachable and the Boolean expression
+does not have the constant value true.
+The switch statement selects for execution a statement list having an associated switch
+label that corresponds to the value of the switch expression.
+ANTLR
+A switch_st atement  consists of the keyword switch, followed by a parenthesized
+expression (called the switch expr ession ), followed by a switch_block . The switch_block
+consists of zero or more switch_section s, enclosed in braces. Each switch_section  consists
+of one or more switch_label s followed by a statement_list  (§13.3.2 ). Each switch_label
+containing case has an associated pattern ( §11) against which the value of the switch
+expression is tested. If case_guar d is present, its expression shall be implicitly convertible
+to the type bool and that expression is evaluated as an additional condition for the case
+to be considered satisfied.13.8.3 The switch statement
+switch_statement
+    : 'switch'  '(' expression ')' switch_block
+    ;
+switch_block
+    : '{' switch_section* '}'
+    ;
+switch_section
+    : switch_label+ statement_list
+    ;
+switch_label
+    : 'case' pattern case_guard?  ':'
+    | 'default'  ':'
+    ;
+case_guard
+    : 'when' expression
+    ;The governing type  of a switch statement is established by the switch expression.
+If the type of the switch expression is sbyte, byte, short, ushort, int, uint, long,
+ulong, char, bool, string, or an enum_type , or if it is the nullable value type
+corresponding to one of these types, then that is the governing type of the switch
+statement.
+Otherwise, if exactly one user-defined implicit conversion exists from the type of
+the switch expression to one of the following possible governing types: sbyte,
+byte, short, ushort, int, uint, long, ulong, char, string, or, a nullable value
+type corresponding to one of those types, then the converted type is the
+governing type of the switch statement.
+Otherwise, the governing type of the switch statement is the type of the switch
+expression. It is an error if no such type exists.
+There can be at most one default label in a switch statement.
+It is an error if the pattern of any switch label is not applicable  (§11.2.1 ) to the type of
+the input expression.
+It is an error if the pattern of any switch label is subsumed  by (§11.3 ) the set of patterns
+of earlier switch labels of the switch statement that do not have a case guard or whose
+case guard is a constant expression with the value true.
+Example :
+C#
+end ex ample
+A switch statement is executed as follows:
+The switch expression is evaluated and converted to the governing type.
+Control is transferred according to the value of the converted switch expression:switch (shape)
+{
+    case var x:
+        break;
+    case var _: // error: pattern subsumed, as previous case always  
+matches
+        break;
+    default:
+        break;  // warning: unreachable, all possible values already  
+handled.
+}The lexically first pattern in the set of case labels in the same switch statement
+that matches the value of the switch expression, and for which the guard
+expression is either absent or evaluates to true, causes control to be transferred
+to the statement list following the matched case label.
+Otherwise, if a default label is present, control is transferred to the statement
+list following the default label.
+Otherwise, control is transferred to the end point of the switch statement.
+Note: The order in which patterns are matched at runtime is not defined. A compiler
+is permitted (but not required) to match patterns out of order, and to reuse the
+results of already matched patterns to compute the result of matching of other
+patterns. Nevertheless, the compiler is required to determine the lexically first
+pattern that matches the expression and for which the guard clause is either absent
+or evaluates to true. end not e
+If the end point of the statement list of a switch section is reachable, a compile-time
+error occurs. This is known as the “no fall through” rule.
+Example : The example
+C#
+is valid because no switch section has a reachable end point. Unlike C and C++,
+execution of a switch section is not permitted to “fall through” to the next switch
+section, and the example
+C#switch (i)
+{
+    case 0:
+        CaseZero();
+        break;
+    case 1:
+        CaseOne();
+        break;
+    default:
+        CaseOthers();
+        break;
+}
+switch (i)
+{
+    case 0:
+        CaseZero();results in a compile-time error. When execution of a switch section is to be followed
+by execution of another switch section, an explicit goto case or goto default
+statement shall be used:
+C#
+end ex ample
+Multiple labels are permitted in a switch_section .
+Example : The example
+C#    case 1:
+        CaseZeroOrOne();
+    default:
+        CaseAny();
+}
+switch (i)
+{
+    case 0:
+        CaseZero();
+        goto case 1;
+    case 1:
+        CaseZeroOrOne();
+        goto default;
+    default:
+        CaseAny();
+        break;
+}
+switch (i)
+{
+    case 0:
+        CaseZero();
+        break;
+    case 1:
+        CaseOne();
+        break;
+    case 2:
+    default:
+        CaseTwo();
+        break;
+}is valid. The example does not violate the “no fall through” rule because the labels
+case 2: and default: are part of the same switch_section .
+end ex ample
+Note: The “no fall through” rule prevents a common class of bugs that occur in C
+and C++ when break statements are accidentally omitted. For example, the sections
+of the switch statement above can be reversed without affecting the behavior of
+the statement:
+C#
+end not e
+Note: The statement list of a switch section typically ends in a break, goto case, or
+goto default statement, but any construct that renders the end point of the
+statement list unreachable is permitted. For example, a while statement controlled
+by the Boolean expression true is known to never reach its end point. Likewise, a
+throw or return statement always transfers control elsewhere and never reaches its
+end point. Thus, the following example is valid:
+C#switch (i)
+{
+    default:
+        CaseAny();
+        break;
+    case 1:
+        CaseZeroOrOne();
+        goto default;
+    case 0:
+        CaseZero();
+        goto case 1;
+}
+switch (i)
+{
+     case 0:
+         while (true)
+         {
+             F();
+         }
+     case 1:
+         throw new ArgumentException();
+     case 2:end not e
+Example : The governing type of a switch statement can be the type string. For
+example:
+C#
+end ex ample
+Note: Like the string equality operators ( §12.12.8 ), the switch statement is case
+sensitive and will execute a given switch section only if the switch expression string
+exactly matches a case label constant. end not e When the governing type of a
+switch statement is string or a nullable value type, the value null is permitted as
+a case label constant.
+The statement_list s of a switch_block  may contain declaration statements ( §13.6 ). The
+scope of a local variable or constant declared in a switch block is the switch block.
+A switch label is reachable if at least one of the following is true:
+The switch expression is a constant value and either
+the label is a case whose pattern would mat ch (§11.2.1 ) that value, and label’s
+guard is either absent or not a constant expression with the value false; or         return;
+}
+void DoCommand (string command )
+{
+    switch (command.ToLower())
+    {
+        case "run":
+            DoRun();
+            break;
+        case "save":
+            DoSave();
+            break;
+        case "quit":
+            DoQuit();
+            break;
+        default:
+            InvalidCommand(command);
+            break;
+    }
+}it is a default label, and no switch section contains a case label whose pattern
+would match that value, and whose guard is either absent or a constant
+expression with the value true.
+The switch expression is not a constant value and either
+the label is a case without a guard or with a guard whose value is not the
+constant false; or
+it is a default label and
+the set of patterns appearing among the cases of the switch statement that
+do not have guards or have guards whose value is the constant true, is not
+exhaustiv e (§11.4 ) for the switch governing type; or
+the switch governing type is a nullable type and the set of patterns appearing
+among the cases of the switch statement that do not have guards or have
+guards whose value is the constant true does not contain a pattern that
+would match the value null.
+The switch label is referenced by a reachable goto case or goto default
+statement.
+The statement list of a given switch section is reachable if the switch statement is
+reachable and the switch section contains a reachable switch label.
+The end point of a switch statement is reachable if the switch statement is reachable
+and at least one of the following is true:
+The switch statement contains a reachable break statement that exits the switch
+statement.
+No default label is present and either
+The switch expression is a non-constant value, and the set of patterns appearing
+among the cases of the switch statement that do not have guards or have
+guards whose value is the constant true, is not exhaustiv e (§11.4 ) for the switch
+governing type.
+The switch expression is a non-constant value of a nullable type, and no pattern
+appearing among the cases of the switch statement that do not have guards or
+have guards whose value is the constant true would match the value null.
+The switch expression is a constant value and no case label without a guard or
+whose guard is the constant true would match that value.
+Example : The following code shows a succinct use of the when clause:
+C#
+static object CreateShape (string shapeDescription )
+{The var case matches null, the empty string, or any string that contains only white
+space. end ex ample
+Iteration statements repeatedly execute an embedded statement.
+ANTLR
+The while statement conditionally executes an embedded statement zero or more
+times.
+ANTLR
+A while statement is executed as follows:
+The boolean_expr ession  (§12.24 ) is evaluated.   switch (shapeDescription)
+   {
+        case "circle" :
+            return new Circle( 2);
+        …
+        case var o when string.IsNullOrWhiteSpace(o):
+            return null;
+        default:
+            return "invalid shape description" ;
+    }
+}
+13.9 Iteration statements
+13.9.1 General
+iteration_statement
+    : while_statement
+    | do_statement
+    | for_statement
+    | foreach_statement
+    ;
+13.9.2 The while statement
+while_statement
+    : 'while' '(' boolean_expression ')' embedded_statement
+    ;If the Boolean expression yields true, control is transferred to the embedded
+statement. When and if control reaches the end point of the embedded statement
+(possibly from execution of a continue statement), control is transferred to the
+beginning of the while statement.
+If the Boolean expression yields false, control is transferred to the end point of
+the while statement.
+Within the embedded statement of a while statement, a break statement ( §13.10.2 )
+may be used to transfer control to the end point of the while statement (thus ending
+iteration of the embedded statement), and a continue statement ( §13.10.3 ) may be used
+to transfer control to the end point of the embedded statement (thus performing
+another iteration of the while statement).
+The embedded statement of a while statement is reachable if the while statement is
+reachable and the Boolean expression does not have the constant value false.
+The end point of a while statement is reachable if at least one of the following is true:
+The while statement contains a reachable break statement that exits the while
+statement.
+The while statement is reachable and the Boolean expression does not have the
+constant value true.
+The do statement conditionally executes an embedded statement one or more times.
+ANTLR
+A do statement is executed as follows:
+Control is transferred to the embedded statement.
+When and if control reaches the end point of the embedded statement (possibly
+from execution of a continue statement), the boolean_expr ession  (§12.24 ) is
+evaluated. If the Boolean expression yields true, control is transferred to the
+beginning of the do statement. Otherwise, control is transferred to the end point
+of the do statement.13.9.3 The do statement
+do_statement
+    : 'do' embedded_statement 'while' '(' boolean_expression ')' ';'
+    ;Within the embedded statement of a do statement, a break statement ( §13.10.2 ) may
+be used to transfer control to the end point of the do statement (thus ending iteration
+of the embedded statement), and a continue statement ( §13.10.3 ) may be used to
+transfer control to the end point of the embedded statement (thus performing another
+iteration of the do statement).
+The embedded statement of a do statement is reachable if the do statement is
+reachable.
+The end point of a do statement is reachable if at least one of the following is true:
+The do statement contains a reachable break statement that exits the do
+statement.
+The end point of the embedded statement is reachable and the Boolean
+expression does not have the constant value true.
+The for statement evaluates a sequence of initialization expressions and then, while a
+condition is true, repeatedly executes an embedded statement and evaluates a
+sequence of iteration expressions.
+ANTLR13.9.4 The for statement
+for_statement
+    : 'for' '(' for_initializer? ';' for_condition? ';' for_iterator? ')'
+      embedded_statement
+    ;
+for_initializer
+    : local_variable_declaration
+    | statement_expression_list
+    ;
+for_condition
+    : boolean_expression
+    ;
+for_iterator
+    : statement_expression_list
+    ;
+statement_expression_list
+    : statement_expression ( ',' statement_expression)*
+    ;The for_initializer , if present, consists of either a local_v ariable_declar ation  (§13.6.2 ) or a
+list of statement_expr ession s (§13.7 ) separated by commas. The scope of a local variable
+declared by a for_initializer  is the for_initializer , for_condition , for_it erator, and
+embedded_st atement .
+The for_condition , if present, shall be a boolean_expr ession  (§12.24 ).
+The for_it erator, if present, consists of a list of statement_expr ession s (§13.7 ) separated by
+commas.
+A for statement is executed as follows:
+If a for_initializer  is present, the variable initializers or statement expressions are
+executed in the order they are written. This step is only performed once.
+If a for_condition  is present, it is evaluated.
+If the for_condition  is not present or if the evaluation yields true, control is
+transferred to the embedded statement. When and if control reaches the end point
+of the embedded statement (possibly from execution of a continue statement),
+the expressions of the for_it erator, if any, are evaluated in sequence, and then
+another iteration is performed, starting with evaluation of the for_condition  in the
+step above.
+If the for_condition  is present and the evaluation yields false, control is transferred
+to the end point of the for statement.
+Within the embedded statement of a for statement, a break statement ( §13.10.2 ) may
+be used to transfer control to the end point of the for statement (thus ending iteration
+of the embedded statement), and a continue statement ( §13.10.3 ) may be used to
+transfer control to the end point of the embedded statement (thus executing the
+for_it erator and performing another iteration of the for statement, starting with the
+for_condition ).
+The embedded statement of a for statement is reachable if one of the following is true:
+The for statement is reachable and no for_condition  is present.
+The for statement is reachable and a for_condition  is present and does not have
+the constant value false.
+The end point of a for statement is reachable if at least one of the following is true:
+The for statement contains a reachable break statement that exits the for
+statement.
+The for statement is reachable and a for_condition  is present and does not have
+the constant value true.The foreach statement enumerates the elements of a collection, executing an
+embedded statement for each element of the collection.
+ANTLR
+The local_v ariable_type  and identi fier of a foreach statement declare the iteration
+variable  of the statement. If the var identifier is given as the local_v ariable_type , and no
+type named var is in scope, the iteration variable is said to be an implicitly typed
+iteration v ariable , and its type is taken to be the element type of the foreach
+statement, as specified below.
+If the foreach_st atement  contains both or neither ref and readonly, the iteration
+variable denotes a variable that is treated as read-only. Otherwise, if foreach_st atement
+contains ref without readonly, the iteration variable denotes a variable that shall be
+writable.
+The iteration variable corresponds to a local variable with a scope that extends over the
+embedded statement. During execution of a foreach statement, the iteration variable
+represents the collection element for which an iteration is currently being performed. If
+the iteration variable denotes a read-only variable, a compile-time error occurs if the
+embedded statement attempts to modify it (via assignment or the ++ and -- operators)
+or pass it as a ref or out parameter.
+In the following, for brevity, IEnumerable, IEnumerator, IEnumerable<T> and
+IEnumerator<T> refer to the corresponding types in the namespaces System.Collections
+and System.Collections.Generic.
+The compile-time processing of a foreach statement first determines the collection
+type, enumer ator type  and iteration type  of the expression. This determination
+proceeds as follows:
+If the type  X of expression  is an array type then there is an implicit reference
+conversion from X to the IEnumerable interface (since System.Array implements
+this interface). The collection type is the IEnumerable interface, the enumerator13.9.5 The foreach statement
+foreach_statement
+    : 'foreach'  '(' ref_kind? local_variable_type identifier 'in' 
+      expression ')' embedded_statement
+    ;type is the IEnumerator interface and the iteration type is the element type of the
+array type X.
+If the type  X of expression  is dynamic then there is an implicit conversion from
+expression  to the IEnumerable interface ( §10.2.10 ). The collection type is the
+IEnumerable interface and the enumerator type is the IEnumerator interface. If the
+var identifier is given as the local_v ariable_type  then the iteration type is dynamic,
+otherwise it is object.
+Otherwise, determine whether the type  X has an appropriate GetEnumerator
+method:
+Perform member lookup on the type  X with identifier GetEnumerator and no
+type arguments. If the member lookup does not produce a match, or it
+produces an ambiguity, or produces a match that is not a method group, check
+for an enumerable interface as described below. It is recommended that a
+warning be issued if member lookup produces anything except a method group
+or no match.
+Perform overload resolution using the resulting method group and an empty
+argument list. If overload resolution results in no applicable methods, results in
+an ambiguity, or results in a single best method but that method is either static
+or not public, check for an enumerable interface as described below. It is
+recommended that a warning be issued if overload resolution produces
+anything except an unambiguous public instance method or no applicable
+methods.
+If the return type  E of the GetEnumerator method is not a class, struct or
+interface type, an error is produced and no further steps are taken.
+Member lookup is performed on  E with the identifier Current and no type
+arguments. If the member lookup produces no match, the result is an error, or
+the result is anything except a public instance property that permits reading, an
+error is produced and no further steps are taken.
+Member lookup is performed on  E with the identifier MoveNext and no type
+arguments. If the member lookup produces no match, the result is an error, or
+the result is anything except a method group, an error is produced and no
+further steps are taken.
+Overload resolution is performed on the method group with an empty
+argument list. If overload resolution results in no applicable methods, results in
+an ambiguity, or results in a single best method but that method is either static
+or not public, or its return type is not bool, an error is produced and no further
+steps are taken.
+The collection type is  X, the enumerator type is  E, and the iteration type is the
+type of the Current property. The Current property may include the refmodifier, in which case, the expression returned is a variable_r eference (§9.5)
+that is optionally read-only.
+Otherwise, check for an enumerable interface:
+If among all the types  Tᵢ for which there is an implicit conversion from X to
+IEnumerable<Tᵢ>, there is a unique type  T such that T is not dynamic and for all
+the other  Tᵢ there is an implicit conversion from IEnumerable<T> to
+IEnumerable<Tᵢ>, then the collection type is the interface IEnumerable<T>, the
+enumerator type is the interface IEnumerator<T>, and the iteration type is  T.
+Otherwise, if there is more than one such type  T, then an error is produced and
+no further steps are taken.
+Otherwise, if there is an implicit conversion from X to the
+System.Collections.IEnumerable interface, then the collection type is this
+interface, the enumerator type is the interface System.Collections.IEnumerator,
+and the iteration type is object.
+Otherwise, an error is produced and no further steps are taken.
+The above steps, if successful, unambiguously produce a collection type  C, enumerator
+type E and iteration type  T, ref T, or ref readonly T. A foreach statement of the form
+C#
+is then equivalent to:
+C#foreach (V v in x) «embedded_statement»
+{
+    E e = ((C)(x)).GetEnumerator();
+    try
+    {
+        while (e.MoveNext())
+        {
+            V v = (V)(T)e.Current;
+            «embedded_statement»
+        }
+    }
+    finally
+    {
+        ... // Dispose e
+    }
+}The variable  e is not visible to or accessible to the expression  x or the embedded
+statement or any other source code of the program. The variable  v is read-only in the
+embedded statement. If there is not an explicit conversion ( §10.3 ) from T (the iteration
+type) to  V (the local_v ariable_type  in the foreach statement), an error is produced and
+no further steps are taken.
+When the iteration variable is a reference variable ( §9.7), a foreach statement of the
+form
+C#
+is then equivalent to:
+C#
+The variable  e is not visible or accessible to the expression  x or the embedded
+statement or any other source code of the program. The reference variable  v is read-
+write in the embedded statement, but v shall not be ref-reassigned ( §12.21.3 ). If there is
+not an identity conversion ( §10.2.2 ) from T (the iteration type) to  V (the
+local_v ariable_type  in the foreach statement), an error is produced and no further steps
+are taken.
+A foreach statement of the form foreach (ref readonly V v in x)
+«embedded_statement» has a similar equivalent form, but the reference variable v is ref
+readonly in the embedded statement, and therefore cannot be ref-reassigned or
+reassigned.foreach (ref V v in x) «embedded_statement»
+{
+    E e = ((C)(x)).GetEnumerator();
+    try
+    {
+        while (e.MoveNext())
+        {
+            ref V v = ref e.Current;
+            «embedded_statement»
+        }
+    }
+    finally
+    {
+        ... // Dispose e
+    }
+}Note: If x has the value null, a System.NullReferenceException is thrown at run-
+time. end not e
+An implementation is permitted to implement a given foreach_st atement  differently; e.g.,
+for performance reasons, as long as the behavior is consistent with the above expansion.
+The placement of v inside the while loop is important for how it is captured
+(§12.19.6.2 ) by any anonymous function occurring in the embedded_st atement .
+Example :
+C#
+If v in the expanded form were declared outside of the while loop, it would be
+shared among all iterations, and its value after the for loop would be the final
+value, 13, which is what the invocation of  f would print. Instead, because each
+iteration has its own variable  v, the one captured by  f in the first iteration will
+continue to hold the value  7, which is what will be printed. (Note that earlier
+versions of C# declared  v outside of the while loop.)
+end ex ample
+The body of the finally block is constructed according to the following steps:
+If there is an implicit conversion from E to the System.IDisposable interface, then
+If E is a non-nullable value type then the finally clause is expanded to the
+semantic equivalent of:
+C#int[] values = { 7, 9, 13 };
+Action f = null;
+foreach (var value in values)
+{
+    if (f == null)
+    {
+        f = () => Console.WriteLine( "First value: "  + value);
+    }
+}
+f();
+finally
+{Otherwise the finally clause is expanded to the semantic equivalent of:
+C#
+except that if E is a value type, or a type parameter instantiated to a value type,
+then the conversion of e to System.IDisposable shall not cause boxing to
+occur.
+Otherwise, if E is a sealed type, the finally clause is expanded to an empty block:
+C#
+Otherwise, the finally clause is expanded to:
+C#
+The local variable  d is not visible to or accessible to any user code. In particular, it does
+not conflict with any other variable whose scope includes the finally block.
+The order in which foreach traverses the elements of an array, is as follows: For single-
+dimensional arrays elements are traversed in increasing index order, starting with
+index 0 and ending with index Length – 1. For multi-dimensional arrays, elements are    ((System.IDisposable)e).Dispose();
+}
+finally
+{
+    System.IDisposable d = e as System.IDisposable;
+    if (d != null)
+    {
+        d.Dispose();
+    }
+}
+finally {}
+finally
+{
+    System.IDisposable d = e as System.IDisposable;
+    if (d != null)
+    {
+        d.Dispose();
+    }
+}traversed such that the indices of the rightmost dimension are increased first, then the
+next left dimension, and so on to the left.
+Example : The following example prints out each value in a two-dimensional array, in
+element order:
+C#
+The output produced is as follows:
+Console
+end ex ample
+Example : In the following example
+C#
+the type of  n is inferred to be int, the iteration type of numbers.
+end ex ampleclass Test
+{
+    static void Main()
+    {
+        double[,] values =
+        {
+            {1.2, 2.3, 3.4, 4.5},
+            {5.6, 6.7, 7.8, 8.9}
+        };
+        foreach (double elementValue in values)
+        {
+            Console.Write( $"{elementValue}  ");
+        }
+        Console.WriteLine();
+    }
+}
+1.2 2.3 3.4 4.5 5.6 6.7 7.8 8.9
+int[] numbers = { 1, 3, 5, 7, 9 };
+foreach (var n in numbers)
+{
+    Console.WriteLine(n);
+}Jump statements unconditionally transfer control.
+ANTLR
+The location to which a jump statement transfers control is called the target of the jump
+statement.
+When a jump statement occurs within a block, and the target of that jump statement is
+outside that block, the jump statement is said to exit the block. While a jump statement
+can transfer control out of a block, it can never transfer control into a block.
+Execution of jump statements is complicated by the presence of intervening try
+statements. In the absence of such try statements, a jump statement unconditionally
+transfers control from the jump statement to its target. In the presence of such
+intervening try statements, execution is more complex. If the jump statement exits one
+or more try blocks with associated finally blocks, control is initially transferred to the
+finally block of the innermost try statement. When and if control reaches the end
+point of a finally block, control is transferred to the finally block of the next
+enclosing try statement. This process is repeated until the finally blocks of all
+intervening try statements have been executed.
+Example : In the following code
+C#13.10 Jump statements
+13.10.1 General
+jump_statement
+    : break_statement
+    | continue_statement
+    | goto_statement
+    | return_statement
+    | throw_statement
+    ;
+class Test
+{
+    static void Main()
+    {
+        while (true)
+        {
+            try
+            {the finally blocks associated with two try statements are executed before control
+is transferred to the target of the jump statement. The output produced is as
+follows:
+Console
+end ex ample
+The break statement exits the nearest enclosing switch, while, do, for, or foreach
+statement.
+ANTLR
+The target of a break statement is the end point of the nearest enclosing switch, while,
+do, for, or foreach statement. If a break statement is not enclosed by a switch, while,
+do, for, or foreach statement, a compile-time error occurs.                try
+                {
+                    Console.WriteLine( "Before break" );
+                    break;
+                }
+                finally
+                {
+                    Console.WriteLine( "Innermost finally block" );
+                }
+            }
+            finally
+            {
+                Console.WriteLine( "Outermost finally block" );
+            }
+        }
+        Console.WriteLine( "After break" );
+    }
+}
+Before break
+Innermost finally block
+Outermost finally block
+After break
+13.10.2 The break statement
+break_statement
+    : 'break' ';'
+    ;When multiple switch, while, do, for, or foreach statements are nested within each
+other, a break statement applies only to the innermost statement. T o transfer control
+across multiple nesting levels, a goto statement ( §13.10.4 ) shall be used.
+A break statement cannot exit a finally block ( §13.11 ). When a break statement
+occurs within a finally block, the target of the break statement shall be within the
+same finally block; otherwise a compile-time error occurs.
+A break statement is executed as follows:
+If the break statement exits one or more try blocks with associated finally
+blocks, control is initially transferred to the finally block of the innermost try
+statement. When and if control reaches the end point of a finally block, control is
+transferred to the finally block of the next enclosing try statement. This process
+is repeated until the finally blocks of all intervening try statements have been
+executed.
+Control is transferred to the target of the break statement.
+Because a break statement unconditionally transfers control elsewhere, the end point of
+a break statement is never reachable.
+The continue statement starts a new iteration of the nearest enclosing while, do, for,
+or foreach statement.
+ANTLR
+The target of a continue statement is the end point of the embedded statement of the
+nearest enclosing while, do, for, or foreach statement. If a continue statement is not
+enclosed by a while, do, for, or foreach statement, a compile-time error occurs.
+When multiple while, do, for, or foreach statements are nested within each other, a
+continue statement applies only to the innermost statement. T o transfer control across
+multiple nesting levels, a goto statement ( §13.10.4 ) shall be used.
+A continue statement cannot exit a finally block ( §13.11 ). When a continue statement
+occurs within a finally block, the target of the continue statement shall be within the13.10.3 The continue statement
+continue_statement
+    : 'continue'  ';'
+    ;same finally block; otherwise a compile-time error occurs.
+A continue statement is executed as follows:
+If the continue statement exits one or more try blocks with associated finally
+blocks, control is initially transferred to the finally block of the innermost try
+statement. When and if control reaches the end point of a finally block, control is
+transferred to the finally block of the next enclosing try statement. This process
+is repeated until the finally blocks of all intervening try statements have been
+executed.
+Control is transferred to the target of the continue statement.
+Because a continue statement unconditionally transfers control elsewhere, the end
+point of a continue statement is never reachable.
+The goto statement transfers control to a statement that is marked by a label.
+ANTLR
+The target of a goto identi fier statement is the labeled statement with the given label. If
+a label with the given name does not exist in the current function member, or if the
+goto statement is not within the scope of the label, a compile-time error occurs.
+Note: This rule permits the use of a goto statement to transfer control out o f a
+nested scope, but not into a nested scope. In the example
+C#13.10.4 The goto statement
+goto_statement
+    : 'goto' identifier ';'
+    | 'goto' 'case' constant_expression ';'
+    | 'goto' 'default'  ';'
+    ;
+class Test
+{
+    static void Main(string[] args)
+    {
+        string[,] table =
+        {
+            {"Red", "Blue", "Green"},
+            {"Monday" , "Wednesday" , "Friday" }
+        };a goto statement is used to transfer control out of a nested scope.
+end not e
+The target of a goto case statement is the statement list in the immediately enclosing
+switch statement ( §13.8.3 ) which contains a case label with a constant pattern of the
+given constant value and no guard. If the goto case statement is not enclosed by a
+switch statement, if the nearest enclosing switch statement does not contain such a
+case, or if the constant_expr ession  is not implicitly convertible ( §10.2 ) to the governing
+type of the nearest enclosing switch statement, a compile-time error occurs.
+The target of a goto default statement is the statement list in the immediately
+enclosing switch statement ( §13.8.3 ), which contains a default label. If the goto
+default statement is not enclosed by a switch statement, or if the nearest enclosing
+switch statement does not contain a default label, a compile-time error occurs.
+A goto statement cannot exit a finally block ( §13.11 ). When a goto statement occurs
+within a finally block, the target of the goto statement shall be within the same
+finally block, or otherwise a compile-time error occurs.
+A goto statement is executed as follows:
+If the goto statement exits one or more try blocks with associated finally
+blocks, control is initially transferred to the finally block of the innermost try
+statement. When and if control reaches the end point of a finally block, control is        foreach (string str in args)
+        {
+            int row, colm;
+            for (row = 0; row <= 1; ++row)
+            {
+                for (colm = 0; colm <= 2; ++colm)
+                {
+                    if (str == table[row,colm])
+                    {
+                        goto done;
+                    }
+                }
+            }
+            Console.WriteLine( $"{str} not found" );
+            continue ;
+          done:
+            Console.WriteLine( $"Found {str} at [{row}][{colm}]");
+        }
+    }
+}transferred to the finally block of the next enclosing try statement. This process
+is repeated until the finally blocks of all intervening try statements have been
+executed.
+Control is transferred to the target of the goto statement.
+Because a goto statement unconditionally transfers control elsewhere, the end point of
+a goto statement is never reachable.
+The return statement returns control to the current caller of the function member in
+which the return statement appears, optionally returning a value or a variable_r eference
+(§9.5).
+ANTLR
+A return_statement  without expression  is called a return-no-v alue; one containing ref
+expression  is called a return-by-ref; and one containing only expression  is called a
+return-by-value.
+It is a compile-time error to use a return-no-value from a method declared as being
+returns-by-value or returns-by-ref ( §15.6.1 ).
+It is a compile-time error to use a return-by-ref from a method declared as being
+returns-no-value or returns-by-value.
+It is a compile-time error to use a return-by-value from a method declared as being
+returns-no-value or returns-by-ref.
+It is a compile-time error to use a return-by-ref if expression  is not a variable_r eference
+or is a reference to a variable whose ref-safe-context is not caller-context ( §9.7.2 ).
+It is a compile-time error to use a return-by-ref from a method declared with the
+method_modi fier async.
+A function member is said to comput e a v alue if it is a method with a returns-by-value
+method ( §15.6.11 ), a returns-by-value get accessor of a property or indexer, or a user-
+defined operator. Function members that are returns-no-value do not compute a value13.10.5 The return statement
+return_statement
+    : 'return'  ';'
+    | 'return'  expression ';'
+    | 'return'  'ref' variable_reference ';'
+    ;and are methods with the effective return type void, set accessors of properties and
+indexers, add and remove accessors of event, instance constructors, static constructors
+and finalizers. Function members that are returns-by-ref do not compute a value.
+For a return-by-value, an implicit conversion ( §10.2 ) shall exist from the type of
+expression  to the effective return type ( §15.6.11 ) of the containing function member. For
+a return-by-ref, an identity conversion ( §10.2.2 ) shall exist between the type of
+expression  and the effective return type of the containing function member.
+return statements can also be used in the body of anonymous function expressions
+(§12.19 ), and participate in determining which conversions exist for those functions
+(§10.7.1 ).
+It is a compile-time error for a return statement to appear in a finally block ( §13.11 ).
+A return statement is executed as follows:
+For a return-by-value, expression  is evaluated and its value is converted to the
+effective return type of the containing function by an implicit conversion. The
+result of the conversion becomes the result value produced by the function. For a
+return-by-ref, the expression  is evaluated, and the result shall be classified as a
+variable. If the enclosing method’s return-by-ref includes readonly, the resulting
+variable is read-only.
+If the return statement is enclosed by one or more try or catch blocks with
+associated finally blocks, control is initially transferred to the finally block of
+the innermost try statement. When and if control reaches the end point of a
+finally block, control is transferred to the finally block of the next enclosing
+try statement. This process is repeated until the finally blocks of all enclosing
+try statements have been executed.
+If the containing function is not an async function, control is returned to the caller
+of the containing function along with the result value, if any.
+If the containing function is an async function, control is returned to the current
+caller, and the result value, if any, is recorded in the return task as described in
+(§15.15.3 ).
+Because a return statement unconditionally transfers control elsewhere, the end point
+of a return statement is never reachable.
+The throw statement throws an exception.13.10.6 The throw statementANTLR
+A throw statement with an expression throws an exception produced by evaluating the
+expression. The expression shall be implicitly convertible to System.Exception, and the
+result of evaluating the expression is converted to System.Exception before being
+thrown. If the result of the conversion is null, a System.NullReferenceException is
+thrown instead.
+A throw statement with no expression can be used only in a catch block, in which case,
+that statement re-throws the exception that is currently being handled by that catch
+block.
+Because a throw statement unconditionally transfers control elsewhere, the end point of
+a throw statement is never reachable.
+When an exception is thrown, control is transferred to the first catch clause in an
+enclosing try statement that can handle the exception. The process that takes place
+from the point of the exception being thrown to the point of transferring control to a
+suitable exception handler is known as exception pr opagation . Propagation of an
+exception consists of repeatedly evaluating the following steps until a catch clause that
+matches the exception is found. In this description, the throw point  is initially the
+location at which the exception is thrown. This behavior is specified in ( §21.4 ).
+In the current function member, each try statement that encloses the throw point
+is examined. For each statement  S, starting with the innermost try statement and
+ending with the outermost try statement, the following steps are evaluated:
+If the try block of S encloses the throw point and if S has one or more catch
+clauses, the catch clauses are examined in order of appearance to locate a
+suitable handler for the exception. The first catch clause that specifies an
+exception type  T (or a type parameter that at run-time denotes an exception
+type T) such that the run-time type of  E derives from  T is considered a match.
+If the clause contains an exception filter, the exception object is assigned to the
+exception variable, and the exception filter is evaluated. When a catch clause
+contains an exception filter, that catch clause is considered a match if the
+exception filter evaluates to true. A general catch (§13.11 ) clause is considered
+a match for any exception type. If a matching catch clause is located, thethrow_statement
+    : 'throw' expression? ';'
+    ;exception propagation is completed by transferring control to the block of that
+catch clause.
+Otherwise, if the try block or a catch block of S encloses the throw point and
+if S has a finally block, control is transferred to the finally block. If the
+finally block throws another exception, processing of the current exception is
+terminated. Otherwise, when control reaches the end point of the finally
+block, processing of the current exception is continued.
+If an exception handler was not located in the current function invocation, the
+function invocation is terminated, and one of the following occurs:
+If the current function is non-async, the steps above are repeated for the caller
+of the function with a throw point corresponding to the statement from which
+the function member was invoked.
+If the current function is async and task-returning, the exception is recorded in
+the return task, which is put into a faulted or cancelled state as described in
+§15.15.3 .
+If the current function is async and void-returning, the synchronization context
+of the current thread is notified as described in §15.15.4 .
+If the exception processing terminates all function member invocations in the
+current thread, indicating that the thread has no handler for the exception, then
+the thread is itself terminated. The impact of such termination is implementation-
+defined.
+The try statement provides a mechanism for catching exceptions that occur during
+execution of a block. Furthermore, the try statement provides the ability to specify a
+block of code that is always executed when control leaves the try statement.
+ANTLR13.11 The try statement
+try_statement
+    : 'try' block catch_clauses
+    | 'try' block catch_clauses? finally_clause
+    ;
+catch_clauses
+    : specific_catch_clause+
+    | specific_catch_clause* general_catch_clause
+    ;A try_statement  consists of the keyword try followed by a block , then zero or more
+catch_claus es, then an optional finally_claus e. There shall be at least one catch_claus e or
+a finally_claus e.
+In an exception_speci fier the type, or its effective base class if it is a type_p aramet er, shall
+be System.Exception or a type that derives from it.
+When a catch clause specifies both a class_type  and an identi fier, an exception v ariable
+of the given name and type is declared. The exception variable is introduced into the
+declaration space of the speci fic_cat ch_claus e (§7.3). During execution of the
+exception_f ilter and catch block, the exception variable represents the exception
+currently being handled. For purposes of definite assignment checking, the exception
+variable is considered definitely assigned in its entire scope.
+Unless a catch clause includes an exception variable name, it is impossible to access the
+exception object in the filter and catch block.
+A catch clause that specifies neither an exception type nor an exception variable name
+is called a general catch clause. A try statement can only have one general catch
+clause, and, if one is present, it shall be the last catch clause.
+Note: Some programming languages might support exceptions that are not
+representable as an object derived from System.Exception, although such
+exceptions could never be generated by C# code. A general catch clause might bespecific_catch_clause
+    : 'catch' exception_specifier exception_filter? block
+    | 'catch' exception_filter block
+    ;
+exception_specifier
+    : '(' type identifier? ')'
+    ;
+exception_filter
+    : 'when' '(' boolean_expression ')'
+    ;
+general_catch_clause
+    : 'catch' block
+    ;
+finally_clause
+    : 'finally'  block
+    ;used to catch such exceptions. Thus, a general catch clause is semantically different
+from one that specifies the type System.Exception, in that the former might also
+catch exceptions from other languages. end not e
+In order to locate a handler for an exception, catch clauses are examined in lexical
+order. If a catch clause specifies a type but no exception filter, it is a compile-time error
+for a later catch clause of the same try statement to specify a type that is the same as,
+or is derived from, that type.
+Note: Without this restriction, it would be possible to write unreachable catch
+clauses. end not e
+Within a catch block, a throw statement ( §13.10.6 ) with no expression can be used to
+re-throw the exception that was caught by the catch block. Assignments to an
+exception variable do not alter the exception that is re-thrown.
+Example : In the following code
+C#
+class Test
+{
+    static void F()
+    {
+        try
+        {
+            G();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine( "Exception in F: "  + e.Message);
+            e = new Exception( "F");
+            throw; // re-throw
+        }
+    }
+    static void G() => throw new Exception( "G");
+    static void Main()
+    {
+        try
+        {
+            F();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine( "Exception in Main: "  + e.Message);
+        }the method  F catches an exception, writes some diagnostic information to the
+console, alters the exception variable, and re-throws the exception. The exception
+that is re-thrown is the original exception, so the output produced is:
+Console
+If the first catch block had thrown e instead of rethrowing the current exception,
+the output produced would be as follows:
+Console
+end ex ample
+It is a compile-time error for a break, continue, or goto statement to transfer control
+out of a finally block. When a break, continue, or goto statement occurs in a finally
+block, the target of the statement shall be within the same finally block, or otherwise a
+compile-time error occurs.
+It is a compile-time error for a return statement to occur in a finally block.
+When execution reaches a try statement, control is transferred to the try block. If
+control reaches the end point of the try block without an exception being propagated,
+control is transferred to the finally block if one exists. If no finally block exists,
+control is transferred to the end point of the try statement.
+If an exception has been propagated, the catch clauses, if any, are examined in lexical
+order seeking the first match for the exception. The search for a matching catch clause
+continues with all enclosing blocks as described in §13.10.6 . A catch clause is a match if
+the exception type matches any exception_speci fier and any exception_f ilter is true. A
+catch clause without an exception_speci fier matches any exception type. The exception
+type matches the exception_speci fier when the exception_speci fier specifies the exception
+type or a base type of the exception type. If the clause contains an exception filter, the    }
+}
+Exception in F: G
+Exception in Main: G
+Exception in F: G
+Exception in Main: Fexception object is assigned to the exception variable, and the exception filter is
+evaluated.
+If an exception has been propagated and a matching catch clause is found, control is
+transferred to the first matching catch block. If control reaches the end point of the
+catch block without an exception being propagated, control is transferred to the
+finally block if one exists. If no finally block exists, control is transferred to the end
+point of the try statement. If an exception has been propagated from the catch block,
+control transfers to the finally block if one exists. The exception is propagated to the
+next enclosing try statement.
+If an exception has been propagated, and no matching catch clause is found, control
+transfers to the finally block, if it exists. The exception is propagated to the next
+enclosing try statement.
+The statements of a finally block are always executed when control leaves a try
+statement. This is true whether the control transfer occurs as a result of normal
+execution, as a result of executing a break, continue, goto, or return statement, or as a
+result of propagating an exception out of the try statement. If control reaches the end
+point of the finally block without an exception being propagated, control is
+transferred to the end point of the try statement.
+If an exception is thrown during execution of a finally block, and is not caught within
+the same finally block, the exception is propagated to the next enclosing try
+statement. If another exception was in the process of being propagated, that exception
+is lost. The process of propagating an exception is discussed further in the description of
+the throw statement ( §13.10.6 ).
+Example : In the following code
+C#
+public class Test
+{
+    static void Main()
+    {
+        try
+        {
+            Method();
+        }
+        catch (Exception ex) when (ExceptionFilter(ex))
+        {
+            Console.WriteLine( "Catch");
+        }the method Method throws an exception. The first action is to examine the enclosing
+catch clauses, executing any exception f ilters. Then, the finally clause in Method
+executes before control transfers to the enclosing matching catch clause. The
+resulting output is:
+Console
+end ex ample
+The try block of a try statement is reachable if the try statement is reachable.
+A catch block of a try statement is reachable if the try statement is reachable.
+The finally block of a try statement is reachable if the try statement is reachable.
+The end point of a try statement is reachable if both of the following are true:
+The end point of the try block is reachable or the end point of at least one catch
+block is reachable.
+If a finally block is present, the end point of the finally block is reachable.        bool ExceptionFilter (Exception ex )
+        {
+            Console.WriteLine( "Filter" );
+            return true;
+        }
+    }
+    static void Method()
+    {
+        try
+        {
+            throw new ArgumentException();
+        }
+        finally
+        {
+            Console.WriteLine( "Finally" );
+        }
+    }
+}
+Filter
+Finally
+Catch
+13.12 The checked and unchecked statementsThe checked and unchecked statements are used to control the overflow-checking
+context for integral-type arithmetic operations and conversions.
+ANTLR
+The checked statement causes all expressions in the block  to be evaluated in a checked
+context, and the unchecked statement causes all expressions in the block  to be evaluated
+in an unchecked context.
+The checked and unchecked statements are precisely equivalent to the checked and
+unchecked operators ( §12.8.19 ), except that they operate on blocks instead of
+expressions.
+The lock statement obtains the mutual-exclusion lock for a given object, executes a
+statement, and then releases the lock.
+ANTLR
+The expression  of a lock statement shall denote a value of a type known to be a
+reference. No implicit boxing conversion ( §10.2.9 ) is ever performed for the expression  of
+a lock statement, and thus it is a compile-time error for the expression to denote a
+value of a value_type .
+A lock statement of the form
+lock (x) …
+where x is an expression of a reference_type , is precisely equivalent to:
+C#checked_statement
+    : 'checked'  block
+    ;
+unchecked_statement
+    : 'unchecked'  block
+    ;
+13.13 The lock statement
+lock_statement
+    : 'lock' '(' expression ')' embedded_statement
+    ;except that x is only evaluated once.
+While a mutual-exclusion lock is held, code executing in the same execution thread can
+also obtain and release the lock. However, code executing in other threads is blocked
+from obtaining the lock until the lock is released.
+The using statement obtains one or more resources, executes a statement, and then
+disposes of the resource.
+ANTLR
+A resource is a class or struct that implements the System.IDisposable interface, which
+includes a single parameterless method named Dispose. Code that is using a resource
+can call Dispose to indicate that the resource is no longer needed.
+If the form of resource_acquisition  is local_v ariable_declar ation  then the type of the
+local_v ariable_declar ation  shall be either dynamic or a type that can be implicitly
+converted to System.IDisposable. If the form of resource_acquisition  is expression  then
+this expression shall be implicitly convertible to System.IDisposable.bool __lockWasTaken = false;
+try
+{
+    System.Threading.Monitor.Enter(x, ref __lockWasTaken);
+    ...
+}
+finally
+{
+    if (__lockWasTaken)
+    {
+        System.Threading.Monitor.Exit(x);
+    }
+}
+13.14 The using statement
+using_statement
+    : 'using' '(' resource_acquisition ')' embedded_statement
+    ;
+resource_acquisition
+    : local_variable_declaration
+    | expression
+    ;Local variables declared in a resource_acquisition  are read-only, and shall include an
+initializer. A compile-time error occurs if the embedded statement attempts to modify
+these local variables (via assignment or the ++ and -- operators), take the address of
+them, or pass them as ref or out parameters.
+A using statement is translated into three parts: acquisition, usage, and disposal. Usage
+of the resource is implicitly enclosed in a try statement that includes a finally clause.
+This finally clause disposes of the resource. If a null resource is acquired, then no call
+to Dispose is made, and no exception is thrown. If the resource is of type dynamic it is
+dynamically converted through an implicit dynamic conversion ( §10.2.10 ) to
+IDisposable during acquisition in order to ensure that the conversion is successful
+before the usage and disposal.
+A using statement of the form
+C#
+corresponds to one of three possible expansions. When ResourceType is a non-nullable
+value type or a type parameter with the value type constraint ( §15.2.5 ), the expansion is
+semantically equivalent to
+C#
+except that the cast of resource to System.IDisposable shall not cause boxing to occur.
+Otherwise, when ResourceType is dynamic, the expansion is
+C#using (ResourceType resource = «expression» ) «statement»
+{
+    ResourceType resource = «expression»;
+    try
+    {
+        «statement»;
+    }
+    finally
+    {
+        ((IDisposable)resource).Dispose();
+    }
+}
+{
+    ResourceType resource = «expression»;Otherwise, the expansion is
+C#
+In any expansion, the resource variable is read-only in the embedded statement, and
+the d variable is inaccessible in, and invisible to, the embedded statement.
+An implementation is permitted to implement a given using_st atement  differently, e.g.,
+for performance reasons, as long as the behavior is consistent with the above expansion.
+A using statement of the form:
+C#
+has the same three possible expansions. In this case ResourceType is implicitly the
+compile-time type of the expression , if it has one. Otherwise the interface IDisposable    IDisposable d = resource;
+    try
+    {
+        «statement»;
+    }
+    finally
+    {
+        if (d != null)
+        {
+            d.Dispose();
+        }
+    }
+}
+{
+    ResourceType resource = «expression»;
+    try
+    {
+        «statement»;
+    }
+    finally
+    {
+        IDisposable d = (IDisposable)resource;
+        if (d != null)
+        {
+            d.Dispose();
+        }
+    }
+}
+using («expression») «statement»itself is used as the ResourceType. The resource variable is inaccessible in, and invisible
+to, the embedded statement .
+When a resource_acquisition  takes the form of a local_v ariable_declar ation , it is possible
+to acquire multiple resources of a given type. A using statement of the form
+C#
+is precisely equivalent to a sequence of nested using statements:
+C#
+Example : The example below creates a file named log.txt and writes two lines of text
+to the file. The example then opens that same file for reading and copies the
+contained lines of text to the console.
+C#using (ResourceType r1 = e1, r2 = e2, ..., rN = eN) «statement»
+using (ResourceType r1 = e1)
+using (ResourceType r2 = e2)
+...
+using (ResourceType rN = eN)
+«statement»
+class Test
+{
+    static void Main()
+    {
+        using (TextWriter w = File.CreateText( "log.txt" ))
+        {
+            w.WriteLine( "This is line one" );
+            w.WriteLine( "This is line two" );
+        }
+        using (TextReader r = File.OpenText( "log.txt" ))
+        {
+            string s;
+            while ((s = r.ReadLine()) != null)
+            {
+                Console.WriteLine(s);
+            }
+        }
+    }
+}Since the TextWriter and TextReader classes implement the IDisposable interface,
+the example can use using statements to ensure that the underlying file is properly
+closed following the write or read operations.
+end ex ample
+The yield statement is used in an iterator block ( §13.3 ) to yield a value to the
+enumerator object ( §15.14.5 ) or enumerable object ( §15.14.6 ) of an iterator or to signal
+the end of the iteration.
+ANTLR
+yield is a contextual keyword ( §6.4.4 ) and has special meaning only when used
+immediately before a return or break keyword.
+There are several restrictions on where a yield statement can appear, as described in
+the following.
+It is a compile-time error for a yield statement (of either form) to appear outside
+a method_body , operator_body , or accessor_body .
+It is a compile-time error for a yield statement (of either form) to appear inside an
+anonymous function.
+It is a compile-time error for a yield statement (of either form) to appear in the
+finally clause of a try statement.
+It is a compile-time error for a yield return statement to appear anywhere in a
+try statement that contains any catch_claus es.
+Example : The following example shows some valid and invalid uses of yield
+statements.
+C#13.15 The yield statement
+yield_statement
+    : 'yield' 'return'  expression ';'
+    | 'yield' 'break' ';'
+    ;
+delegate  IEnumerable< int> D();
+IEnumerator< int> GetEnumerator ()
+{end ex ample
+An implicit conversion ( §10.2 ) shall exist from the type of the expression in the yield
+return statement to the yield type ( §15.14.4 ) of the iterator.
+A yield return statement is executed as follows:
+The expression given in the statement is evaluated, implicitly converted to the yield
+type, and assigned to the Current property of the enumerator object.
+Execution of the iterator block is suspended. If the yield return statement is
+within one or more try blocks, the associated finally blocks are not executed at
+this time.
+The MoveNext method of the enumerator object returns true to its caller,
+indicating that the enumerator object successfully advanced to the next item.    try
+    {
+        yield return 1; // Ok
+        yield break;    // Ok
+    }
+    finally
+    {
+        yield return 2; // Error, yield in finally
+        yield break;    // Error, yield in finally
+    }
+    try
+    {
+        yield return 3; // Error, yield return in try/catch
+        yield break;    // Ok
+    }
+    catch
+    {
+        yield return 4; // Error, yield return in try/catch
+        yield break;    // Ok
+    }
+    D d = delegate
+    {
+        yield return 5; // Error, yield in an anonymous function
+    };
+}
+int MyMethod ()
+{
+    yield return 1;     // Error, wrong return type for an iterator  
+block
+}The next call to the enumerator object’s MoveNext method resumes execution of the
+iterator block from where it was last suspended.
+A yield break statement is executed as follows:
+If the yield break statement is enclosed by one or more try blocks with
+associated finally blocks, control is initially transferred to the finally block of
+the innermost try statement. When and if control reaches the end point of a
+finally block, control is transferred to the finally block of the next enclosing
+try statement. This process is repeated until the finally blocks of all enclosing
+try statements have been executed.
+Control is returned to the caller of the iterator block. This is either the MoveNext
+method or Dispose method of the enumerator object.
+Because a yield break statement unconditionally transfers control elsewhere, the end
+point of a yield break statement is never reachable.
+６ Collaborat e with us on
+GitHub
+The source for this content can
+be found on GitHub, where you
+can also create and review
+issues and pull requests. For
+more information, see our
+contributor guide .C# Standar d documentation
+feedb ack
+C# Standard documentation is an
+open source project. Select a link to
+provide feedback:
+ Open a documentation issue
+ Provide product feedback14 Namespaces
+Article •04/07/2023
+C# programs are organized using namespaces. Namespaces are used both as an
+“internal” organization system for a program, and as an “external” organization system
+—a way of presenting program elements that are exposed to other programs.
+Using directives ( §14.5 ) are provided to facilitate the use of namespaces.
+A compilation_unit  consists of zero or more extern_alias_dir ectives followed by zero or
+more using_dir ectives followed by zero or one global_attr ibutes followed by zero or
+more namesp ace_member_declar ation s. The compilation_unit  defines the overall
+structure of the input.
+ANTLR
+A C# program consists of one or more compilation units. When a C# program is
+compiled, all of the compilation units are processed together. Thus, compilation units
+can depend on each other, possibly in a circular fashion.
+The extern_alias_dir ectives of a compilation unit affect the using_dir ectives,
+global_attr ibutes and namesp ace_member_declar ation s of that compilation unit, but have
+no effect on other compilation units.
+The using_dir ectives of a compilation unit affect the global_attr ibutes and
+namesp ace_member_declar ation s of that compilation unit, but have no effect on other
+compilation units.
+The global_attr ibutes (§22.3 ) of a compilation unit permit the specification of attributes
+for the target assembly and module. Assemblies and modules act as physical containers
+for types. An assembly may consist of several physically separate modules.14.1 General
+14.2 Compilation units
+compilation_unit
+    : extern_alias_directive* using_directive* global_attributes?
+      namespace_member_declaration*
+    ;The namesp ace_member_declar ation s of each compilation unit of a program contribute
+members to a single declaration space called the global namespace.
+Example :
+C#
+The two compilation units contribute to the single global namespace, in this case
+declaring two classes with the fully qualified names A and B. Because the two
+compilation units contribute to the same declaration space, it would have been an
+error if each contained a declaration of a member with the same name.
+end ex ample
+A namesp ace_declar ation  consists of the keyword namespace, followed by a namespace
+name and body, optionally followed by a semicolon.
+ANTLR
+A namesp ace_declar ation  may occur as a top-level declaration in a compilation_unit  or as
+a member declaration within another namesp ace_declar ation . When a
+namesp ace_declar ation  occurs as a top-level declaration in a compilation_unit , the
+namespace becomes a member of the global namespace. When a
+namesp ace_declar ation  occurs within another namesp ace_declar ation , the inner// File A.cs:
+class A {}
+// File B.cs:
+class B {}
+14.3 Namespace declarations
+namespace_declaration
+    : 'namespace'  qualified_identifier namespace_body ';'?
+    ;
+qualified_identifier
+    : identifier ( '.' identifier)*
+    ;
+namespace_body
+    : '{' extern_alias_directive* using_directive*
+      namespace_member_declaration* '}'
+    ;namespace becomes a member of the outer namespace. In either case, the name of a
+namespace shall be unique within the containing namespace.
+Namespaces are implicitly public and the declaration of a namespace cannot include
+any access modifiers.
+Within a namesp ace_body , the optional using_dir ectives import the names of other
+namespaces, types and members, allowing them to be referenced directly instead of
+through qualified names. The optional namesp ace_member_declar ation s contribute
+members to the declaration space of the namespace. Note that all using_dir ectives shall
+appear before any member declarations.
+The quali fied_identi fier of a namesp ace_declar ation  may be a single identifier or a
+sequence of identifiers separated by “ .” tokens. The latter form permits a program to
+define a nested namespace without lexically nesting several namespace declarations.
+Example :
+C#
+is semantically equivalent to
+C#
+end ex ample
+Namespaces are open-ended, and two namespace declarations with the same fully
+qualified name ( §7.8.2 ) contribute to the same declaration space ( §7.3).
+Example : In the following codenamespace  N1.N2
+{
+    class A {}
+    class B {}
+}
+namespace  N1
+{
+    namespace  N2
+    {
+        class A {}
+        class B {}
+    }
+}C#
+the two namespace declarations above contribute to the same declaration space, in
+this case declaring two classes with the fully qualified names N1.N2.A and N1.N2.B.
+Because the two declarations contribute to the same declaration space, it would
+have been an error if each contained a declaration of a member with the same
+name.
+end ex ample
+An extern_alias_dir ective introduces an identifier that serves as an alias for a namespace.
+The specification of the aliased namespace is external to the source code of the
+program and applies also to nested namespaces of the aliased namespace.
+ANTLR
+The scope of an extern_alias_dir ective extends over the using_dir ectives, global_attr ibutes
+and namesp ace_member_declar ation s of its immediately containing compilation_unit  or
+namesp ace_body .
+Within a compilation unit or namespace body that contains an extern_alias_dir ective, the
+identifier introduced by the extern_alias_dir ective can be used to reference the aliased
+namespace. It is a compile-time error for the identi fier to be the word global.
+The alias introduced by an extern_alias_dir ective is very similar to the alias introduced by
+a using_alias_dir ective. See §14.5.2  for more detailed discussion of extern_alias_dir ectives
+and using_alias_dir ectives.namespace  N1.N2
+{
+    class A {}
+}
+namespace  N1.N2
+{
+    class B {}
+}
+14.4 Extern alias directives
+extern_alias_directive
+    : 'extern'  'alias' identifier ';'
+    ;alias is a contextual keyword ( §6.4.4 ) and only has special meaning when it
+immediately follows the extern keyword in an extern_alias_dir ective.
+An error occurs if a program declares an extern alias for which no external definition is
+provided.
+Example : The following program declares and uses two extern aliases, X and Y,
+each of which represent the root of a distinct namespace hierarchy:
+C#
+The program declares the existence of the extern aliases X and Y, but the actual
+definitions of the aliases are external to the program. The identically named N.B
+classes can now be referenced as X.N.B and Y.N.B, or, using the namespace alias
+qualifier, X::N.B and Y::N.B. end ex ample
+Using dir ectiv es facilitate the use of namespaces and types defined in other
+namespaces. Using directives impact the name resolution process of
+namesp ace_or_type_name s (§7.8) and simple_name s (§12.8.4 ), but unlike declarations,
+using_dir ectives do not contribute new members to the underlying declaration spaces of
+the compilation units or namespaces within which they are used.
+ANTLRextern alias X;
+extern alias Y;
+class Test
+{
+    X::N.A a;
+    X::N.B b1;
+    Y::N.B b2;
+    Y::N.C c;
+}
+14.5 Using directives
+14.5.1 General
+using_directive
+    : using_alias_directive
+    | using_namespace_directive
+    | using_static_directive    
+    ;A using_alias_dir ective (§14.5.2 ) introduces an alias for a namespace or type.
+A using_namesp ace_directive (§14.5.3 ) imports the type members of a namespace.
+A using_st atic_dir ective (§14.5.4 ) imports the nested types and static members of a type.
+The scope of a using_dir ective extends over the namesp ace_member_declar ations  of its
+immediately containing compilation unit or namespace body. The scope of a
+using_dir ective specifically does not include its peer using_dir ectives. Thus, peer
+using_dir ectives do not affect each other, and the order in which they are written is
+insignificant. In contrast, the scope of an extern_alias_dir ective includes the
+using_dir ectives defined in the same compilation unit or namespace body.
+A using_alias_dir ective introduces an identifier that serves as an alias for a namespace or
+type within the immediately enclosing compilation unit or namespace body.
+ANTLR
+Within global attributes and member declarations in a compilation unit or namespace
+body that contains a using_alias_dir ective, the identifier introduced by the
+using_alias_dir ective can be used to reference the given namespace or type.
+Example :
+C#
+Above, within member declarations in the N3 namespace, A is an alias for N1.N2.A,
+and thus class N3.B derives from class N1.N2.A. The same effect can be obtained by14.5.2 Using alias directives
+using_alias_directive
+    : 'using' identifier '=' namespace_or_type_name ';'
+    ;
+namespace  N1.N2
+{
+    class A {}
+}
+namespace  N3
+{
+    using A = N1.N2.A;
+    class B: A {}
+}creating an alias  R for N1.N2 and then referencing R.A:
+C#
+end ex ample
+Within using directives, global attributes and member declarations in a compilation unit
+or namespace body that contains an extern_alias_dir ective, the identifier introduced by
+the extern_alias_dir ective can be used to reference the associated namespace.
+Example : For example:
+C#
+Above, within member declarations in the N1 namespace, N2 is an alias for some
+namespace whose definition is external to the source code of the program. Class
+N1.B derives from class N2.A. The same effect can be obtained by creating an
+alias A for N2.A and then referencing A:
+C#
+end ex amplenamespace  N3
+{
+    using R = N1.N2;
+    class B : R.A {}
+}
+namespace  N1
+{
+    extern alias N2;
+    class B : N2::A {}
+}
+namespace  N1
+{
+    extern alias N2;
+    using A = N2::A;
+    class B : A {}
+}An extern_alias_dir ective or using_alias_dir ective makes an alias available within a
+particular compilation unit or namespace body, but it does not contribute any new
+members to the underlying declaration space. In other words, an alias directive is not
+transitive, but, rather, affects only the compilation unit or namespace body in which it
+occurs.
+Example : In the following code
+C#
+the scopes of the alias directives that introduce R1 and R2 only extend to member
+declarations in the namespace body in which they are contained, so R1 and R2 are
+unknown in the second namespace declaration. However, placing the alias directives
+in the containing compilation unit causes the alias to become available within both
+namespace declarations:
+C#
+end ex amplenamespace  N3
+{
+    extern alias R1;
+    using R2 = N1.N2;
+}
+namespace  N3
+{
+    class B : R1::A, R2.I {} // Error, R1 and R2 unknown
+}
+extern alias R1;
+using R2 = N1.N2;
+namespace  N3
+{
+    class B : R1::A, R2.I {}
+}
+namespace  N3
+{
+    class C : R1::A, R2.I {}
+}Each extern_alias_dir ective or using_alias_dir ective in a compilation_unit  or
+namesp ace_body  contributes a name to the alias declaration space ( §7.3) of the
+immediately enclosing compilation_unit  or namesp ace_body . The identi fier of the alias
+directive shall be unique within the corresponding alias declaration space. The alias
+identifier need not be unique within the global declaration space or the declaration
+space of the corresponding namespace.
+Example :
+C#
+The using alias named X causes an error since there is already an alias named X in
+the same compilation unit. The class named Y does not conflict with the extern alias
+named Y since these names are added to distinct declaration spaces. The former is
+added to the global declaration space and the latter is added to the alias declaration
+space for this compilation unit.
+When an alias name matches the name of a member of a namespace, usage of
+either shall be appropriately qualified:
+C#extern alias X;
+extern alias Y;
+using X = N1.N2; // Error: alias X already exists
+class Y {} // Ok
+namespace  N1.N2
+{
+    class B {}
+}
+namespace  N3
+{
+    class A {}
+    class B : A {}
+}
+namespace  N3
+{
+    using A = N1.N2;
+    using B = N1.N2.B;
+    class W : B {} // Error: B is ambiguous
+    class X : A.B {} // Error: A is ambiguous
+    class Y : A::B {} // Ok: uses N1.N2.BIn the second namespace body for N3, unqualified use of B results in an error, since
+N3 contains a member named B and the namespace body that also declares an
+alias with name B; likewise for A. The class N3.B can be referenced as N3.B or
+global::N3.B. The alias A can be used in a quali fied-alias-member  (§14.8 ), such as
+A::B. The alias B is essentially useless. It cannot be used in a quali fied_alias_member
+since only namespace aliases can be used in a quali fied_alias_member  and B aliases
+a type.
+end ex ample
+Just like regular members, names introduced by alias_dir ectives are hidden by similarly
+named members in nested scopes.
+Example : In the following code
+C#
+the reference to  R.A in the declaration of  B causes a compile-time error because R
+refers to N3.R, not N1.N2.
+end ex ample
+The order in which extern_alias_dir ectives are written has no significance. Likewise, the
+order in which using_alias_dir ectives are written has no significance, but all
+using_alias_dir ectives shall come after all extern_alias_dir ectives in the same compilation
+unit or namespace body. R esolution of the namesp ace_or_type_name  referenced by a
+using_alias_dir ective is not affected by the using_alias_dir ective itself or by other
+using_dir ectives in the immediately containing compilation unit or namespace body, but
+may be affected by extern_alias_dir ectives in the immediately containing compilation
+unit or namespace body. In other words, the namesp ace_or_type_name  of a
+using_alias_dir ective is resolved as if the immediately containing compilation unit or    class Z : N3.B {} // Ok: uses N3.B
+}
+using R = N1.N2;
+namespace  N3
+{
+    class R {}
+    class B: R.A {} // Error, R has no member A
+}namespace body had no using_dir ectives but has the correct set of
+extern_alias_dir ectives.
+Example : In the following code
+C#
+the last using_alias_dir ective results in a compile-time error because it is not affected
+by the previous using_alias_dir ective. The first using_alias_dir ective does not result in
+an error since the scope of the extern alias X includes the using_alias_dir ective.
+end ex ample
+A using_alias_dir ective can create an alias for any namespace or type, including the
+namespace within which it appears and any namespace or type nested within that
+namespace.
+Accessing a namespace or type through an alias yields exactly the same result as
+accessing that namespace or type through its declared name.
+Example : Given
+C#namespace  N1.N2 {}
+namespace  N3
+{
+    extern alias X;
+    using R1 = X::N; // OK
+    using R2 = N1; // OK
+    using R3 = N1.N2; // OK
+    using R4 = R2.N2; // Error, R2 unknown
+}
+namespace  N1.N2
+{
+    class A {}
+}
+namespace  N3
+{
+    using R1 = N1;
+    using R2 = N1.N2;
+    class B
+    {the names N1.N2.A, R1.N2.A, and R2.A are equivalent and all refer to the class
+declaration whose fully qualified name is N1.N2.A.
+end ex ample
+Although each part of a partial type ( §15.2.7 ) is declared within the same namespace,
+the parts are typically written within different namespace declarations. Thus, different
+extern_alias_dir ectives and using_dir ectives can be present for each part. When
+interpreting simple names ( §12.8.4 ) within one part, only the extern_alias_dir ectives and
+using_dir ectives of the namespace bodies and compilation unit enclosing that part are
+considered. This may result in the same identifier having different meanings in different
+parts.
+Example :
+C#
+end ex ample        N1.N2.A a; // refers to N1.N2.A
+        R1.N2.A b; // refers to N1.N2.A
+        R2.A c; // refers to N1.N2.A
+    }
+}
+namespace  N
+{
+    using List = System.Collections.ArrayList;
+    partial class A
+    {
+        List x; // x has type System.Collections.ArrayList
+    }
+}
+namespace  N
+{
+    using List = Widgets.LinkedList;
+    partial class A
+    {
+        List y; // y has type Widgets.LinkedList
+    }
+}Using aliases can name a closed constructed type, but cannot name an unbound generic
+type declaration without supplying type arguments.
+Example :
+C#
+end ex ample
+A using_namesp ace_directive imports the types contained in a namespace into the
+immediately enclosing compilation unit or namespace body, enabling the identifier of
+each type to be used without qualification.
+ANTLR
+Within member declarations in a compilation unit or namespace body that contains a
+using_namesp ace_directive, the types contained in the given namespace can be
+referenced directly.
+Example :
+C#namespace  N1
+{
+    class A<T>
+    {
+        class B {}
+    }
+}
+namespace  N2
+{
+    using W = N1.A;       // Error, cannot name unbound generic type
+    using X = N1.A.B;     // Error, cannot name unbound generic type
+    using Y = N1.A< int>;  // Ok, can name closed constructed type
+    using Z<T> = N1.A<T>; // Error, using alias cannot have type  
+parameters
+}
+14.5.3 Using namespace directives
+using_namespace_directive
+    : 'using' namespace_name ';'
+    ;Above, within member declarations in the N3 namespace, the type members of
+N1.N2 are directly available, and thus class N3.B derives from class N1.N2.A.
+end ex ample
+A using_namesp ace_directive imports the types contained in the given namespace, but
+specifically does not import nested namespaces.
+Example : In the following code
+C#
+the using_namesp ace_directive imports the types contained in  N1, but not the
+namespaces nested in  N1. Thus, the reference to N2.A in the declaration of  B results
+in a compile-time error because no members named N2 are in scope.
+end ex ample
+Unlike a using_alias_dir ective, a using_namesp ace_directive may import types whose
+identifiers are already defined within the enclosing compilation unit or namespace body.
+In effect, names imported by a using_namesp ace_directive are hidden by similarly named
+members in the enclosing compilation unit or namespace body.namespace  N1.N2
+{
+    class A {}
+}
+namespace  N3
+{
+    using N1.N2;
+    class B : A {}
+}
+namespace  N1.N2
+{
+    class A {}
+}
+namespace  N3
+{
+    using N1;
+    class B : N2.A {} // Error, N2 unknown
+}Example :
+C#
+Here, within member declarations in the N3 namespace, A refers to N3.A rather
+than N1.N2.A.
+end ex ample
+Because names may be ambiguous when more than one imported namespace
+introduces the same type name, a using_alias_dir ective is useful to disambiguate the
+reference.
+Example : In the following code
+C#namespace  N1.N2
+{
+    class A {}
+    class B {}
+}
+namespace  N3
+{
+    using N1.N2;
+    class A {}
+}
+namespace  N1
+{
+    class A {}
+}
+namespace  N2
+{
+    class A {}
+}
+namespace  N3
+{
+    using N1;
+    using N2;
+    class B : A {} // Error, A is ambiguous
+}both N1 and N2 contain a member  A, and because N3 imports both, referencing A
+in N3 is a compile-time error. In this situation, the conflict can be resolved either
+through qualification of references to  A, or by introducing a using_alias_dir ective
+that picks a particular  A. For example:
+C#
+end ex ample
+Furthermore, when more than one namespace or type imported by
+using_namesp ace_directives or using_st atic_dir ectives in the same compilation unit or
+namespace body contain types or members by the same name, references to that name
+as a simple_name  are considered ambiguous.
+Example :
+C#namespace  N3
+{
+    using N1;
+    using N2;
+    using A = N1.A;
+    class B : A {} // A means N1.A
+}
+namespace  N1
+{
+    class A {}
+}
+class C
+{
+    public static int A;
+}
+namespace  N2
+{
+    using N1;
+    using static C;
+    class B
+    {
+        void M()
+        {
+            A a = new A();   // Ok, A is unambiguous as a type-name
+            A.Equals( 2);     // Error, A is ambiguous as a simple-name
+        }N1 contains a type member A, and C contains a static field A, and because N2
+imports both, referencing A as a simple_name  is ambiguous and a compile-time
+error.
+end ex ample
+Like a using_alias_dir ective, a using_namesp ace_directive does not contribute any new
+members to the underlying declaration space of the compilation unit or namespace, but,
+rather, affects only the compilation unit or namespace body in which it appears.
+The namesp ace_name  referenced by a using_namesp ace_directive is resolved in the same
+way as the namesp ace_or_type_name  referenced by a using_alias_dir ective. Thus,
+using_namesp ace_directives in the same compilation unit or namespace body do not
+affect each other and can be written in any order.
+A using_st atic_dir ective imports the nested types and static members contained directly
+in a type declaration into the immediately enclosing compilation unit or namespace
+body, enabling the identifier of each member and type to be used without qualification.
+ANTLR
+Within member declarations in a compilation unit or namespace body that contains a
+using_st atic_dir ective, the accessible nested types and static members (except extension
+methods) contained directly in the declaration of the given type can be referenced
+directly.
+Example :
+C#    }
+}
+14.5.4 Using static directives
+using_static_directive
+    : 'using' 'static'  type_name ';'
+    ;
+namespace  N1
+{
+   class A 
+   {
+        public class B {}In the preceding code, within member declarations in the N2 namespace, the static
+members and nested types of N1.A are directly available, and thus the method N is
+able to reference both the B and M members of N1.A.
+end ex ample
+A using_st atic_dir ective specifically does not import extension methods directly as static
+methods, but makes them available for extension method invocation ( §12.8.9.3 ).
+Example :
+C#        public static B M() => new B();
+   }
+}
+namespace  N2
+{
+    using static N1.A;
+    class C
+    {
+        void N()
+        {
+            B b = M();
+        }
+    }
+}
+namespace  N1 
+{
+    static class A 
+    {
+        public static void M(this string s){}
+    }
+}
+namespace  N2
+{
+    using static N1.A;
+    class B
+    {
+        void N()
+        {
+            M("A");      // Error, M unknown
+            "B".M();     // Ok, M known as extension method
+            N1.A.M("C"); // Ok, fully qualified
+        }the using_st atic_dir ective imports the extension method M contained in N1.A, but
+only as an extension method. Thus, the first reference to M in the body of B.N
+results in a compile-time error because no members named M are in scope.
+end ex ample
+A using_st atic_dir ective only imports members and types declared directly in the given
+type, not members and types declared in base classes.
+Example :
+C#
+the using_st atic_dir ective imports the method M2 contained in N1.B, but does not
+import the method M contained in N1.A. Thus, the reference to M in the body of
+C.N results in a compile-time error because no members named M are in scope.    }
+}
+namespace  N1 
+{
+    class A 
+    {
+        public static void M(string s){}
+    }
+    class B : A
+    {
+        public static void M2(string s){}
+    }
+}
+namespace  N2
+{
+    using static N1.B;
+    class C
+    {
+        void N()
+        {
+            M2("B");      // OK, calls B.M2
+            M("C");       // Error. M unknown 
+        }
+    }
+}Developers must add a second using static directive to specify that the methods
+in N1.A should also be imported.
+end ex ample
+Ambiguities between multiple using_namesp ace_directives and using_st atic_dir ectives are
+discussed in §14.5.3 .
+A namesp ace_member_declar ation  is either a namesp ace_declar ation  (§14.3 ) or a
+type_declar ation  (§14.7 ).
+ANTLR
+A compilation unit or a namespace body can contain namesp ace_member_declar ation s,
+and such declarations contribute new members to the underlying declaration space of
+the containing compilation unit or namespace body.
+A type_declar ation  is a class_declar ation  (§15.2 ), a struct_declar ation  (§16.2 ), an
+interface_declar ation  (§18.2 ), an enum_declar ation  (§19.2 ), or a delegat e_declar ation
+(§20.2 ).
+ANTLR
+A type_declar ation  can occur as a top-level declaration in a compilation unit or as a
+member declaration within a namespace, class, or struct.14.6 Namespace member declarations
+namespace_member_declaration
+    : namespace_declaration
+    | type_declaration
+    ;
+14.7 Type declarations
+type_declaration
+    : class_declaration
+    | struct_declaration
+    | interface_declaration
+    | enum_declaration
+    | delegate_declaration
+    ;When a type declaration for a type  T occurs as a top-level declaration in a compilation
+unit, the fully qualified name ( §7.8.2 ) of the type declaration is the same as the
+unqualified name of the declaration ( §7.8.2 ). When a type declaration for a type  T
+occurs within a namespace, class, or struct declaration, the fully qualified name ( §7.8.3 )
+of the type declarationis S.N, where S is the fully qualified name of the containing
+namespace, class, or struct declaration, and N is the unqualified name of the declaration.
+A type declared within a class or struct is called a nested type ( §15.3.9 ).
+The permitted access modifiers and the default access for a type declaration depend on
+the context in which the declaration takes place ( §7.5.2 ):
+Types declared in compilation units or namespaces can have public or internal
+access. The default is internal access.
+Types declared in classes can have public, protected internal, protected,
+private protected, internal, or private access. The default is private access.
+Types declared in structs can have public, internal, or private access. The
+default is private access.
+The namesp ace alias quali fier :: makes it possible to guarantee that type name
+lookups are unaffected by the introduction of new types and members. The namespace
+alias qualifier always appears between two identifiers referred to as the left-hand and
+right-hand identifiers. Unlike the regular . qualifier, the left-hand identifier of the
+:: qualifier is looked up only as an extern or using alias.
+A quali fied_alias_member  provides explicit access to the global namespace and to extern
+or using aliases that are potentially hidden by other entities.
+ANTLR
+A quali fied_alias_member  can be used as a namesp ace_or_type_name  (§7.8) or as the left
+operand in a member_ac cess (§12.8.7 ).14.8 Qualified alias member
+14.8.1 General
+qualified_alias_member
+    : identifier '::' identifier type_argument_list?
+    ;A quali fied_alias_member  consists of two identifiers, referred to as the left-hand and
+right-hand identifiers, seperated by the :: token and optionally followed by a
+type_ar gument_list . When the left-hand identifier is global then the global namespace is
+searched for the right-hand identifier. For any other left-hand identifier, that identifier is
+looked up as an extern or using alias ( §14.4  and §14.5.2 ). A compile-time error occurs if
+there is no such alias or the alias references a type. If the alias references a namespace
+then that namespace is searched for the right-hand identifier.
+A quali fied_alias_member  has one of two forms:
+N::I<A₁, ..., Aₑ>, where  N and I represent identifiers, and <A₁, ..., Aₑ> is a
+type argument list. ( e is always at least one.)
+N::I, where  N and I represent identifiers. (In this case, e is considered to be
+zero.)
+Using this notation, the meaning of a quali fied_alias_member  is determined as follows:
+If N is the identifier global, then the global namespace is searched for  I:
+If the global namespace contains a namespace named  I and e is zero, then the
+quali fied_alias_member  refers to that namespace.
+Otherwise, if the global namespace contains a non-generic type named  I and
+e is zero, then the quali fied_alias_member  refers to that type.
+Otherwise, if the global namespace contains a type named  I that has e type
+parameters, then the quali fied_alias_member  refers to that type constructed
+with the given type arguments.
+Otherwise, the quali fied_alias_member  is undefined and a compile-time error
+occurs.
+Otherwise, starting with the namespace declaration ( §14.3 ) immediately containing
+the quali fied_alias_member  (if any), continuing with each enclosing namespace
+declaration (if any), and ending with the compilation unit containing the
+quali fied_alias_member , the following steps are evaluated until an entity is located:
+If the namespace declaration or compilation unit contains a using_alias_dir ective
+that associates N with a type, then the quali fied_alias_member  is undefined and
+a compile-time error occurs.
+Otherwise, if the namespace declaration or compilation unit contains an
+extern_alias_dir ective or using_alias_dir ective that associates N with a
+namespace, then:
+If the namespace associated with N contains a namespace named  I and e is
+zero, then the quali fied_alias_member  refers to that namespace.
+Otherwise, if the namespace associated with N contains a non-generic type
+named I and e is zero, then the quali fied_alias_member  refers to that type.Otherwise, if the namespace associated with N contains a type named  I that
+has e type parameters, then the quali fied_alias_member  refers to that type
+constructed with the given type arguments.
+Otherwise, the quali fied_alias_member  is undefined and a compile-time error
+occurs.
+Otherwise, the quali fied_alias_member  is undefined and a compile-time error
+occurs.
+Example : In the code:
+C#
+the class  A is referenced with global::A and the type System.Net.Sockets.Socket is
+referenced with S::Socket. Using A.x and S.Socket instead would have caused
+compile-time errors because A and S would have resolved to the parameters.
+end ex ample
+Note: The identifier global has special meaning only when used as the left-hand
+identifier of a quali fied_alias_name . It is not a keyword and it is not itself an alias; it is
+a contextual keyword ( §6.4.4 ). In the code:
+C#using S = System.Net.Sockets;
+class A
+{
+    public static int x;
+}
+class C
+{
+    public void F(int A, object S)
+    {
+        // Use global::A.x instead of A.x
+        global::A.x += A;
+        // Use S::Socket instead of S.Socket
+        S::Socket s = S as S::Socket;
+    }
+}
+class A { }
+class C
+{
+    global.A x; // Error: global is not definedusing global.A causes a compile-time error since there is no entity named global
+in scope. If some entity named global were in scope, then global in global.A would
+have resolved to that entity.
+Using global as the left-hand identifier of a quali fied_alias_member  always causes a
+lookup in the global namespace, even if there is a using alias named global. In the
+code:
+C#
+global.A resolves to MyGlobalTypes.A and global::A resolves to class A in the
+global namespace.
+end not e
+Each compilation unit and namespace body has a separate declaration space for extern
+aliases and using aliases. Thus, while the name of an extern alias or using alias shall be
+unique within the set of extern aliases and using aliases declared in the immediately
+containing compilation unit or namespace body, an alias is permitted to have the same
+name as a type or namespace as long as it is used only with the :: qualifier.
+Example : In the following:
+C#    global::A y; // Valid: References A in the global namespace
+}
+using global = MyGlobalTypes;
+class A { }
+class C 
+{
+    global.A x; // Valid: References MyGlobalTypes.A
+    global::A y; // Valid: References A in the global namespace
+}
+14.8.2 Uniqueness of aliases
+namespace  N
+{
+    public class A {}
+    public class B {}
+}the name  A has two possible meanings in the second namespace body because
+both the class  A and the using alias  A are in scope. For this reason, use of  A in the
+qualified name A.Stream is ambiguous and causes a compile-time error to occur.
+However, use of  A with the :: qualifier is not an error because  A is looked up only
+as a namespace alias.
+end ex amplenamespace  N
+{
+    using A = System.IO;
+    class X
+    {
+        A.Stream s1; // Error, A is ambiguous
+        A::Stream s2; // Ok
+    }
+}
+６ Collaborat e with us on
+GitHub
+The source for this content can
+be found on GitHub, where you
+can also create and review
+issues and pull requests. For
+more information, see our
+contributor guide .C# Standar d documentation
+feedb ack
+The C# S tandard documentation is
+open source. Provide feedback here.
+ Open a documentation issue
+ Provide product feedback15 Classes
+Article •11/30/2023
+A class is a data structure that may contain data members (constants and fields),
+function members (methods, properties, events, indexers, operators, instance
+constructors, finalizers, and static constructors), and nested types. Class types support
+inheritance, a mechanism whereby a derived class  can extend and specialize a base
+class .
+A class_declar ation  is a type_declar ation  (§14.7 ) that declares a new class.
+ANTLR
+A class_declar ation  consists of an optional set of attributes (§22), followed by an optional
+set of class_modi fiers (§15.2.2 ), followed by an optional partial modifier ( §15.2.7 ),
+followed by the keyword class and an identi fier that names the class, followed by an
+optional type_p aramet er_list  (§15.2.3 ), followed by an optional class_b ase specification
+(§15.2.4 ), followed by an optional set of type_p aramet er_constr aints_claus es (§15.2.5 ),
+followed by a class_body  (§15.2.6 ), optionally followed by a semicolon.
+A class declaration shall not supply a type_p aramet er_constr aints_claus es unless it also
+supplies a type_p aramet er_list .
+A class declaration that supplies a type_p aramet er_list  is a generic class declaration.
+Additionally, any class nested inside a generic class declaration or a generic struct
+declaration is itself a generic class declaration, since type arguments for the containing
+type shall be supplied to create a constructed type ( §8.4).15.1 General
+15.2 Class declarations
+15.2.1 General
+class_declaration
+    : attributes? class_modifier* 'partial' ? 'class' identifier
+        type_parameter_list? class_base? type_parameter_constraints_clause*
+        class_body ';'?
+    ;A class_declar ation  may optionally include a sequence of class modifiers:
+ANTLR
+unsafe_modi fier (§23.2 ) is only available in unsafe code ( §23).
+It is a compile-time error for the same modifier to appear multiple times in a class
+declaration.
+The new modifier is permitted on nested classes. It specifies that the class hides an
+inherited member by the same name, as described in §15.3.5 . It is a compile-time error
+for the new modifier to appear on a class declaration that is not a nested class
+declaration.
+The public, protected, internal, and private modifiers control the accessibility of the
+class. Depending on the context in which the class declaration occurs, some of these
+modifiers might not be permitted ( §7.5.2 ).
+When a partial type declaration ( §15.2.7 ) includes an accessibility specification (via the
+public, protected, internal, and private modifiers), that specification shall agree with
+all other parts that include an accessibility specification. If no part of a partial type
+includes an accessibility specification, the type is given the appropriate default
+accessibility ( §7.5.2 ).
+The abstract, sealed, and static modifiers are discussed in the following subclauses.15.2.2 Class modifiers
+15.2.2.1 General
+class_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | 'abstract'
+    | 'sealed'
+    | 'static'
+    | unsafe_modifier   // unsafe code support
+    ;
+15.2.2.2 Abstract classesThe abstract modifier is used to indicate that a class is incomplete and that it is
+intended to be used only as a base class. An abstr act class  differs from a non-abstr act
+class  in the following ways:
+An abstract class cannot be instantiated directly, and it is a compile-time error to
+use the new operator on an abstract class. While it is possible to have variables and
+values whose compile-time types are abstract, such variables and values will
+necessarily either be null or contain references to instances of non-abstract
+classes derived from the abstract types.
+An abstract class is permitted (but not required) to contain abstract members.
+An abstract class cannot be sealed.
+When a non-abstract class is derived from an abstract class, the non-abstract class shall
+include actual implementations of all inherited abstract members, thereby overriding
+those abstract members.
+Example : In the following code
+C#
+the abstract class  A introduces an abstract method  F. Class B introduces an
+additional method  G, but since it doesn’t provide an implementation of  F, B shall
+also be declared abstract. Class  C overrides F and provides an actual
+implementation. Since there are no abstract members in  C, C is permitted (but not
+required) to be non-abstract.
+end ex ampleabstract  class A
+{
+    public abstract  void F();
+}
+abstract  class B : A
+{
+    public void G() {}
+}
+class C : B
+{
+    public override  void F()
+    {
+        // Actual implementation of F
+    }
+}If one or more parts of a partial type declaration ( §15.2.7 ) of a class include the abstract
+modifier, the class is abstract. Otherwise, the class is non-abstract.
+The sealed modifier is used to prevent derivation from a class. A compile-time error
+occurs if a sealed class is specified as the base class of another class.
+A sealed class cannot also be an abstract class.
+Note: The sealed modifier is primarily used to prevent unintended derivation, but it
+also enables certain run-time optimizations. In particular, because a sealed class is
+known to never have any derived classes, it is possible to transform virtual function
+member invocations on sealed class instances into non-virtual invocations. end not e
+If one or more parts of a partial type declaration ( §15.2.7 ) of a class include the sealed
+modifier, the class is sealed. Otherwise, the class is unsealed.
+The static modifier is used to mark the class being declared as a static class . A static
+class shall not be instantiated, shall not be used as a type and shall contain only static
+members. Only a static class can contain declarations of extension methods ( §15.6.10 ).
+A static class declaration is subject to the following restrictions:
+A static class shall not include a sealed or abstract modifier. (However, since a
+static class cannot be instantiated or derived from, it behaves as if it was both
+sealed and abstract.)
+A static class shall not include a class_b ase specification ( §15.2.4 ) and cannot
+explicitly specify a base class or a list of implemented interfaces. A static class
+implicitly inherits from type object.
+A static class shall only contain static members ( §15.3.8 ).
+Note: All constants and nested types are classified as static members. end not e
+A static class shall not have members with protected, private protected, or
+protected internal declared accessibility.15.2.2.3 Sealed classes
+15.2.2.4 Static classes
+15.2.2.4.1 GeneralIt is a compile-time error to violate any of these restrictions.
+A static class has no instance constructors. It is not possible to declare an instance
+constructor in a static class, and no default instance constructor ( §15.11.5 ) is provided
+for a static class.
+The members of a static class are not automatically static, and the member declarations
+shall explicitly include a static modifier (except for constants and nested types). When
+a class is nested within a static outer class, the nested class is not a static class unless it
+explicitly includes a static modifier.
+If one or more parts of a partial type declaration ( §15.2.7 ) of a class include the static
+modifier, the class is static. Otherwise, the class is not static.
+A namesp ace_or_type_name  (§7.8) is permitted to reference a static class if
+The namesp ace_or_type_name  is the T in a namesp ace_or_type_name  of the form
+T.I, or
+The namesp ace_or_type-name  is the T in a typeo f_expr ession  (§12.8.17 ) of the form
+typeof(T).
+A primary_expr ession  (§12.8 ) is permitted to reference a static class if
+The primary_expr ession  is the E in a member_ac cess (§12.8.7 ) of the form E.I.
+In any other context, it is a compile-time error to reference a static class.
+Note: For example, it is an error for a static class to be used as a base class, a
+constituent type ( §15.3.7 ) of a member, a generic type argument, or a type
+parameter constraint. Likewise, a static class cannot be used in an array type, a new
+expression, a cast expression, an is expression, an as expression, a sizeof
+expression, or a default value expression. end not e
+A type parameter is a simple identifier that denotes a placeholder for a type argument
+supplied to create a constructed type. By constrast, a type argument ( §8.4.2 ) is the type
+that is substituted for the type parameter when a constructed type is created.
+ANTLR15.2.2.4.2 Referencing static class types
+15.2.3 Type parameterstype_p aramet er is defined in §8.5.
+Each type parameter in a class declaration defines a name in the declaration space ( §7.3)
+of that class. Thus, it cannot have the same name as another type parameter of that
+class or a member declared in that class. A type parameter cannot have the same name
+as the type itself.
+Two partial generic type declarations (in the same program) contribute to the same
+unbound generic type if they have the same fully qualified name (which includes a
+gener ic_dimension_speci fier (§12.8.17 ) for the number of type parameters) ( §7.8.3 ). Two
+such partial type declarations shall specify the same name for each type parameter, in
+order.
+A class declaration may include a class_b ase specification, which defines the direct base
+class of the class and the interfaces ( §18) directly implemented by the class.
+ANTLRtype_parameter_list
+    : '<' type_parameters '>'
+  ;
+type_parameters
+    : attributes? type_parameter
+    | type_parameters ',' attributes? type_parameter
+    ;
+15.2.4 Class base specification
+15.2.4.1 General
+class_base
+    : ':' class_type
+    | ':' interface_type_list
+    | ':' class_type ',' interface_type_list
+    ;
+interface_type_list
+    : interface_type ( ',' interface_type)*
+    ;
+15.2.4.2 Base classesWhen a class_type  is included in the class_b ase, it specifies the direct base class of the
+class being declared. If a non-partial class declaration has no class_b ase, or if the
+class_b ase lists only interface types, the direct base class is assumed to be object. When
+a partial class declaration includes a base class specification, that base class specification
+shall reference the same type as all other parts of that partial type that include a base
+class specification. If no part of a partial class includes a base class specification, the
+base class is object. A class inherits members from its direct base class, as described in
+§15.3.4 .
+Example : In the following code
+C#
+Class A is said to be the direct base class of  B, and B is said to be derived from  A.
+Since A does not explicitly specify a direct base class, its direct base class is
+implicitly object.
+end ex ample
+For a constructed class type, including a nested type declared within a generic type
+declaration ( §15.3.9.7 ), if a base class is specified in the generic class declaration, the
+base class of the constructed type is obtained by substituting, for each type_p aramet er
+in the base class declaration, the corresponding type_ar gument  of the constructed type.
+Example : Given the generic class declarations
+C#
+the base class of the constructed type G<int> would be B<string,int[]>.
+end ex ample
+The base class specified in a class declaration can be a constructed class type ( §8.4). A
+base class cannot be a type parameter on its own ( §8.5), though it can involve the type
+parameters that are in scope.class A {}
+class B : A {}
+class B<U,V> {...}
+class G<T> : B<string,T[]> {...}Example :
+C#
+end ex ample
+The direct base class of a class type shall be at least as accessible as the class type itself
+(§7.5.5 ). For example, it is a compile-time error for a public class to derive from a private
+or internal class.
+The direct base class of a class type shall not be any of the following types:
+System.Array, System.Delegate, System.Enum, or System.ValueType. Furthermore, a
+generic class declaration shall not use System.Attribute as a direct or indirect base class
+(§22.2.1 ).
+In determining the meaning of the direct base class specification  A of a class  B, the
+direct base class of  B is temporarily assumed to be object, which ensures that the
+meaning of a base class specification cannot recursively depend on itself.
+Example : The following
+C#
+is in error since in the base class specification X<Z.Y> the direct base class of  Z is
+considered to be object, and hence (by the rules of §7.8) Z is not considered to
+have a member  Y.class Base<T> {}
+// Valid, non-constructed class with constructed base class
+class Extend1 : Base<int> {}
+// Error, type parameter used as base class
+class Extend2<V> : V {}
+// Valid, type parameter used as type argument for base class
+class Extend3<V> : Base<V> {}
+class X<T>
+{
+    public class Y{}
+}
+class Z : X<Z.Y> {}end ex ample
+The base classes of a class are the direct base class and its base classes. In other words,
+the set of base classes is the transitive closure of the direct base class relationship.
+Example : In the following:
+C#
+the base classes of D<int> are C<int[]>, B<IComparable<int[]>>, A, and object.
+end ex ample
+Except for class object, every class has exactly one direct base class. The object class
+has no direct base class and is the ultimate base class of all other classes.
+It is a compile-time error for a class to depend on itself. For the purpose of this rule, a
+class directly depends on  its direct base class (if any) and directly depends on  the nearest
+enclosing class within which it is nested (if any). Given this definition, the complete set of
+classes upon which a class depends is the transitive closure of the directly depends on
+relationship.
+Example : The example
+C#
+is erroneous because the class depends on itself. Likewise, the example
+C#
+is in error because the classes circularly depend on themselves. Finally, the example
+C#class A {...}
+class B<T> : A {...}
+class C<T> : B<IComparable <T>> {...}
+class D<T> : C<T[]> {...}
+class A : A {}
+class A : B {}
+class B : C {}
+class C : A {}results in a compile-time error because A depends on B.C (its direct base class),
+which depends on B (its immediately enclosing class), which circularly depends
+on A.
+end ex ample
+A class does not depend on the classes that are nested within it.
+Example : In the following code
+C#
+B depends on A (because A is both its direct base class and its immediately
+enclosing class), but A does not depend on B (since B is neither a base class nor an
+enclosing class of A). Thus, the example is valid.
+end ex ample
+It is not possible to derive from a sealed class.
+Example : In the following code
+C#
+Class B is in error because it attempts to derive from the sealed class  A.
+end ex ampleclass A : B.C {}
+class B : A
+{
+    public class C {}
+}
+class A
+{
+    class B : A {}
+}
+sealed class A {}
+class B : A {} // Error, cannot derive from a sealed class
+15.2.4.3 Interface implementationsA class_b ase specification may include a list of interface types, in which case the class is
+said to implement the given interface types. For a constructed class type, including a
+nested type declared within a generic type declaration ( §15.3.9.7 ), each implemented
+interface type is obtained by substituting, for each type_p aramet er in the given interface,
+the corresponding type_ar gument  of the constructed type.
+The set of interfaces for a type declared in multiple parts ( §15.2.7 ) is the union of the
+interfaces specified on each part. A particular interface can only be named once on each
+part, but multiple parts can name the same base interface(s). There shall only be one
+implementation of each member of any given interface.
+Example : In the following:
+C#
+the set of base interfaces for class  C is IA, IB, and IC.
+end ex ample
+Typically, each part provides an implementation of the interface(s) declared on that part;
+however, this is not a requirement. A part can provide the implementation for an
+interface declared on a different part.
+Example :
+C#
+end ex ample
+The base interfaces specified in a class declaration can be constructed interface types
+(§8.4, §18.2 ). A base interface cannot be a type parameter on its own, though it canpartial class C : IA, IB {...}
+partial class C : IC {...}
+partial class C : IA, IB {...}
+partial class X
+{
+    int IComparable.CompareTo( object o) {...}
+}
+partial class X : IComparable
+{
+    ...
+}involve the type parameters that are in scope.
+Example : The following code illustrates how a class can implement and extend
+constructed types:
+C#
+end ex ample
+Interface implementations are discussed further in §18.6 .
+Generic type and method declarations can optionally specify type parameter constraints
+by including type_p aramet er_constr aints_claus es.
+ANTLRclass C<U, V> {}
+interface  I1<V> {}
+class D : C<string, int>, I1<string> {}
+class E<T> : C<int, T>, I1<T> {}
+15.2.5 Type parameter constraints
+type_parameter_constraints_clauses
+    : type_parameter_constraints_clause
+    | type_parameter_constraints_clauses type_parameter_constraints_clause
+    ;
+    
+type_parameter_constraints_clause
+    : 'where' type_parameter ':' type_parameter_constraints
+    ;
+type_parameter_constraints
+    : primary_constraint
+    | secondary_constraints
+    | constructor_constraint
+    | primary_constraint ',' secondary_constraints
+    | primary_constraint ',' constructor_constraint
+    | secondary_constraints ',' constructor_constraint
+    | primary_constraint ',' secondary_constraints ',' 
+constructor_constraint
+    ;
+primary_constraint
+    : class_type
+    | 'class'
+    | 'struct'
+    | 'unmanaged'
+    ;Each type_p aramet er_constr aints_claus e consists of the token where, followed by the
+name of a type parameter, followed by a colon and the list of constraints for that type
+parameter. There can be at most one where clause for each type parameter, and the
+where clauses can be listed in any order. Like the get and set tokens in a property
+accessor, the where token is not a keyword.
+The list of constraints given in a where clause can include any of the following
+components, in this order: a single primary constraint, one or more secondary
+constraints, and the constructor constraint, new().
+A primary constraint can be a class type, the reference type c onstr aint class, the value
+type c onstr aint struct, or the unmanaged type c onstr aint unmanaged.
+A secondary constraint can be a type_p aramet er or interface_type .
+The reference type constraint specifies that a type argument used for the type
+parameter shall be a reference type. All class types, interface types, delegate types, array
+types, and type parameters known to be a reference type (as defined below) satisfy this
+constraint.
+The value type constraint specifies that a type argument used for the type parameter
+shall be a non-nullable value type. All non-nullable struct types, enum types, and type
+parameters having the value type constraint satisfy this constraint. Note that although
+classified as a value type, a nullable value type ( §8.3.12 ) does not satisfy the value type
+constraint. A type parameter having the value type constraint shall not also have the
+constr uctor_constr aint, although it may be used as a type argument for another type
+parameter with a constr uctor_constr aint.
+Note: The System.Nullable<T> type specifies the non-nullable value type constraint
+for T. Thus, recursively constructed types of the forms  T?? and
+Nullable<Nullable<T>> are prohibited. end not esecondary_constraints
+    : interface_type
+    | type_parameter
+    | secondary_constraints ',' interface_type
+    | secondary_constraints ',' type_parameter
+    ;
+constructor_constraint
+    : 'new' '(' ')'
+    ;Because unmanaged is not a keyword, in primary_constr aint the unmanaged constraint is
+always syntactically ambiguous with class_type . For compatibility reasons, if a name
+lookup ( §12.8.4 ) of the name unmanaged succeeds it is treated as a class_type.
+Otherwise it is treated as the unmanaged constraint.
+The unmanaged type constraint specifies that a type argument used for the type
+parameter shall be a non-nullable unmanaged type ( §8.8).
+Pointer types are never allowed to be type arguments, and don’t satisfy any type
+constraints, even unmanaged, despite being unmanaged types.
+If a constraint is a class type, an interface type, or a type parameter, that type specifies a
+minimal “base type” that every type argument used for that type parameter shall
+support. Whenever a constructed type or generic method is used, the type argument is
+checked against the constraints on the type parameter at compile-time. The type
+argument supplied shall satisfy the conditions described in §8.4.5 .
+A class_type  constraint shall satisfy the following rules:
+The type shall be a class type.
+The type shall not be sealed.
+The type shall not be one of the following types: System.Array or
+System.ValueType.
+The type shall not be object.
+At most one constraint for a given type parameter may be a class type.
+A type specified as an interface_type  constraint shall satisfy the following rules:
+The type shall be an interface type.
+A type shall not be specified more than once in a given where clause.
+In either case, the constraint may involve any of the type parameters of the associated
+type or method declaration as part of a constructed type, and may involve the type
+being declared.
+Any class or interface type specified as a type parameter constraint shall be at least as
+accessible ( §7.5.5 ) as the generic type or method being declared.
+A type specified as a type_p aramet er constraint shall satisfy the following rules:
+The type shall be a type parameter.
+A type shall not be specified more than once in a given where clause.In addition there shall be no cycles in the dependency graph of type parameters, where
+dependency is a transitive relation defined by:
+If a type parameter  T is used as a constraint for type parameter  S then S depends
+on T.
+If a type parameter  S depends on a type parameter  T and T depends on a type
+parameter  U then S depends on  U.
+Given this relation, it is a compile-time error for a type parameter to depend on itself
+(directly or indirectly).
+Any constraints shall be consistent among dependent type parameters. If type
+parameter  S depends on type parameter  T then:
+T shall not have the value type constraint. Otherwise, T is effectively sealed so  S
+would be forced to be the same type as  T, eliminating the need for two type
+parameters.
+If S has the value type constraint then  T shall not have a class_type  constraint.
+If S has a class_type  constraint  A and T has a class_type  constraint  B then there
+shall be an identity conversion or implicit reference conversion from  A to B or an
+implicit reference conversion from  B to A.
+If S also depends on type parameter  U and U has a class_type  constraint  A and T
+has a class_type  constraint  B then there shall be an identity conversion or implicit
+reference conversion from  A to B or an implicit reference conversion from  B to A.
+It is valid for  S to have the value type constraint and T to have the reference type
+constraint. Effectively this limits T to the types System.Object, System.ValueType,
+System.Enum, and any interface type.
+If the where clause for a type parameter includes a constructor constraint (which has the
+form new()), it is possible to use the new operator to create instances of the type
+(§12.8.16.2 ). Any type argument used for a type parameter with a constructor constraint
+shall be a value type, a non-abstract class having a public parameterless constructor, or
+a type parameter having the value type constraint or constructor constraint.
+It is a compile-time error for type_p aramet er_constr aints  having a primary_constr aint of
+struct or unmanaged to also have a constr uctor_constr aint.
+Example : The following are examples of constraints:
+C#The following example is in error because it causes a circularity in the dependency
+graph of the type parameters:
+C#
+The following examples illustrate additional invalid situations:
+C#interface  IPrintable
+{
+    void Print();
+}
+interface  IComparable <T>
+{
+    int CompareTo (T value);
+}
+interface  IKeyProvider <T>
+{
+    T GetKey();
+}
+class Printer<T> where T : IPrintable  {...}
+class SortedList <T> where T : IComparable <T> {...}
+class Dictionary <K,V>
+    where K : IComparable <K>
+    where V : IPrintable , IKeyProvider <K>, new()
+{
+    ...
+}
+class Circular <S,T>
+    where S: T
+    where T: S // Error, circularity in dependency graph
+{
+    ...
+}
+class Sealed<S,T>
+    where S : T
+    where T : struct // Error, `T` is sealed
+{
+    ...
+}
+class A {...}
+class B {...}end ex ample
+The dynamic er asure of a type  C is type  Cₓ constructed as follows:
+If C is a nested type Outer.Inner then Cₓ is a nested type Outerₓ.Innerₓ.
+If C Cₓis a constructed type G<A¹, ..., Aⁿ> with type arguments A¹, ..., Aⁿ
+then Cₓ is the constructed type G<A¹ₓ, ..., Aⁿₓ>.
+If C is an array type E[] then Cₓ is the array type Eₓ[].
+If C is dynamic then Cₓ is object.
+Otherwise, Cₓ is C.
+The effectiv e base class  of a type parameter  T is defined as follows:
+Let R be a set of types such that:
+For each constraint of  T that is a type parameter, R contains its effective base
+class.
+For each constraint of  T that is a struct type, R contains System.ValueType.
+For each constraint of  T that is an enumeration type, R contains System.Enum.
+For each constraint of  T that is a delegate type, R contains its dynamic erasure.
+For each constraint of  T that is an array type, R contains System.Array.
+For each constraint of  T that is a class type, R contains its dynamic erasure.
+Then
+If T has the value type constraint, its effective base class is System.ValueType.
+Otherwise, if R is empty then the effective base class is object.
+Otherwise, the effective base class of  T is the most-encompassed type ( §10.5.3 ) of
+set R. If the set has no encompassed type, the effective base class of  T is object.class Incompat <S,T>
+    where S : A, T
+    where T : B // Error, incompatible class-type constraints
+{
+    ...
+}
+class StructWithClass <S,T,U>
+    where S : struct, T
+    where T : U
+    where U : A // Error, A incompatible with struct
+{
+    ...
+}The consistency rules ensure that the most-encompassed type exists.
+If the type parameter is a method type parameter whose constraints are inherited from
+the base method the effective base class is calculated after type substitution.
+These rules ensure that the effective base class is always a class_type .
+The effectiv e interface set of a type parameter  T is defined as follows:
+If T has no secondar y_constr aints , its effective interface set is empty.
+If T has interface_type  constraints but no type_p aramet er constraints, its effective
+interface set is the set of dynamic erasures of its interface_type  constraints.
+If T has no interface_type  constraints but has type_p aramet er constraints, its
+effective interface set is the union of the effective interface sets of its
+type_p aramet er constraints.
+If T has both interface_type  constraints and type_p aramet er constraints, its
+effective interface set is the union of the set of dynamic erasures of its
+interface_type  constraints and the effective interface sets of its type_p aramet er
+constraints.
+A type parameter is known to be a r eference type  if it has the reference type constraint or
+its effective base class is not object or System.ValueType.
+Values of a constrained type parameter type can be used to access the instance
+members implied by the constraints.
+Example : In the following:
+C#
+the methods of IPrintable can be invoked directly on x because T is constrained
+to always implement IPrintable.
+end ex ampleinterface  IPrintable
+{
+    void Print();
+}
+class Printer<T> where T : IPrintable
+{
+    void PrintOne (T x) => x.Print();
+}When a partial generic type declaration includes constraints, the constraints shall agree
+with all other parts that include constraints. Specifically, each part that includes
+constraints shall have constraints for the same set of type parameters, and for each type
+parameter, the sets of primary, secondary, and constructor constraints shall be
+equivalent. T wo sets of constraints are equivalent if they contain the same members. If
+no part of a partial generic type specifies type parameter constraints, the type
+parameters are considered unconstrained.
+Example :
+C#
+is correct because those parts that include constraints (the first two) effectively
+specify the same set of primary, secondary, and constructor constraints for the same
+set of type parameters, respectively.
+end ex ample
+The class_body  of a class defines the members of that class.
+ANTLRpartial class Map<K,V>
+    where K : IComparable <K>
+    where V : IKeyProvider <K>, new()
+{
+    ...
+}
+partial class Map<K,V>
+    where V : IKeyProvider <K>, new()
+    where K : IComparable <K>
+{
+    ...
+}
+partial class Map<K,V>
+{
+    ...
+}
+15.2.6 Class body
+class_body
+    : '{' class_member_declaration* '}'
+    ;The modifier partial is used when defining a class, struct, or interface type in multiple
+parts. The partial modifier is a contextual keyword ( §6.4.4 ) and only has special
+meaning immediately before one of the keywords class, struct, or interface.
+Each part of a partial type  declaration shall include a partial modifier and shall be
+declared in the same namespace or containing type as the other parts. The partial
+modifier indicates that additional parts of the type declaration might exist elsewhere,
+but the existence of such additional parts is not a requirement; it is valid for the only
+declaration of a type to include the partial modifier.
+All parts of a partial type shall be compiled together such that the parts can be merged
+at compile-time. P artial types specifically do not allow already compiled types to be
+extended.
+Nested types can be declared in multiple parts by using the partial modifier. T ypically,
+the containing type is declared using partial as well, and each part of the nested type
+is declared in a different part of the containing type.
+Example : The following partial class is implemented in two parts, which reside in
+different compilation units. The first part is machine generated by a database-
+mapping tool while the second part is manually authored:
+C#15.2.7 Partial declarations
+public partial class Customer
+{
+    private int id;
+    private string name;
+    private string address;
+    private List<Order> orders;
+    public Customer ()
+    {
+        ...
+    }
+}
+// File: Customer2.cs
+public partial class Customer
+{
+    public void SubmitOrder (Order orderSubmitted ) => 
+orders.Add(orderSubmitted);
+    public bool HasOutstandingOrders () => orders.Count > 0;
+}When the two parts above are compiled together, the resulting code behaves as if
+the class had been written as a single unit, as follows:
+C#
+end ex ample
+The handling of attributes specified on the type or type parameters of different parts of
+a partial declaration is discussed in  §22.3 .
+The members of a class consist of the members introduced by its
+class_member_declar ation s and the members inherited from the direct base class.
+ANTLRpublic class Customer
+{
+    private int id;
+    private string name;
+    private string address;
+    private List<Order> orders;
+    public Customer ()
+    {
+        ...
+    }
+    public void SubmitOrder (Order orderSubmitted ) => 
+orders.Add(orderSubmitted);
+    public bool HasOutstandingOrders () => orders.Count > 0;
+}
+15.3 Class members
+15.3.1 General
+class_member_declaration
+    : constant_declaration
+    | field_declaration
+    | method_declaration
+    | property_declaration
+    | event_declaration
+    | indexer_declaration
+    | operator_declaration
+    | constructor_declaration
+    | finalizer_declarationThe members of a class are divided into the following categories:
+Constants, which represent constant values associated with the class ( §15.4 ).
+Fields, which are the variables of the class ( §15.5 ).
+Methods, which implement the computations and actions that can be performed
+by the class ( §15.6 ).
+Properties, which define named characteristics and the actions associated with
+reading and writing those characteristics ( §15.7 ).
+Events, which define notifications that can be generated by the class ( §15.8 ).
+Indexers, which permit instances of the class to be indexed in the same way
+(syntactically) as arrays ( §15.9 ).
+Operators, which define the expression operators that can be applied to instances
+of the class ( §15.10 ).
+Instance constructors, which implement the actions required to initialize instances
+of the class ( §15.11 )
+Finalizers, which implement the actions to be performed before instances of the
+class are permanently discarded ( §15.13 ).
+Static constructors, which implement the actions required to initialize the class
+itself ( §15.12 ).
+Types, which represent the types that are local to the class ( §14.7 ).
+A class_declar ation  creates a new declaration space ( §7.3), and the type_p aramet ers and
+the class_member_declar ation s immediately contained by the class_declar ation  introduce
+new members into this declaration space. The following rules apply to
+class_member_declar ation s:
+Instance constructors, finalizers, and static constructors shall have the same name
+as the immediately enclosing class. All other members shall have names that differ
+from the name of the immediately enclosing class.
+The name of a type parameter in the type_p aramet er_list  of a class declaration shall
+differ from the names of all other type parameters in the same type_p aramet er_list
+and shall differ from the name of the class and the names of all members of the
+class.
+The name of a type shall differ from the names of all non-type members declared
+in the same class. If two or more type declarations share the same fully qualified
+name, the declarations shall have the partial modifier ( §15.2.7 ) and these
+declarations combine to define a single type.    | static_constructor_declaration
+    | type_declaration
+    ;Note: Since the fully qualified name of a type declaration encodes the number of
+type parameters, two distinct types may share the same name as long as they have
+different number of type parameters. end not e
+The name of a constant, field, property, or event shall differ from the names of all
+other members declared in the same class.
+The name of a method shall differ from the names of all other non-methods
+declared in the same class. In addition, the signature ( §7.6) of a method shall differ
+from the signatures of all other methods declared in the same class, and two
+methods declared in the same class shall not have signatures that differ solely by
+in, out, and ref.
+The signature of an instance constructor shall differ from the signatures of all other
+instance constructors declared in the same class, and two constructors declared in
+the same class shall not have signatures that differ solely by ref and out.
+The signature of an indexer shall differ from the signatures of all other indexers
+declared in the same class.
+The signature of an operator shall differ from the signatures of all other operators
+declared in the same class.
+The inherited members of a class ( §15.3.4 ) are not part of the declaration space of a
+class.
+Note: Thus, a derived class is allowed to declare a member with the same name or
+signature as an inherited member (which in effect hides the inherited member). end
+note
+The set of members of a type declared in multiple parts ( §15.2.7 ) is the union of the
+members declared in each part. The bodies of all parts of the type declaration share the
+same declaration space ( §7.3), and the scope of each member ( §7.7) extends to the
+bodies of all the parts. The accessibility domain of any member always includes all the
+parts of the enclosing type; a private member declared in one part is freely accessible
+from another part. It is a compile-time error to declare the same member in more than
+one part of the type, unless that member is a type having the partial modifier.
+Example :
+C#end ex ample
+Field initialization order can be significant within C# code, and some guarantees are
+provided, as defined in §15.5.6.1 . Otherwise, the ordering of members within a type is
+rarely significant, but may be significant when interfacing with other languages and
+environments. In these cases, the ordering of members within a type declared in
+multiple parts is undefined.
+Each class declaration has an associated instance type . For a generic class declaration,
+the instance type is formed by creating a constructed type ( §8.4) from the type
+declaration, with each of the supplied type arguments being the corresponding type
+parameter. Since the instance type uses the type parameters, it can only be used where
+the type parameters are in scope; that is, inside the class declaration. The instance type
+is the type of this for code written inside the class declaration. For non-generic classes,
+the instance type is simply the declared class.
+Example : The following shows several class declarations along with their instance
+types:
+C#partial class A
+{
+    int x;                   // Error, cannot declare x more than once
+    partial class Inner      // Ok, Inner is a partial type
+    {
+        int y;
+    }
+}
+partial class A
+{
+    int x;                   // Error, cannot declare x more than once
+    partial class Inner      // Ok, Inner is a partial type
+    {
+        int z;
+    }
+}
+15.3.2 The instance type
+class A<T>             // instance type: A<T>
+{end ex ample
+The non-inherited members of a constructed type are obtained by substituting, for each
+type_p aramet er in the member declaration, the corresponding type_ar gument  of the
+constructed type. The substitution process is based on the semantic meaning of type
+declarations, and is not simply textual substitution.
+Example : Given the generic class declaration
+C#
+the constructed type Gen<int[],IComparable<string>> has the following members:
+C#
+The type of the member  a in the generic class declaration Gen is “two-dimensional
+array of  T”, so the type of the member  a in the constructed type above is “two-
+dimensional array of single-dimensional array of int”, or int[,][].
+end ex ample
+Within instance function members, the type of this is the instance type ( §15.3.2 ) of the
+containing declaration.    class B {}         // instance type: A<T>.B
+    class C<U> {}      // instance type: A<T>.C<U>
+}
+class D {}             // instance type: D
+15.3.3 Members of constructed types
+class Gen<T,U>
+{
+    public T[,] a;
+    public void G(int i, T t, Gen<U,T> gt ) {...}
+    public U Prop { get {...} set {...} }
+    public int H(double d) {...}
+}
+public int[,][] a;
+public void G(int i, int[] t, Gen<IComparable< string>,int[]> gt) {...}
+public IComparable< string> Prop { get {...} set {...} }
+public int H(double d) {...}All members of a generic class can use type parameters from any enclosing class, either
+directly or as part of a constructed type. When a particular closed constructed type
+(§8.4.3 ) is used at run-time, each use of a type parameter is replaced with the type
+argument supplied to the constructed type.
+Example :
+C#
+end ex ample
+A class inher its the members of its direct base class. Inheritance means that a class
+implicitly contains all members of its direct base class, except for the instance
+constructors, finalizers, and static constructors of the base class. Some important aspects
+of inheritance are:
+Inheritance is transitive. If C is derived from  B, and B is derived from  A, then C
+inherits the members declared in B as well as the members declared in  A.
+A derived class extends its direct base class. A derived class can add new members
+to those it inherits, but it cannot remove the definition of an inherited member.class C<V>
+{
+    public V f1;
+    public C<V> f2 = null;
+    public C(V x)
+    {
+        this.f1 = x;
+        this.f2 = this;
+    }
+}
+class Application
+{
+    static void Main()
+    {
+        C<int> x1 = new C<int>(1);
+        Console.WriteLine(x1.f1);              // Prints 1
+        C<double> x2 = new C<double>(3.1415);
+        Console.WriteLine(x2.f1);              // Prints 3.1415
+    }
+}
+15.3.4 InheritanceInstance constructors, finalizers, and static constructors are not inherited, but all
+other members are, regardless of their declared accessibility ( §7.5). However,
+depending on their declared accessibility, inherited members might not be
+accessible in a derived class.
+A derived class can hide (§7.7.2.3 ) inherited members by declaring new members
+with the same name or signature. However, hiding an inherited member does not
+remove that member—it merely makes that member inaccessible directly through
+the derived class.
+An instance of a class contains a set of all instance fields declared in the class and
+its base classes, and an implicit conversion ( §10.2.8 ) exists from a derived class type
+to any of its base class types. Thus, a reference to an instance of some derived
+class can be treated as a reference to an instance of any of its base classes.
+A class can declare virtual methods, properties, indexers, and events, and derived
+classes can override the implementation of these function members. This enables
+classes to exhibit polymorphic behavior wherein the actions performed by a
+function member invocation vary depending on the run-time type of the instance
+through which that function member is invoked.
+The inherited members of a constructed class type are the members of the immediate
+base class type ( §15.2.4.2 ), which is found by substituting the type arguments of the
+constructed type for each occurrence of the corresponding type parameters in the
+base_class_speci fication . These members, in turn, are transformed by substituting, for
+each type_p aramet er in the member declaration, the corresponding type_ar gument  of
+the base_class_speci fication .
+Example :
+C#
+In the code above, the constructed type D<int> has a non-inherited member public
+int G(string s) obtained by substituting the type argument int for the typeclass B<U>
+{
+    public U F(long index) {...}
+}
+class D<T> : B<T[]>
+{
+    public T G(string s) {...}
+}parameter  T. D<int> also has an inherited member from the class declaration  B.
+This inherited member is determined by first determining the base class type
+B<int[]> of D<int> by substituting int for T in the base class specification B<T[]>.
+Then, as a type argument to  B, int[] is substituted for  U in public U F(long
+index), yielding the inherited member public int[] F(long index).
+end ex ample
+A class_member_declar ation  is permitted to declare a member with the same name or
+signature as an inherited member. When this occurs, the derived class member is said to
+hide the base class member. See §7.7.2.3  for a precise specification of when a member
+hides an inherited member.
+An inherited member M is considered to be available  if M is accessible and there is no
+other inherited accessible member N that already hides M. Implicitly hiding an inherited
+member is not considered an error, but it does cause the compiler to issue a warning
+unless the declaration of the derived class member includes a new modifier to explicitly
+indicate that the derived member is intended to hide the base member. If one or more
+parts of a partial declaration ( §15.2.7 ) of a nested type include the new modifier, no
+warning is issued if the nested type hides an available inherited member.
+If a new modifier is included in a declaration that doesn’t hide an available inherited
+member, a warning to that effect is issued.
+A class_member_declar ation  can have any one of the permitted kinds of declared
+accessibility ( §7.5.2 ): public, protected internal, protected, private protected,
+internal, or private. Except for the protected internal and private protected
+combinations, it is a compile-time error to specify more than one access modifier. When
+a class_member_declar ation  does not include any access modifiers, private is assumed.
+Types that are used in the declaration of a member are called the constituent types  of
+that member. P ossible constituent types are the type of a constant, field, property,
+event, or indexer, the return type of a method or operator, and the parameter types of a15.3.5 The new modifier
+15.3.6 Access modifiers
+15.3.7 Constituent typesmethod, indexer, operator, or instance constructor. The constituent types of a member
+shall be at least as accessible as that member itself ( §7.5.5 ).
+Members of a class are either static member s or instance member s.
+Note: Generally speaking, it is useful to think of static members as belonging to
+classes and instance members as belonging to objects (instances of classes). end
+note
+When a field, method, property, event, operator, or constructor declaration includes a
+static modifier, it declares a static member. In addition, a constant or type declaration
+implicitly declares a static member. S tatic members have the following characteristics:
+When a static member  M is referenced in a member_ac cess (§12.8.7 ) of the form
+E.M, E shall denote a type that has a member  M. It is a compile-time error for E to
+denote an instance.
+A static field in a non-generic class identifies exactly one storage location. No
+matter how many instances of a non-generic class are created, there is only ever
+one copy of a static field. Each distinct closed constructed type ( §8.4.3 ) has its own
+set of static fields, regardless of the number of instances of the closed constructed
+type.
+A static function member (method, property, event, operator, or constructor) does
+not operate on a specific instance, and it is a compile-time error to refer to this in
+such a function member.
+When a field, method, property, event, indexer, constructor, or finalizer declaration does
+not include a static modifier, it declares an instance member. (An instance member is
+sometimes called a non-static member.) Instance members have the following
+characteristics:
+When an instance member  M is referenced in a member_ac cess (§12.8.7 ) of the
+form E.M, E shall denote an instance of a type that has a member  M. It is a
+binding-time error for E to denote a type.
+Every instance of a class contains a separate set of all instance fields of the class.
+An instance function member (method, property, indexer, instance constructor, or
+finalizer) operates on a given instance of the class, and this instance can be
+accessed as this (§12.8.13 ).15.3.8 Static and instance membersExample : The following example illustrates the rules for accessing static and instance
+members:
+C#
+The F method shows that in an instance function member, a simple_name  (§12.8.4 )
+can be used to access both instance members and static members. The G method
+shows that in a static function member, it is a compile-time error to access an
+instance member through a simple_name . The Main method shows that in a
+member_ac cess (§12.8.7 ), instance members shall be accessed through instances,
+and static members shall be accessed through types.
+end ex ampleclass Test
+{
+    int x;
+    static int y;
+    void F()
+    {
+        x = 1;               // Ok, same as this.x = 1
+        y = 1;               // Ok, same as Test.y = 1
+    }
+    static void G()
+    {
+        x = 1;               // Error, cannot access this.x
+        y = 1;               // Ok, same as Test.y = 1
+    }
+    static void Main()
+    {
+        Test t = new Test();
+        t.x = 1;       // Ok
+        t.y = 1;       // Error, cannot access static member through  
+instance
+        Test.x = 1;    // Error, cannot access instance member through  
+type
+        Test.y = 1;    // Ok
+    }
+}
+15.3.9 Nested types
+15.3.9.1 GeneralA type declared within a class or struct is called a nested type . A type that is declared
+within a compilation unit or namespace is called a non-nest ed type .
+Example : In the following example:
+C#
+class B is a nested type because it is declared within class  A, and class  A is a non-
+nested type because it is declared within a compilation unit.
+end ex ample
+The fully qualified name ( §7.8.3 ) for a nested type declarationis S.N where S is the fully
+qualified name of the type declarationin which type  N is declared and N is the
+unqualified name ( §7.8.2 ) of the nested type declaration (including any
+gener ic_dimension_speci fier (§12.8.17 )).
+Non-nested types can have public or internal declared accessibility and have
+internal declared accessibility by default. Nested types can have these forms of
+declared accessibility too, plus one or more additional forms of declared accessibility,
+depending on whether the containing type is a class or struct:
+A nested type that is declared in a class can have any of the permitted kinds of
+declared accessibility and, like other class members, defaults to private declared
+accessibility.
+A nested type that is declared in a struct can have any of three forms of declared
+accessibility ( public, internal, or private) and, like other struct members,
+defaults to private declared accessibility.class A
+{
+    class B
+    {
+        static void F()
+        {
+            Console.WriteLine( "A.B.F");
+        }
+    }
+}
+15.3.9.2 Fully qualified name
+15.3.9.3 Declared accessibilityExample : The example
+C#
+declares a private nested class Node.
+end ex ample
+A nested type may hide ( §7.7.2.2 ) a base member. The new modifier ( §15.3.5 ) is
+permitted on nested type declarations so that hiding can be expressed explicitly.
+Example : The example
+C#public class List
+{
+    // Private data structure
+    private class Node
+    {
+        public object Data;
+        public Node Next;
+        public Node(object data, Node next )
+        {
+            this.Data = data;
+            this.Next = next;
+        }
+    }
+    private Node first = null;
+    private Node last = null;
+    // Public interface
+    public void AddToFront (object o) {...}
+    public void AddToBack (object o) {...}
+    public object RemoveFromFront () {...}
+    public object RemoveFromBack () {...}
+    public int Count { get {...} }
+}
+15.3.9.4 Hiding
+class Base
+{
+    public static void M()
+    {
+        Console.WriteLine( "Base.M" );
+    }
+}shows a nested class  M that hides the method  M defined in Base.
+end ex ample
+A nested type and its containing type do not have a special relationship with regard to
+this_ac cess (§12.8.13 ). Specifically, this within a nested type cannot be used to refer to
+instance members of the containing type. In cases where a nested type needs access to
+the instance members of its containing type, access can be provided by providing the
+this for the instance of the containing type as a constructor argument for the nested
+type.
+Example : The following example
+C#class Derived: Base
+{
+    public new class M
+    {
+        public static void F()
+        {
+            Console.WriteLine( "Derived.M.F" );
+        }
+    }
+}
+class Test
+{
+    static void Main()
+    {
+        Derived.M.F();
+    }
+}
+15.3.9.5 this access
+class C
+{
+    int i = 123;
+    public void F()
+    {
+        Nested n = new Nested( this);
+        n.G();
+    }
+    public class Nested
+    {
+        C this_c;shows this technique. An instance of C creates an instance of Nested, and passes its
+own this to Nested’s constructor in order to provide subsequent access to C’s
+instance members.
+end ex ample
+A nested type has access to all of the members that are accessible to its containing type,
+including members of the containing type that have private and protected declared
+accessibility.
+Example : The example
+C#        public Nested(C c)
+        {
+            this_c = c;
+        }
+        public void G()
+        {
+            Console.WriteLine(this_c.i);
+        }
+    }
+}
+class Test
+{
+    static void Main()
+    {
+        C c = new C();
+        c.F();
+    }
+}
+15.3.9.6 Access to private and protected members of the containing
+type
+class C
+{
+    private static void F() => Console.WriteLine( "C.F");
+    public class Nested
+    {
+        public static void G() => F();
+    }
+}shows a class  C that contains a nested class  Nested. Within Nested, the method  G
+calls the static method  F defined in  C, and F has private declared accessibility.
+end ex ample
+A nested type also may access protected members defined in a base type of its
+containing type.
+Example : In the following code
+C#
+the nested class Derived.Nested accesses the protected method  F defined in
+Derived’s base class, Base, by calling through an instance of Derived.
+end ex ampleclass Test
+{
+    static void Main() => C.Nested.G();
+}
+class Base
+{
+    protected  void F() => Console.WriteLine( "Base.F" );
+}
+class Derived: Base
+{
+    public class Nested
+    {
+        public void G()
+        {
+            Derived d = new Derived();
+            d.F(); // ok
+        }
+    }
+}
+class Test
+{
+    static void Main()
+    {
+        Derived.Nested n = new Derived.Nested();
+        n.G();
+    }
+}A generic class declaration may contain nested type declarations. The type parameters
+of the enclosing class may be used within the nested types. A nested type declaration
+may contain additional type parameters that apply only to the nested type.
+Every type declaration contained within a generic class declaration is implicitly a generic
+type declaration. When writing a reference to a type nested within a generic type, the
+containing constructed type, including its type arguments, shall be named. However,
+from within the outer class, the nested type may be used without qualification; the
+instance type of the outer class may be implicitly used when constructing the nested
+type.
+Example : The following shows three different correct ways to refer to a constructed
+type created from Inner; the first two are equivalent:
+C#
+end ex ample
+Although it is bad programming style, a type parameter in a nested type can hide a
+member or type parameter declared in the outer type.
+Example :
+C#15.3.9.7 Nested types in generic classes
+class Outer<T>
+{
+    class Inner<U>
+    {
+        public static void F(T t, U u ) {...}
+    }
+    static void F(T t)
+    {
+        Outer<T>.Inner< string>.F(t, "abc");    // These two statements  
+have
+        Inner<string>.F(t, "abc");             // the same effect
+        Outer<int>.Inner< string>.F(3, "abc");  // This type is different
+        Outer.Inner< string>.F(t, "abc");       // Error, Outer needs  
+type arg
+    }
+}
+class Outer<T>
+{end ex ample
+To facilitate the underlying C# run-time implementation, for each source member
+declaration that is a property, event, or indexer, the implementation shall reserve two
+method signatures based on the kind of the member declaration, its name, and its type
+(§15.3.10.2 , §15.3.10.3 , §15.3.10.4 ). It is a compile-time error for a program to declare a
+member whose signature matches a signature reserved by a member declared in the
+same scope, even if the underlying run-time implementation does not make use of
+these reservations.
+The reserved names do not introduce declarations, thus they do not participate in
+member lookup. However, a declaration’s associated reserved method signatures do
+participate in inheritance ( §15.3.4 ), and can be hidden with the new modifier ( §15.3.5 ).
+Note: The reservation of these names serves three purposes:
+1. To allow the underlying implementation to use an ordinary identifier as a
+method name for get or set access to the C# language feature.
+2. To allow other languages to interoperate using an ordinary identifier as a
+method name for get or set access to the C# language feature.
+3. To help ensure that the source accepted by one conforming compiler is
+accepted by another, by making the specifics of reserved member names
+consistent across all C# implementations.
+end not e
+The declaration of a finalizer ( §15.13 ) also causes a signature to be reserved ( §15.3.10.5 ).    class Inner<T>                                  // Valid, hides  
+Outer's T
+    {
+        public T t;                                 // Refers to Inner's  
+T
+    }
+}
+15.3.10 Reserved member names
+15.3.10.1 General
+15.3.10.2 Member names reserved for propertiesFor a property  P (§15.7 ) of type  T, the following signatures are reserved:
+C#
+Both signatures are reserved, even if the property is read-only or write-only.
+Example : In the following code
+C#
+A class A defines a read-only property  P, thus reserving signatures for get_P and
+set_P methods. A class B derives from A and hides both of these reserved
+signatures. The example produces the output:
+ConsoleT get_P();
+void set_P(T value);
+class A
+{
+    public int P
+    {
+        get => 123;
+    }
+}
+class B : A
+{
+    public new int get_P() => 456;
+    public new void set_P(int value)
+    {
+    }
+}
+class Test
+{
+    static void Main()
+    {
+        B b = new B();
+        A a = b;
+        Console.WriteLine(a.P);
+        Console.WriteLine(b.P);
+        Console.WriteLine(b.get_P());
+    }
+}end ex ample
+For an event  E (§15.8 ) of delegate type  T, the following signatures are reserved:
+C#
+For an indexer ( §15.9 ) of type  T with parameter-list  L, the following signatures are
+reserved:
+C#
+Both signatures are reserved, even if the indexer is read-only or write-only.
+Furthermore the member name Item is reserved.
+For a class containing a finalizer ( §15.13 ), the following signature is reserved:
+C#
+A constant is a class member that represents a constant value: a value that can be
+computed at compile-time. A constant_declar ation  introduces one or more constants of123
+123
+456
+15.3.10.3 Member names reserved for events
+void add_E(T handler );
+void remove_E (T handler );
+15.3.10.4 Member names reserved for indexers
+T get_Item (L);
+void set_Item (L, T value);
+15.3.10.5 Member names reserved for finalizers
+void Finalize ();
+15.4 Constantsa given type.
+ANTLR
+A constant_declar ation  may include a set of attributes (§22), a new modifier ( §15.3.5 ), and
+any one of the permitted kinds of declared accessibility ( §15.3.6 ). The attributes and
+modifiers apply to all of the members declared by the constant_declar ation . Even though
+constants are considered static members, a constant_declar ation  neither requires nor
+allows a static modifier. It is an error for the same modifier to appear multiple times in
+a constant declaration.
+The type of a constant_declar ation  specifies the type of the members introduced by the
+declaration. The type is followed by a list of constant_declar ators (§13.6.3 ), each of which
+introduces a new member. A constant_declar ator consists of an identi fier that names the
+member, followed by an “ =” token, followed by a constant_expr ession  (§12.23 ) that gives
+the value of the member.
+The type specified in a constant declaration shall be sbyte, byte, short, ushort, int,
+uint, long, ulong, char, float, double, decimal, bool, string, an enum_type , or a
+reference_type . Each constant_expr ession  shall yield a value of the target type or of a type
+that can be converted to the target type by an implicit conversion ( §10.2 ).
+The type of a constant shall be at least as accessible as the constant itself ( §7.5.5 ).
+The value of a constant is obtained in an expression using a simple_name  (§12.8.4 ) or a
+member_ac cess (§12.8.7 ).
+A constant can itself participate in a constant_expr ession . Thus, a constant may be used
+in any construct that requires a constant_expr ession .
+Note: Examples of such constructs include case labels, goto case statements, enum
+member declarations, attributes, and other constant declarations. end not econstant_declaration
+    : attributes? constant_modifier* 'const' type constant_declarators ';'
+    ;
+constant_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    ;Note: As described in §12.23 , a constant_expr ession  is an expression that can be fully
+evaluated at compile-time. Since the only way to create a non-null value of a
+reference_type  other than string is to apply the new operator, and since the new
+operator is not permitted in a constant_expr ession , the only possible value for
+constants of reference_type s other than string is null. end not e
+When a symbolic name for a constant value is desired, but when the type of that value is
+not permitted in a constant declaration, or when the value cannot be computed at
+compile-time by a constant_expr ession , a readonly field ( §15.5.3 ) may be used instead.
+Note: The versioning semantics of const and readonly differ ( §15.5.3.3 ). end not e
+A constant declaration that declares multiple constants is equivalent to multiple
+declarations of single constants with the same attributes, modifiers, and type.
+Example :
+C#
+is equivalent to
+C#
+end ex ample
+Constants are permitted to depend on other constants within the same program as long
+as the dependencies are not of a circular nature. The compiler automatically arranges to
+evaluate the constant declarations in the appropriate order.
+Example : In the following codeclass A
+{
+    public const double X = 1.0, Y = 2.0, Z = 3.0;
+}
+class A
+{
+    public const double X = 1.0;
+    public const double Y = 2.0;
+    public const double Z = 3.0;
+}C#
+the compiler first evaluates  A.Y, then evaluates  B.Z, and finally evaluates  A.X,
+producing the values  10, 11, and 12.
+end ex ample
+Constant declarations may depend on constants from other programs, but such
+dependencies are only possible in one direction.
+Example : Referring to the example above, if A and B were declared in separate
+programs, it would be possible for A.X to depend on B.Z, but B.Z could then not
+simultaneously depend on A.Y. end ex ample
+A field is a member that represents a variable associated with an object or class. A
+field_declar ation  introduces one or more fields of a given type.
+ANTLRclass A
+{
+    public const int X = B.Z + 1;
+    public const int Y = 10;
+}
+class B
+{
+    public const int Z = A.Y + 1;
+}
+15.5 Fields
+15.5.1 General
+field_declaration
+    : attributes? field_modifier* type variable_declarators ';'
+    ;
+field_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | 'static'
+    | 'readonly'unsafe_modi fier (§23.2 ) is only available in unsafe code ( §23).
+A field_declar ation  may include a set of attributes (§22), a new modifier ( §15.3.5 ), a valid
+combination of the four access modifiers ( §15.3.6 ), and a static modifier ( §15.5.2 ). In
+addition, a field_declar ation  may include a readonly modifier ( §15.5.3 ) or a volatile
+modifier ( §15.5.4 ), but not both. The attributes and modifiers apply to all of the
+members declared by the field_declar ation . It is an error for the same modifier to appear
+multiple times in a field_declar ation .
+The type of a field_declar ation  specifies the type of the members introduced by the
+declaration. The type is followed by a list of variable_declar ators, each of which
+introduces a new member. A variable_declar ator consists of an identi fier that names that
+member, optionally followed by an “ =” token and a variable_initializer  (§15.5.6 ) that
+gives the initial value of that member.
+The type of a field shall be at least as accessible as the field itself ( §7.5.5 ).
+The value of a field is obtained in an expression using a simple_name  (§12.8.4 ), a
+member_ac cess (§12.8.7 ) or a base_access ( §12.8.14 ). The value of a non-readonly field is
+modified using an assignment  (§12.21 ). The value of a non-readonly field can be both
+obtained and modified using postfix increment and decrement operators ( §12.8.15 ) and
+prefix increment and decrement operators ( §12.9.6 ).
+A field declaration that declares multiple fields is equivalent to multiple declarations of
+single fields with the same attributes, modifiers, and type.
+Example :
+C#    | 'volatile'
+    | unsafe_modifier   // unsafe code support
+    ;
+variable_declarators
+    : variable_declarator ( ',' variable_declarator)*
+    ;
+variable_declarator
+    : identifier ( '=' variable_initializer)?
+    ;
+class A
+{
+    public static int X = 1, Y, Z = 100;
+}is equivalent to
+C#
+end ex ample
+When a field declaration includes a static modifier, the fields introduced by the
+declaration are static f ields . When no static modifier is present, the fields introduced
+by the declaration are instance fields . Static fields and instance fields are two of the
+several kinds of variables ( §9) supported by C#, and at times they are referred to as
+static v ariables  and instance variables , respectively.
+As explained in §15.3.8 , each instance of a class contains a complete set of the instance
+fields of the class, while there is only one set of static fields for each non-generic class or
+closed constructed type, regardless of the number of instances of the class or closed
+constructed type.
+When a field_declar ation  includes a readonly modifier, the fields introduced by the
+declaration are readonly f ields . Direct assignments to readonly fields can only occur as
+part of that declaration or in an instance constructor or static constructor in the same
+class. (A readonly field can be assigned to multiple times in these contexts.) Specifically,
+direct assignments to a readonly field are permitted only in the following contexts:
+In the variable_declar ator that introduces the field (by including a
+variable_initializer  in the declaration).
+For an instance field, in the instance constructors of the class that contains the field
+declaration; for a static field, in the static constructor of the class that contains the
+field declaration. These are also the only contexts in which it is valid to pass a
+readonly field as an out or ref parameter.class A
+{
+    public static int X = 1;
+    public static int Y;
+    public static int Z = 100;
+}
+15.5.2 Static and instance fields
+15.5.3 Readonly fields
+15.5.3.1 GeneralAttempting to assign to a readonly field or pass it as an out or ref parameter in any
+other context is a compile-time error.
+A static readonly field is useful when a symbolic name for a constant value is desired,
+but when the type of the value is not permitted in a const declaration, or when the value
+cannot be computed at compile-time.
+Example : In the following code
+C#
+the Black, White, Red, Green, and Blue members cannot be declared as const
+members because their values cannot be computed at compile-time. However,
+declaring them static readonly instead has much the same effect.
+end ex ample
+Constants and readonly fields have different binary versioning semantics. When an
+expression references a constant, the value of the constant is obtained at compile-time,
+but when an expression references a readonly field, the value of the field is not obtained
+until run-time.
+Example : Consider an application that consists of two separate programs:15.5.3.2 Using static readonly fields for constants
+public class Color
+{
+    public static readonly  Color Black = new Color(0, 0, 0);
+    public static readonly  Color White = new Color(255, 255, 255);
+    public static readonly  Color Red = new Color(255, 0, 0);
+    public static readonly  Color Green = new Color(0, 255, 0);
+    public static readonly  Color Blue = new Color(0, 0, 255);
+    private byte red, green, blue;
+    public Color(byte r, byte g, byte b)
+    {
+        red = r;
+        green = g;
+        blue = b;
+    }
+}
+15.5.3.3 Versioning of constants and static readonly fieldsC#
+and
+C#
+The Program1 and Program2 namespaces denote two programs that are compiled
+separately. Because Program1.Utils.X is declared as a static readonly field, the
+value output by the Console.WriteLine statement is not known at compile-time, but
+rather is obtained at run-time. Thus, if the value of X is changed and Program1 is
+recompiled, the Console.WriteLine statement will output the new value even if
+Program2 isn’t recompiled. However, had X been a constant, the value of X would
+have been obtained at the time Program2 was compiled, and would remain
+unaffected by changes in Program1 until Program2 is recompiled.
+end ex ample
+When a field_declar ation  includes a volatile modifier, the fields introduced by that
+declaration are volatile f ields . For non-volatile fields, optimization techniques that
+reorder instructions can lead to unexpected and unpredictable results in multi-threaded
+programs that access fields without synchronization such as that provided by the
+lock_st atement  (§13.13 ). These optimizations can be performed by the compiler, by thenamespace  Program1
+{
+    public class Utils
+    {
+        public static readonly  int x = 1;
+    }
+}
+namespace  Program2
+{
+    class Test
+    {
+        static void Main()
+        {
+            Console.WriteLine(Program1.Utils.X);
+        }
+    }
+}
+15.5.4 Volatile fieldsrun-time system, or by hardware. For volatile fields, such reordering optimizations are
+restricted:
+A read of a volatile field is called a volatile r ead. A volatile read has “acquire
+semantics”; that is, it is guaranteed to occur prior to any references to memory that
+occur after it in the instruction sequence.
+A write of a volatile field is called a volatile wr ite. A volatile write has “release
+semantics”; that is, it is guaranteed to happen after any memory references prior to
+the write instruction in the instruction sequence.
+These restrictions ensure that all threads will observe volatile writes performed by any
+other thread in the order in which they were performed. A conforming implementation
+is not required to provide a single total ordering of volatile writes as seen from all
+threads of execution. The type of a volatile field shall be one of the following:
+A reference_type .
+A type_p aramet er that is known to be a reference type ( §15.2.5 ).
+The type byte, sbyte, short, ushort, int, uint, char, float, bool,
+System.IntPtr, or System.UIntPtr.
+An enum_type  having an enum_b ase type of byte, sbyte, short, ushort, int, or
+uint.
+Example : The example
+C#
+class Test
+{
+    public static int result;
+    public static volatile  bool finished;
+    static void Thread2()
+    {
+        result = 143;
+        finished = true;
+    }
+    static void Main()
+    {
+        finished = false;
+        // Run Thread2() in a new thread
+        new Thread( new ThreadStart(Thread2)).Start();    
+        // Wait for Thread2() to signal that it has a result
+        // by setting finished to true.
+        for (;;)
+        {produces the output:
+Console
+In this example, the method Main starts a new thread that runs the method
+Thread2. This method stores a value into a non-volatile field called result, then
+stores true in the volatile field finished. The main thread waits for the field
+finished to be set to true, then reads the field result. Since finished has been
+declared volatile, the main thread shall read the value 143 from the field result.
+If the field finished had not been declared volatile, then it would be permissible
+for the store to result to be visible to the main thread after the store to finished,
+and hence for the main thread to read the value 0 from the field result. Declaring
+finished as a volatile field prevents any such inconsistency.
+end ex ample
+The initial value of a field, whether it be a static field or an instance field, is the default
+value ( §9.3) of the field’s type. It is not possible to observe the value of a field before this
+default initialization has occurred, and a field is thus never “uninitialized”.
+Example : The example
+C#            if (finished)
+            {
+                Console.WriteLine( $"result = {result} ");
+                return;
+            }
+        }
+    }
+}
+result = 143
+15.5.5 Field initialization
+class Test
+{
+    static bool b;
+    int i;
+    static void Main()
+    {produces the output
+Console
+because b and i are both automatically initialized to default values.
+end ex ample
+Field declarations may include variable_initializer s. For static fields, variable initializers
+correspond to assignment statements that are executed during class initialization. For
+instance fields, variable initializers correspond to assignment statements that are
+executed when an instance of the class is created.
+Example : The example
+C#
+produces the output
+Console        Test t = new Test();
+        Console.WriteLine( $"b = {b}, i = {t.i}");
+    }
+}
+b = False, i = 0
+15.5.6 Variable initializers
+15.5.6.1 General
+class Test
+{
+    static double x = Math.Sqrt( 2.0);
+    int i = 100;
+    string s = "Hello";
+    static void Main()
+    {
+        Test a = new Test();
+        Console.WriteLine( $"x = {x}, i = {a.i}, s = {a.s}");
+    }
+}because an assignment to x occurs when static field initializers execute and
+assignments to i and s occur when the instance field initializers execute.
+end ex ample
+The default value initialization described in §15.5.5  occurs for all fields, including fields
+that have variable initializers. Thus, when a class is initialized, all static fields in that class
+are first initialized to their default values, and then the static field initializers are
+executed in textual order. Likewise, when an instance of a class is created, all instance
+fields in that instance are first initialized to their default values, and then the instance
+field initializers are executed in textual order. When there are field declarations in
+multiple partial type declarations for the same type, the order of the parts is unspecified.
+However, within each part the field initializers are executed in order.
+It is possible for static fields with variable initializers to be observed in their default value
+state.
+Example : However, this is strongly discouraged as a matter of style. The example
+C#
+exhibits this behavior. Despite the circular definitions of a and b, the program is
+valid. It results in the output
+Console
+because the static fields a and b are initialized to 0 (the default value for int)
+before their initializers are executed. When the initializer for a runs, the value of bx = 1.4142135623730951, i = 100, s = Hello
+class Test
+{
+    static int a = b + 1;
+    static int b = a + 1;
+    static void Main()
+    {
+        Console.WriteLine( $"a = {a}, b = {b}");
+    }
+}
+a = 1, b = 2is zero, and so a is initialized to  1. When the initializer for b runs, the value of a is
+already  1, and so b is initialized to  2.
+end ex ample
+The static field variable initializers of a class correspond to a sequence of assignments
+that are executed in the textual order in which they appear in the class declaration
+(§15.5.6.1 ). Within a partial class, the meaning of “textual order” is specified by §15.5.6.1 .
+If a static constructor ( §15.12 ) exists in the class, execution of the static field initializers
+occurs immediately prior to executing that static constructor. Otherwise, the static field
+initializers are executed at an implementation-dependent time prior to the first use of a
+static field of that class.
+Example : The example
+C#
+might produce either the output:
+Console15.5.6.2 Static field initialization
+class Test
+{
+    static void Main()
+    {
+        Console.WriteLine( $"{B.Y} {A.X}");
+    }
+    public static int F(string s)
+    {
+        Console.WriteLine(s);
+        return 1;
+    }
+}
+class A
+{
+    public static int X = Test.F( "Init A" );
+}
+class B
+{
+    public static int Y = Test.F( "Init B" );
+}or the output:
+Console
+because the execution of X’s initializer and Y’s initializer could occur in either order;
+they are only constrained to occur before the references to those fields. However, in
+the example:
+C#
+the output shall be:
+ConsoleInit A
+Init B
+1 1
+Init B
+Init A
+1 1
+class Test
+{
+    static void Main()
+    {
+        Console.WriteLine( $"{B.Y} {A.X}");
+    }
+    public static int F(string s)
+    {
+        Console.WriteLine(s);
+        return 1;
+    }
+}
+class A
+{
+    static A() {}
+    public static int X = Test.F( "Init A" );
+}
+class B
+{
+    static B() {}
+    public static int Y = Test.F( "Init B" );
+}because the rules for when static constructors execute (as defined in §15.12 ) provide
+that B’s static constructor (and hence B’s static field initializers) shall run before
+A’s static constructor and field initializers.
+end ex ample
+The instance field variable initializers of a class correspond to a sequence of assignments
+that are executed immediately upon entry to any one of the instance constructors
+(§15.11.3 ) of that class. Within a partial class, the meaning of “textual order” is specified
+by §15.5.6.1 . The variable initializers are executed in the textual order in which they
+appear in the class declaration ( §15.5.6.1 ). The class instance creation and initialization
+process is described further in §15.11 .
+A variable initializer for an instance field cannot reference the instance being created.
+Thus, it is a compile-time error to reference this in a variable initializer, as it is a
+compile-time error for a variable initializer to reference any instance member through a
+simple_name .
+Example : In the following code
+C#
+the variable initializer for y results in a compile-time error because it references a
+member of the instance being created.
+end ex ampleInit B
+Init A
+1 1
+15.5.6.3 Instance field initialization
+class A
+{
+    int x = 1;
+    int y = x + 1;     // Error, reference to instance member of this
+}
+15.6 Methods
+15.6.1 GeneralA method  is a member that implements a computation or action that can be performed
+by an object or class. Methods are declared using method_declar ation s:
+ANTLR
+method_declaration
+    : attributes? method_modifiers return_type method_header method_body
+    | attributes? ref_method_modifiers ref_kind ref_return_type  
+method_header
+      ref_method_body
+    ;
+method_modifiers
+    : method_modifier* 'partial' ?
+    ;
+ref_kind
+    : 'ref'
+    | 'ref' 'readonly'
+    ;
+ref_method_modifiers
+    : ref_method_modifier*
+    ;
+method_header
+    : member_name '(' formal_parameter_list? ')'
+    | member_name type_parameter_list '(' formal_parameter_list? ')'
+      type_parameter_constraints_clause*
+    ;
+method_modifier
+    : ref_method_modifier
+    | 'async'
+    ;
+ref_method_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | 'static'
+    | 'virtual'
+    | 'sealed'
+    | 'override'
+    | 'abstract'
+    | 'extern'
+    | unsafe_modifier   // unsafe code support
+    ;
+return_type
+    : ref_return_type
+    | 'void'Grammar notes:
+unsafe_modi fier (§23.2 ) is only available in unsafe code ( §23).
+when recognising a method_body  if both the null_c onditional_in vocation_expr ession
+and expression  alternatives are applicable then the former shall be chosen.
+Note: The overlapping of, and priority between, alternatives here is solely for
+descriptive convenience; the grammar rules could be elaborated to remove the
+overlap. ANTLR, and other grammar systems, adopt the same convenience and so
+method_body  has the specified semantics automatically. end not e
+A method_declar ation  may include a set of attributes (§22) and one of the permitted
+kinds of declared accessibility ( §15.3.6 ), the new (§15.3.5 ), static (§15.6.3 ), virtual
+(§15.6.4 ), override (§15.6.5 ), sealed (§15.6.6 ), abstract (§15.6.7 ), extern (§15.6.8 ) and
+async (§15.15 ) modifiers.
+A declaration has a valid combination of modifiers if all of the following are true:
+The declaration includes a valid combination of access modifiers ( §15.3.6 ).
+The declaration does not include the same modifier multiple times.
+The declaration includes at most one of the following modifiers: static, virtual,
+and override.
+The declaration includes at most one of the following modifiers: new and override.    ;
+ref_return_type
+    : type
+    ;
+member_name
+    : identifier
+    | interface_type '.' identifier
+    ;
+method_body
+    : block
+    | '=>' null_conditional_invocation_expression ';'
+    | '=>' expression ';'
+    | ';'
+    ;
+ref_method_body
+    : block
+    | '=>' 'ref' variable_reference ';'
+    | ';'
+    ;If the declaration includes the abstract modifier, then the declaration does not
+include any of the following modifiers: static, virtual, sealed, or extern.
+If the declaration includes the private modifier, then the declaration does not
+include any of the following modifiers: virtual, override, or abstract.
+If the declaration includes the sealed modifier, then the declaration also includes
+the override modifier.
+If the declaration includes the partial modifier, then it does not include any of the
+following modifiers: new, public, protected, internal, private, virtual, sealed,
+override, abstract, or extern.
+Methods are classified according to what, if anything, they return:
+If ref is present, the method is returns-by-ref and returns a variable r eference, that
+is optionally read-only;
+Otherwise, if return_type  is void, the method is returns-no-v alue and does not
+return a value;
+Otherwise, the method is returns-by-value and returns a value.
+The return_type  of a returns-by-value or returns-no-value method declaration specifies
+the type of the result, if any, returned by the method. Only a returns-no-value method
+may include the partial modifier ( §15.6.9 ). If the declaration includes the async
+modifier then return_type  shall be void or the method returns-by-value and the return
+type is a task type  (§15.15.1 ).
+The ref_return_type  of a returns-by-ref method declaration specifies the type of the
+variable referenced by the variable_r eference returned by the method.
+A generic method is a method whose declaration includes a type_p aramet er_list . This
+specifies the type parameters for the method. The optional
+type_p aramet er_constr aints_claus es specify the constraints for the type parameters.
+A generic method_declar ation  for an explicit interface member implementation shall not
+have any type_p aramet er_constr aints_claus es; the declaration inherits any constraints
+from the constraints on the interface method.
+Similarly, a method declaration with the override modifier shall not have any
+type_p aramet er_constr aints_claus es and the constraints of the method’s type parameters
+are inherited from the virtual method being overridden.
+The member_name  specifies the name of the method. Unless the method is an explicit
+interface member implementation ( §18.6.2 ), the member_name  is simply an identi fier.For an explicit interface member implementation, the member_name  consists of an
+interface_type  followed by a “ .” and an identi fier. In this case, the declaration shall
+include no modifiers other than (possibly) extern or async.
+The optional formal_p aramet er_list  specifies the parameters of the method ( §15.6.2 ).
+The return_type  or ref_return_type , and each of the types referenced in the
+formal_p aramet er_list  of a method, shall be at least as accessible as the method itself
+(§7.5.5 ).
+The method_body  of a returns-by-value or returns-no-value method is either a
+semicolon, a block body or an expression body. A block body consists of a block , which
+specifies the statements to execute when the method is invoked. An expression body
+consists of =>, followed by a null_c onditional_in vocation_expr ession  or expression , and a
+semicolon, and denotes a single expression to perform when the method is invoked.
+For abstract and extern methods, the method_body  consists simply of a semicolon. For
+partial methods the method_body  may consist of either a semicolon, a block body or an
+expression body. For all other methods, the method_body  is either a block body or an
+expression body.
+If the method_body  consists of a semicolon, the declaration shall not include the async
+modifier.
+The ref_method_body  of a returns-by-ref method is either a semicolon, a block body or
+an expression body. A block body consists of a block , which specifies the statements to
+execute when the method is invoked. An expression body consists of =>, followed by
+ref, a variable_r eference, and a semicolon, and denotes a single variable_r eference to
+evaluate when the method is invoked.
+For abstract and extern methods, the ref_method_body  consists simply of a semicolon;
+for all other methods, the ref_method_body  is either a block body or an expression body.
+The name, the number of type parameters, and the formal parameter list of a method
+define the signature ( §7.6) of the method. Specifically, the signature of a method
+consists of its name, the number of its type parameters, and the number,
+paramet er_mode_modi fiers (§15.6.2.1 ), and types of its formal parameters. The return
+type is not part of a method’s signature, nor are the names of the formal parameters,
+the names of the type parameters, or the constraints. When a formal parameter type
+references a type parameter of the method, the ordinal position of the type parameter
+(not the name of the type parameter) is used for type equivalence.The name of a method shall differ from the names of all other non-methods declared in
+the same class. In addition, the signature of a method shall differ from the signatures of
+all other methods declared in the same class, and two methods declared in the same
+class may not have signatures that differ solely by in, out, and ref.
+The method’s type_p aramet ers are in scope throughout the method_declar ation , and can
+be used to form types throughout that scope in return_type  or ref_return_type ,
+method_body  or ref_method_body , and type_p aramet er_constr aints_claus es but not in
+attributes.
+All formal parameters and type parameters shall have different names.
+The parameters of a method, if any, are declared by the method’s formal_p aramet er_list .
+ANTLR15.6.2 Method parameters
+15.6.2.1 General
+formal_parameter_list
+    : fixed_parameters
+    | fixed_parameters ',' parameter_array
+    | parameter_array
+    ;
+fixed_parameters
+    : fixed_parameter ( ',' fixed_parameter)*
+    ;
+fixed_parameter
+    : attributes? parameter_modifier? type identifier default_argument?
+    ;
+default_argument
+    : '=' expression
+    ;
+parameter_modifier
+    : parameter_mode_modifier
+    | 'this'
+    ;
+parameter_mode_modifier
+    : 'ref'
+    | 'out'
+    | 'in'
+    ;The formal parameter list consists of one or more comma-separated parameters of
+which only the last may be a paramet er_arr ay.
+A fixed_paramet er consists of an optional set of attributes (§22); an optional in, out,
+ref, or this modifier; a type; an identi fier; and an optional default_ar gument . Each
+fixed_paramet er declares a parameter of the given type with the given name. The this
+modifier designates the method as an extension method and is only allowed on the first
+parameter of a static method in a non-generic, non-nested static class. If the parameter
+is a struct type or a type parameter constrained to a struct, the this modifier may be
+combined with either the ref or in modifier, but not the out modifier. Extension
+methods are further described in §15.6.10 . A fixed_paramet er with a default_ar gument  is
+known as an optional p aramet er, whereas a fixed_paramet er without a default_ar gument
+is a requir ed paramet er. A required parameter may not appear after an optional
+parameter in a formal_p aramet er_list .
+A parameter with a ref, out or this modifier cannot have a default_ar gument . A
+parameter with an in modifier may have a default_ar gument . The expression  in a
+default_ar gument  shall be one of the following:
+a constant_expr ession
+an expression of the form new S() where S is a value type
+an expression of the form default(S) where S is a value type
+The expression  shall be implicitly convertible by an identity or nullable conversion to the
+type of the parameter.
+If optional parameters occur in an implementing partial method declaration ( §15.6.9 ), an
+explicit interface member implementation ( §18.6.2 ), a single-parameter indexer
+declaration ( §15.9 ), or in an operator declaration ( §15.10.1 ) the compiler should give a
+warning, since these members can never be invoked in a way that permits arguments to
+be omitted.
+A paramet er_arr ay consists of an optional set of attributes (§22), a params modifier, an
+array_type , and an identi fier. A parameter array declares a single parameter of the given
+array type with the given name. The array_type  of a parameter array shall be a single-
+dimensional array type ( §17.2 ). In a method invocation, a parameter array permits either
+a single argument of the given array type to be specified, or it permits zero or moreparameter_array
+    : attributes? 'params'  array_type identifier
+    ;arguments of the array element type to be specified. P arameter arrays are described
+further in §15.6.2.6 .
+A paramet er_arr ay may occur after an optional parameter, but cannot have a default
+value – the omission of arguments for a paramet er_arr ay would instead result in the
+creation of an empty array.
+Example : The following illustrates different kinds of parameters:
+C#
+In the formal_p aramet er_list  for M, i is a required ref parameter, d is a required
+value parameter, b, s, o and t are optional value parameters and a is a parameter
+array.
+end ex ample
+A method declaration creates a separate declaration space ( §7.3) for parameters and
+type parameters. Names are introduced into this declaration space by the type
+parameter list and the formal parameter list of the method. The body of the method, if
+any, is considered to be nested within this declaration space. It is an error for two
+members of a method declaration space to have the same name. It is an error for the
+method declaration space and the local variable declaration space of a nested
+declaration space to contain elements with the same name.
+A method invocation ( §12.8.9.2 ) creates a copy, specific to that invocation, of the formal
+parameters and local variables of the method, and the argument list of the invocation
+assigns values or variable references to the newly created formal parameters. Within the
+block  of a method, formal parameters can be referenced by their identifiers in
+simple_name  expressions ( §12.8.4 ).
+The following kinds of formal parameters exist:
+Value parameters, which are declared without any modifiers.void M<T>(
+    ref int i,
+    decimal d,
+    bool b = false,
+    bool? n = false,
+    string s = "Hello",
+    object o = null,
+    T t = default(T),
+    params int[] a
+) { }Input parameters, which are declared with the in modifier.
+Output parameters, which are declared with the out modifier.
+Reference parameters, which are declared with the ref modifier.
+Parameter arrays, which are declared with the params modifier.
+Note: As described in §7.6, the in, out, and ref modifiers are part of a method’s
+signature, but the params modifier is not. end not e
+A parameter declared with no modifiers is a value parameter. A value parameter is a
+local variable that gets its initial value from the corresponding argument supplied in the
+method invocation.
+When a formal parameter is a value parameter, the corresponding argument in a
+method invocation shall be an expression that is implicitly convertible ( §10.2 ) to the
+formal parameter type.
+A method is permitted to assign new values to a value parameter. Such assignments
+only affect the local storage location represented by the value parameter—they have no
+effect on the actual argument given in the method invocation.
+A parameter declared with an in modifier is an input parameter. An input parameter is
+a local reference variable ( §9.7) that gets its initial referent from the corresponding
+argument supplied in the method invocation. That argument is either a variable existing
+at the point of the method invocation, or one created by the implementation ( §12.6.2.3 )
+in the method invocation.
+Note: As with reference variables the referent of an input parameter can be changed
+using the ref assignment ( = ref) operator, however the value stored in the referent
+itself cannot be changed. end not e
+When a formal parameter is an input parameter, the corresponding argument in a
+method invocation shall consist of either the keyword in followed by a
+variable_r eference (§9.2.8 ) of the same type as the formal parameter, or an expression  for
+which an implicit conversion ( §10.2 ) exists from that argument expression to the type of
+the corresponding parameter. A variable shall be definitely assigned before it can be
+passed as an input parameter.15.6.2.2 Value parameters
+15.6.2.3 Input parametersIt is a compile-time error to modify the value of an input parameter.
+Within a method, an input parameter is always considered definitely assigned.
+Input parameters are not allowed on functions declared as an iterator ( §15.14 ) or async
+function ( §15.15 ).
+In a method that takes input parameters, it is possible for multiple names to represent
+the same storage location.
+Note: The primary purpose of input parameters is for efficiency. When the type of a
+method parameter is a large struct (in terms of memory requirements), it is useful to
+be able to avoid copying the whole value of the argument when calling the method.
+Input parameters allow methods to refer to existing values in memory, while
+providing protection against unwanted changes to those values. end not e
+A parameter declared with a ref modifier is a reference parameter. A reference
+parameter is a local reference variable ( §9.7) that gets its initial referent from the
+corresponding argument supplied in the method invocation.
+Note: As with reference variables the referent of a reference parameter can be
+changed using the ref assignment ( = ref) operator. end not e
+When a formal parameter is a reference parameter, the corresponding argument in a
+method invocation shall consist of the keyword ref followed by a variable_r eference
+(§9.5) of the same type as the formal parameter. A variable shall be definitely assigned
+before it can be passed as a reference parameter.
+Within a method, a reference parameter is always considered definitely assigned.
+A method declared as an iterator ( §15.14 ) may not have reference parameters.
+Example : The example
+C#15.6.2.4 Reference parameters
+class Test
+{
+    static void Swap(ref int x, ref int y)
+    {
+        int temp = x;
+        x = y;
+        y = temp;produces the output
+Console
+For the invocation of Swap in Main, x represents i and y represents  j. Thus, the
+invocation has the effect of swapping the values of i and j.
+end ex ample
+In a method that takes reference parameters, it is possible for multiple names to
+represent the same storage location.
+Example : In the following code
+C#
+the invocation of F in G passes a reference to s for both a and b. Thus, for that
+invocation, the names  s, a, and b all refer to the same storage location, and the
+three assignments all modify the instance field s.    }
+    static void Main()
+    {
+        int i = 1, j = 2;
+        Swap(ref i, ref j);
+        Console.WriteLine( $"i = {i}, j = {j}");
+    }
+}
+i = 2, j = 1
+class A
+{
+    string s;
+    void F(ref string a, ref string b)
+    {
+        s = "One";
+        a = "Two";
+        b = "Three";
+    }
+    void G()
+    {
+        F(ref s, ref s);
+    }
+}end ex ample
+A parameter declared with an out modifier is an output parameter. An output
+parameter is a local reference variable ( §9.7) that gets its initial referent from the
+corresponding argument supplied in the method invocation.
+When a formal parameter is an output parameter, the corresponding argument in a
+method invocation shall consist of the keyword out followed by a variable_r eference
+(§9.5) of the same type as the formal parameter. A variable need not be definitely
+assigned before it can be passed as an output parameter, but following an invocation
+where a variable was passed as an output parameter, the variable is considered
+definitely assigned.
+Within a method, just like a local variable, an output parameter is initially considered
+unassigned and shall be definitely assigned before its value is used.
+Every output parameter of a method shall be definitely assigned before the method
+returns.
+A method declared as a partial method ( §15.6.9 ) or an iterator ( §15.14 ) may not have
+output parameters.
+Output parameters are typically used in methods that produce multiple return values.
+Example :
+C#15.6.2.5 Output parameters
+class Test
+{
+    static void SplitPath (string path, out string dir, out string name)
+    {
+        int i = path.Length;
+        while (i > 0)
+        {
+            char ch = path[i - 1];
+            if (ch == '\\' || ch == '/' || ch == ':')
+            {
+                break;
+            }
+            i--;
+        }
+        dir = path.Substring( 0, i);
+        name = path.Substring(i);
+    }The example produces the output:
+Console
+Note that the dir and name variables can be unassigned before they are passed to
+SplitPath, and that they are considered definitely assigned following the call.
+end ex ample
+A parameter declared with a params modifier is a parameter array. If a formal parameter
+list includes a parameter array, it shall be the last parameter in the list and it shall be of a
+single-dimensional array type.
+Example : The types string[] and string[][] can be used as the type of a
+parameter array, but the type string[,] can not. end ex ample
+Note: It is not possible to combine the params modifier with the modifiers in, out,
+or ref. end not e
+A parameter array permits arguments to be specified in one of two ways in a method
+invocation:
+The argument given for a parameter array can be a single expression that is
+implicitly convertible ( §10.2 ) to the parameter array type. In this case, the
+parameter array acts precisely like a value parameter.
+Alternatively, the invocation can specify zero or more arguments for the parameter
+array, where each argument is an expression that is implicitly convertible ( §10.2 ) to
+the element type of the parameter array. In this case, the invocation creates an    static void Main()
+    {
+        string dir, name;
+        SplitPath( @"c:\Windows\System\hello.txt" , out dir, out name);
+        Console.WriteLine(dir);
+        Console.WriteLine(name);
+    }
+}
+c:\Windows\System\
+hello.txt
+15.6.2.6 Parameter arraysinstance of the parameter array type with a length corresponding to the number of
+arguments, initializes the elements of the array instance with the given argument
+values, and uses the newly created array instance as the actual argument.
+Except for allowing a variable number of arguments in an invocation, a parameter array
+is precisely equivalent to a value parameter ( §15.6.2.2 ) of the same type.
+Example : The example
+C#
+produces the output
+Console
+The first invocation of F simply passes the array arr as a value parameter. The
+second invocation of F automatically creates a four-element int[] with the given
+element values and passes that array instance as a value parameter. Likewise, the
+third invocation of F creates a zero-element int[] and passes that instance as a
+value parameter. The second and third invocations are precisely equivalent to
+writing:class Test
+{
+    static void F(params int[] args)
+    {
+        Console.Write( $"Array contains {args.Length}  elements:" );
+        foreach (int i in args)
+        {
+            Console.Write( $" {i}");
+        }
+        Console.WriteLine();
+    }
+    static void Main()
+    {
+        int[] arr = { 1, 2, 3};
+        F(arr);
+        F(10, 20, 30, 40);
+        F();
+    }
+}
+Array contains 3 elements: 1 2 3
+Array contains 4 elements: 10 20 30 40
+Array contains 0 elements:C#
+end ex ample
+When performing overload resolution, a method with a parameter array might be
+applicable, either in its normal form or in its expanded form ( §12.6.4.2 ). The expanded
+form of a method is available only if the normal form of the method is not applicable
+and only if an applicable method with the same signature as the expanded form is not
+already declared in the same type.
+Example : The example
+C#
+produces the output
+ConsoleF(new int[] {10, 20, 30, 40});
+F(new int[] {});
+class Test
+{
+    static void F(params object[] a) =>
+        Console.WriteLine( "F(object[])" );
+    static void F() =>
+        Console.WriteLine( "F()");
+    static void F(object a0, object a1) =>
+        Console.WriteLine( "F(object,object)" );
+    static void Main()
+    {
+        F();
+        F(1);
+        F(1, 2);
+        F(1, 2, 3);
+        F(1, 2, 3, 4);
+    }
+}
+F()
+F(object[])
+F(object,object)
+F(object[])
+F(object[])In the example, two of the possible expanded forms of the method with a parameter
+array are already included in the class as regular methods. These expanded forms
+are therefore not considered when performing overload resolution, and the first and
+third method invocations thus select the regular methods. When a class declares a
+method with a parameter array, it is not uncommon to also include some of the
+expanded forms as regular methods. By doing so, it is possible to avoid the
+allocation of an array instance that occurs when an expanded form of a method with
+a parameter array is invoked.
+end ex ample
+An array is a reference type, so the value passed for a parameter array can be null.
+Example : The example:
+C#
+produces the output:
+Console
+The second invocation produces False as it is equivalent to F(new string[] { null
+}) and passes an array containing a single null reference.
+end ex ample
+When the type of a parameter array is object[], a potential ambiguity arises between
+the normal form of the method and the expanded form for a single object parameter.
+The reason for the ambiguity is that an object[] is itself implicitly convertible to typeclass Test
+{
+    static void F(params string[] array ) =>
+        Console.WriteLine(array == null);
+    static void Main()
+    {
+        F(null);
+        F((string) null);
+    }
+}
+True
+Falseobject. The ambiguity presents no problem, however, since it can be resolved by
+inserting a cast if needed.
+Example : The example
+C#
+produces the output
+Console
+In the first and last invocations of  F, the normal form of F is applicable because an
+implicit conversion exists from the argument type to the parameter type (both are
+of type object[]). Thus, overload resolution selects the normal form of  F, and the
+argument is passed as a regular value parameter. In the second and third
+invocations, the normal form of F is not applicable because no implicit conversion
+exists from the argument type to the parameter type (type object cannot be
+implicitly converted to type object[]). However, the expanded form of F is
+applicable, so it is selected by overload resolution. As a result, a one-elementclass Test
+{
+    static void F(params object[] args)
+    {
+        foreach (object o in args)
+        {
+            Console.Write(o.GetType().FullName);
+            Console.Write( " ");
+        }
+        Console.WriteLine();
+    }
+    static void Main()
+    {
+        object[] a = { 1, "Hello", 123.456};
+        object o = a;
+        F(a);
+        F((object)a);
+        F(o);
+        F((object[])o);
+    }
+}
+System.Int32 System.String System.Double
+System.Object[]
+System.Object[]
+System.Int32 System.String System.Doubleobject[] is created by the invocation, and the single element of the array is
+initialized with the given argument value (which itself is a reference to an object[]).
+end ex ample
+When a method declaration includes a static modifier, that method is said to be a
+static method. When no static modifier is present, the method is said to be an instance
+method.
+A static method does not operate on a specific instance, and it is a compile-time error to
+refer to this in a static method.
+An instance method operates on a given instance of a class, and that instance can be
+accessed as this (§12.8.13 ).
+The differences between static and instance members are discussed further in §15.3.8 .
+When an instance method declaration includes a virtual modifier, that method is said to
+be a virtual method . When no virtual modifier is present, the method is said to be a
+non-vir tual method .
+The implementation of a non-virtual method is invariant: The implementation is the
+same whether the method is invoked on an instance of the class in which it is declared
+or an instance of a derived class. In contrast, the implementation of a virtual method can
+be superseded by derived classes. The process of superseding the implementation of an
+inherited virtual method is known as overriding  that method ( §15.6.5 ).
+In a virtual method invocation, the run-time type  of the instance for which that
+invocation takes place determines the actual method implementation to invoke. In a
+non-virtual method invocation, the compile-time type  of the instance is the determining
+factor. In precise terms, when a method named N is invoked with an argument list A on
+an instance with a compile-time type C and a run-time type R (where R is either C or a
+class derived from  C), the invocation is processed as follows:
+At binding-time, overload resolution is applied to  C, N, and A, to select a specific
+method  M from the set of methods declared in and inherited by  C. This is
+described in §12.8.9.2 .
+Then at run-time:15.6.3 Static and instance methods
+15.6.4 Virtual methodsIf M is a non-virtual method, M is invoked.
+Otherwise, M is a virtual method, and the most derived implementation of  M
+with respect to  R is invoked.
+For every virtual method declared in or inherited by a class, there exists a most der ived
+implement ation  of the method with respect to that class. The most derived
+implementation of a virtual method  M with respect to a class  R is determined as follows:
+If R contains the introducing virtual declaration of  M, then this is the most derived
+implementation of  M with respect to R.
+Otherwise, if R contains an override of  M, then this is the most derived
+implementation of  M with respect to R.
+Otherwise, the most derived implementation of M with respect to R is the same as
+the most derived implementation of M with respect to the direct base class of  R.
+Example : The following example illustrates the differences between virtual and non-
+virtual methods:
+C#
+In the example, A introduces a non-virtual method  F and a virtual method  G. The
+class B introduces a new non-virtual method  F, thus hiding  the inherited  F, andclass A
+{
+    public void F() => Console.WriteLine( "A.F");
+    public virtual void G() => Console.WriteLine( "A.G");
+}
+class B : A
+{
+    public new void F() => Console.WriteLine( "B.F");
+    public override  void G() => Console.WriteLine( "B.G");
+}
+class Test
+{
+    static void Main()
+    {
+        B b = new B();
+        A a = b;
+        a.F();
+        b.F();
+        a.G();
+        b.G();
+    }
+}also overrides the inherited method  G. The example produces the output:
+Console
+Notice that the statement a.G() invokes B.G, not A.G. This is because the run-time
+type of the instance (which is  B), not the compile-time type of the instance (which
+is A), determines the actual method implementation to invoke.
+end ex ample
+Because methods are allowed to hide inherited methods, it is possible for a class to
+contain several virtual methods with the same signature. This does not present an
+ambiguity problem, since all but the most derived method are hidden.
+Example : In the following code
+C#A.F
+B.F
+B.G
+B.G
+class A
+{
+    public virtual void F() => Console.WriteLine( "A.F");
+}
+class B : A
+{
+    public override  void F() => Console.WriteLine( "B.F");
+}
+class C : B
+{
+    public new virtual void F() => Console.WriteLine( "C.F");
+}
+class D : C
+{
+    public override  void F() => Console.WriteLine( "D.F");
+}
+class Test
+{
+    static void Main()
+    {
+        D d = new D();
+        A a = d;the C and D classes contain two virtual methods with the same signature: The one
+introduced by A and the one introduced by  C. The method introduced by C hides
+the method inherited from  A. Thus, the override declaration in D overrides the
+method introduced by  C, and it is not possible for D to override the method
+introduced by  A. The example produces the output:
+Console
+Note that it is possible to invoke the hidden virtual method by accessing an instance
+of D through a less derived type in which the method is not hidden.
+end ex ample
+When an instance method declaration includes an override modifier, the method is said
+to be an override method . An override method overrides an inherited virtual method
+with the same signature. Whereas a virtual method declaration introduces a new
+method, an override method declaration specializes  an existing inherited virtual method
+by providing a new implementation of that method.
+The method overridden by an override declaration is known as the overridden b ase
+method  For an override method  M declared in a class  C, the overridden base method is
+determined by examining each base class of  C, starting with the direct base class of  C
+and continuing with each successive direct base class, until in a given base class type at
+least one accessible method is located which has the same signature as M after
+substitution of type arguments. For the purposes of locating the overridden base
+method, a method is considered accessible if it is public, if it is protected, if it is        B b = d;
+        C c = d;
+        a.F();
+        b.F();
+        c.F();
+        d.F();
+    }
+}
+B.F
+B.F
+D.F
+D.F
+15.6.5 Override methodsprotected internal, or if it is either internal or private protected and declared in the
+same program as  C.
+A compile-time error occurs unless all of the following are true for an override
+declaration:
+An overridden base method can be located as described above.
+There is exactly one such overridden base method. This restriction has effect only if
+the base class type is a constructed type where the substitution of type arguments
+makes the signature of two methods the same.
+The overridden base method is a virtual, abstract, or override method. In other
+words, the overridden base method cannot be static or non-virtual.
+The overridden base method is not a sealed method.
+There is an identity conversion between the return type of the overridden base
+method and the override method.
+The override declaration and the overridden base method have the same declared
+accessibility. In other words, an override declaration cannot change the
+accessibility of the virtual method. However, if the overridden base method is
+protected internal and it is declared in a different assembly than the assembly
+containing the override declaration then the override declaration’s declared
+accessibility shall be protected.
+The override declaration does not specify any type_p aramet er_constr aints_claus es.
+Instead, the constraints are inherited from the overridden base method.
+Constraints that are type parameters in the overridden method may be replaced by
+type arguments in the inherited constraint. This can lead to constraints that are not
+valid when explicitly specified, such as value types or sealed types.
+Example : The following demonstrates how the overriding rules work for generic
+classes:
+C#
+abstract  class C<T>
+{
+    public virtual T F() {...}
+    public virtual C<T> G() {...}
+    public virtual void H(C<T> x) {...}
+}
+class D : C<string>
+{
+    public override  string F() {...}            // Ok
+    public override  C<string> G() {...}         // Ok
+    public override  void H(C<T> x) {...}        // Error, should be  
+C<string>end ex ample
+An override declaration can access the overridden base method using a base_access
+(§12.8.14 ).
+Example : In the following code
+C#
+the base.PrintFields() invocation in B invokes the PrintFields method declared
+in A. A base_access disables the virtual invocation mechanism and simply treats the
+base method as a non- virtual method. Had the invocation in B been written
+((A)this).PrintFields(), it would recursively invoke the PrintFields method
+declared in  B, not the one declared in  A, since PrintFields is virtual and the run-
+time type of ((A)this) is B.
+end ex ample}
+class E<T,U> : C<U>
+{
+    public override  U F() {...}                 // Ok
+    public override  C<U> G() {...}              // Ok
+    public override  void H(C<T> x) {...}        // Error, should be C<U>
+}
+class A
+{
+    int x;
+    public virtual void PrintFields () => Console.WriteLine( $"x = {x}");
+}
+class B : A
+{
+    int y;
+    public override  void PrintFields ()
+    {
+        base.PrintFields();
+        Console.WriteLine( $"y = {y}");
+    }
+}Only by including an override modifier can a method override another method. In all
+other cases, a method with the same signature as an inherited method simply hides the
+inherited method.
+Example : In the following code
+C#
+the F method in B does not include an override modifier and therefore does not
+override the F method in  A. Rather, the F method in B hides the method in  A, and
+a warning is reported because the declaration does not include a new modifier.
+end ex ample
+Example : In the following code
+C#
+the F method in B hides the virtual  F method inherited from  A. Since the new  F in
+B has private access, its scope only includes the class body of B and does not
+extend to  C. Therefore, the declaration of F in C is permitted to override the F
+inherited from  A.class A
+{
+    public virtual void F() {}
+}
+class B : A
+{
+    public virtual void F() {} // Warning, hiding inherited F()
+}
+class A
+{
+    public virtual void F() {}
+}
+class B : A
+{
+    private new void F() {} // Hides A.F within body of B
+}
+class C : B
+{
+    public override  void F() {} // Ok, overrides A.F
+}end ex ample
+When an instance method declaration includes a sealed modifier, that method is said to
+be a sealed method . A sealed method overrides an inherited virtual method with the
+same signature. A sealed method shall also be marked with the override modifier. Use
+of the sealed modifier prevents a derived class from further overriding the method.
+Example : The example
+C#
+the class  B provides two override methods: an F method that has the sealed
+modifier and a G method that does not. B’s use of the sealed modifier prevents C
+from further overriding  F.
+end ex ample
+When an instance method declaration includes an abstract modifier, that method is
+said to be an abstr act method . Although an abstract method is implicitly also a virtual
+method, it cannot have the modifier virtual.
+An abstract method declaration introduces a new virtual method but does not provide
+an implementation of that method. Instead, non-abstract derived classes are required to
+provide their own implementation by overriding that method. Because an abstract15.6.6 Sealed methods
+class A
+{
+    public virtual void F() => Console.WriteLine( "A.F");
+    public virtual void G() => Console.WriteLine( "A.G");
+}
+class B : A
+{
+    public sealed override  void F() => Console.WriteLine( "B.F");
+    public override  void G()        => Console.WriteLine( "B.G");
+}
+class C : B
+{
+    public override  void G() => Console.WriteLine( "C.G");
+}
+15.6.7 Abstract methodsmethod provides no actual implementation, the method body of an abstract method
+simply consists of a semicolon.
+Abstract method declarations are only permitted in abstract classes ( §15.2.2.2 ).
+Example : In the following code
+C#
+the Shape class defines the abstract notion of a geometrical shape object that can
+paint itself. The Paint method is abstract because there is no meaningful default
+implementation. The Ellipse and Box classes are concrete Shape implementations.
+Because these classes are non-abstract, they are required to override the Paint
+method and provide an actual implementation.
+end ex ample
+It is a compile-time error for a base_access (§12.8.14 ) to reference an abstract method.
+Example : In the following code
+C#public abstract  class Shape
+{
+    public abstract  void Paint(Graphics g, Rectangle r );
+}
+public class Ellipse : Shape
+{
+    public override  void Paint(Graphics g, Rectangle r ) => 
+g.DrawEllipse(r);
+}
+public class Box : Shape
+{
+    public override  void Paint(Graphics g, Rectangle r ) => 
+g.DrawRect(r);
+}
+abstract  class A
+{
+    public abstract  void F();
+}
+class B : A
+{
+    // Error, base.F is abstracta compile-time error is reported for the base.F() invocation because it references
+an abstract method.
+end ex ample
+An abstract method declaration is permitted to override a virtual method. This allows an
+abstract class to force re-implementation of the method in derived classes, and makes
+the original implementation of the method unavailable.
+Example : In the following code
+C#
+class A declares a virtual method, class  B overrides this method with an abstract
+method, and class  C overrides the abstract method to provide its own
+implementation.
+end ex ample
+When a method declaration includes an extern modifier, the method is said to be an
+external method . External methods are implemented externally, typically using a
+language other than C#. Because an external method declaration provides no actual
+implementation, the method body of an external method simply consists of a
+semicolon. An external method shall not be generic.    public override  void F() => base.F();
+}
+class A
+{
+    public virtual void F() => Console.WriteLine( "A.F");
+}
+abstract  class B: A
+{
+    public abstract  override  void F();
+}
+class C : B
+{
+    public override  void F() => Console.WriteLine( "C.F");
+}
+15.6.8 External methodsThe mechanism by which linkage to an external method is achieved, is implementation-
+defined.
+Example : The following example demonstrates the use of the extern modifier and
+the DllImport attribute:
+C#
+end ex ample
+When a method declaration includes a partial modifier, that method is said to be a
+partial method . Partial methods may only be declared as members of partial types
+(§15.2.7 ), and are subject to a number of restrictions.
+Partial methods may be defined in one part of a type declaration and implemented in
+another. The implementation is optional; if no part implements the partial method, the
+partial method declaration and all calls to it are removed from the type declaration
+resulting from the combination of the parts.
+Partial methods shall not define access modifiers; they are implicitly private. Their return
+type shall be void, and their parameters shall not have the out modifier. The identifier
+partial is recognized as a contextual keyword ( §6.4.4 ) in a method declaration only if it
+appears immediately before the void keyword. A partial method cannot explicitly
+implement interface methods.
+There are two kinds of partial method declarations: If the body of the method
+declaration is a semicolon, the declaration is said to be a defining p artial methodclass Path
+{
+    [DllImport( "kernel32" , SetLastError=true) ]
+    static extern bool CreateDirectory (string name, SecurityAttribute  
+sa);
+    [DllImport( "kernel32" , SetLastError=true) ]
+    static extern bool RemoveDirectory (string name);
+    [DllImport( "kernel32" , SetLastError=true) ]
+    static extern int GetCurrentDirectory (int bufSize, StringBuilder  
+buf);
+    [DllImport( "kernel32" , SetLastError=true) ]
+    static extern bool SetCurrentDirectory (string name);
+}
+15.6.9 Partial methodsdeclar ation . If the body is other than a semicolon, the declaration is said to be an
+implementing p artial method declar ation . Across the parts of a type declaration, there
+may be only one defining partial method declaration with a given signature, and there
+may be only one implementing partial method declaration with a given signature. If an
+implementing partial method declaration is given, a corresponding defining partial
+method declaration shall exist, and the declarations shall match as specified in the
+following:
+The declarations shall have the same modifiers (although not necessarily in the
+same order), method name, number of type parameters and number of
+parameters.
+Corresponding parameters in the declarations shall have the same modifiers
+(although not necessarily in the same order) and the same types (modulo
+differences in type parameter names).
+Corresponding type parameters in the declarations shall have the same constraints
+(modulo differences in type parameter names).
+An implementing partial method declaration can appear in the same part as the
+corresponding defining partial method declaration.
+Only a defining partial method participates in overload resolution. Thus, whether or not
+an implementing declaration is given, invocation expressions may resolve to invocations
+of the partial method. Because a partial method always returns void, such invocation
+expressions will always be expression statements. Furthermore, because a partial
+method is implicitly private, such statements will always occur within one of the parts
+of the type declaration within which the partial method is declared.
+Note: The definition of matching defining and implementing partial method
+declarations does not require parameter names to match. This can produce
+surpr ising, albeit well def ined, behaviour when named arguments ( §12.6.2.1 ) are
+used. For example, given the defining partial method declaration for M in one file,
+and the implementing partial method declaration in another file:
+C#
+// File P1.cs:
+partial class P
+{
+    static partial void M(int x);
+}
+// File P2.cs:
+partial class P
+{
+    static void Caller() => M(y: 0);is invalid as the invocation uses the argument name from the implementing and not
+the defining partial method declaration.
+end not e
+If no part of a partial type declaration contains an implementing declaration for a given
+partial method, any expression statement invoking it is simply removed from the
+combined type declaration. Thus the invocation expression, including any
+subexpressions, has no effect at run-time. The partial method itself is also removed and
+will not be a member of the combined type declaration.
+If an implementing declaration exists for a given partial method, the invocations of the
+partial methods are retained. The partial method gives rise to a method declaration
+similar to the implementing partial method declaration except for the following:
+The partial modifier is not included.
+The attributes in the resulting method declaration are the combined attributes of
+the defining and the implementing partial method declaration in unspecified
+order. Duplicates are not removed.
+The attributes on the parameters of the resulting method declaration are the
+combined attributes of the corresponding parameters of the defining and the
+implementing partial method declaration in unspecified order. Duplicates are not
+removed.
+If a defining declaration but not an implementing declaration is given for a partial
+method  M, the following restrictions apply:
+It is a compile-time error to create a delegate from  M (§12.8.16.6 ).
+It is a compile-time error to refer to M inside an anonymous function that is
+converted to an expression tree type ( §8.6).
+Expressions occurring as part of an invocation of M do not affect the definite
+assignment state ( §9.4), which can potentially lead to compile-time errors.
+M cannot be the entry point for an application ( §7.1).
+Partial methods are useful for allowing one part of a type declaration to customize the
+behavior of another part, e.g., one that is generated by a tool. Consider the following    static partial void M(int y) {}
+}partial class declaration:
+C#
+If this class is compiled without any other parts, the defining partial method declarations
+and their invocations will be removed, and the resulting combined class declaration will
+be equivalent to the following:
+C#
+Assume that another part is given, however, which provides implementing declarations
+of the partial methods:
+C#partial class Customer
+{
+    string name;
+    public string Name
+    {
+        get => name;
+        set
+        {
+            OnNameChanging( value);
+            name = value;
+            OnNameChanged();
+        }
+    }
+    partial void OnNameChanging (string newName );
+    partial void OnNameChanged ();
+}
+class Customer
+{
+    string name;
+    public string Name
+    {
+        get => name;
+        set => name = value;
+    }
+}
+partial class Customer
+{
+    partial void OnNameChanging (string newName ) =>
+        Console.WriteLine( $"Changing {name} to {newName} ");Then the resulting combined class declaration will be equivalent to the following:
+C#
+When the first parameter of a method includes the this modifier, that method is said to
+be an extension method . Extension methods shall only be declared in non-generic, non-
+nested static classes. The first parameter of an extension method is restricted, as follows:
+It may have the parameter modifier in only if the parameter has a value type
+It may have the parameter modifier ref only if the parameter has a value type or is
+a generic type constrained to struct
+It shall not be a pointer type.
+Example : The following is an example of a static class that declares two extension
+methods:
+C#    partial void OnNameChanged () =>
+        Console.WriteLine( $"Changed to {name}");
+}
+class Customer
+{
+    string name;
+    public string Name
+    {
+        get => name;
+        set
+        {
+            OnNameChanging( value);
+            name = value;
+            OnNameChanged();
+        }
+    }
+    void OnNameChanging (string newName ) =>
+        Console.WriteLine( $"Changing {name} to {newName} ");
+    void OnNameChanged () =>
+        Console.WriteLine( $"Changed to {name}");
+}
+15.6.10 Extension methodsend ex ample
+An extension method is a regular static method. In addition, where its enclosing static
+class is in scope, an extension method may be invoked using instance method
+invocation syntax ( §12.8.9.3 ), using the receiver expression as the first argument.
+Example : The following program uses the extension methods declared above:
+C#
+The Slice method is available on the string[], and the ToInt32 method is
+available on string, because they have been declared as extension methods. The
+meaning of the program is the same as the following, using ordinary static method
+calls:
+C#public static class Extensions
+{
+    public static int ToInt32(this string s) => Int32.Parse(s);
+    public static T[] Slice<T>( this T[] source, int index, int count)
+    {
+        if (index < 0 || count < 0 || source.Length - index < count)
+        {
+            throw new ArgumentException();
+        }
+        T[] result = new T[count];
+        Array.Copy(source, index, result, 0, count);
+        return result;
+    }
+}
+static class Program
+{
+    static void Main()
+    {
+        string[] strings = { "1", "22", "333", "4444" };
+        foreach (string s in strings.Slice( 1, 2))
+        {
+            Console.WriteLine(s.ToInt32());
+        }
+    }
+}
+static class Program
+{end ex ample
+The method body of a method declaration consists of either a block body, an expression
+body or a semicolon.
+Abstract and external method declarations do not provide a method implementation, so
+their method bodies simply consist of a semicolon. For any other method, the method
+body is a block ( §13.3 ) that contains the statements to execute when that method is
+invoked.
+The effectiv e return type  of a method is void if the return type is void, or if the method
+is async and the return type is «TaskType» (§15.15.1 ). Otherwise, the effective return type
+of a non-async method is its return type, and the effective return type of an async
+method with return type «TaskType»<T>(§15.15.1 ) is T.
+When the effective return type of a method is void and the method has a block body,
+return statements ( §13.10.5 ) in the block shall not specify an expression. If execution of
+the block of a void method completes normally (that is, control flows off the end of the
+method body), that method simply returns to its caller.
+When the effective return type of a method is void and the method has an expression
+body, the expression E shall be a statement_expr ession , and the body is exactly
+equivalent to a block body of the form { E; }.
+For a returns-by-value method ( §15.6.1 ), each return statement in that method’s body
+shall specify an expression that is implicitly convertible to the effective return type.
+For a returns-by-ref method ( §15.6.1 ), each return statement in that method’s body shall
+specify an expression whose type is that of the effective return type, and has a ref-safe-
+context of caller -context (§9.7.2 ).    static void Main()
+    {
+        string[] strings = { "1", "22", "333", "4444" };
+        foreach (string s in Extensions.Slice(strings, 1, 2))
+        {
+            Console.WriteLine(Extensions.ToInt32(s));
+        }
+    }
+}
+15.6.11 Method bodyFor returns-by-value and returns-by-ref methods the endpoint of the method body shall
+not be reachable. In other words, control is not permitted to flow off the end of the
+method body.
+Example : In the following code
+C#
+the value-returning F method results in a compile-time error because control can
+flow off the end of the method body. The G and H methods are correct because all
+possible execution paths end in a return statement that specifies a return value. The
+I method is correct, because its body is equivalent to a block with just a single
+return statement in it.
+end ex ample
+A property is a member that provides access to a characteristic of an object or a class.
+Examples of properties include the length of a string, the size of a font, the caption of aclass A
+{
+    public int F() {} // Error, return value required
+    public int G()
+    {
+        return 1;
+    }
+    public int H(bool b)
+    {
+        if (b)
+        {
+            return 1;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    public int I(bool b) => b ? 1 : 0;
+}
+15.7 Properties
+15.7.1 Generalwindow, the name of a customer, and so on. Properties are a natural extension of fields
+—both are named members with associated types, and the syntax for accessing fields
+and properties is the same. However, unlike fields, properties do not denote storage
+locations. Instead, properties have accessors that specify the statements to be executed
+when their values are read or written. Properties thus provide a mechanism for
+associating actions with the reading and writing of an object’s characteristics;
+furthermore, they permit such characteristics to be computed.
+Properties are declared using property_declar ation s:
+ANTLR
+unsafe_modi fier (§23.2 ) is only available in unsafe code ( §23).
+There are two kinds of property_declar ation :property_declaration
+    : attributes? property_modifier* type member_name property_body
+    | attributes? property_modifier* ref_kind type member_name  
+ref_property_body
+    ;    
+property_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | 'static'
+    | 'virtual'
+    | 'sealed'
+    | 'override'
+    | 'abstract'
+    | 'extern'
+    | unsafe_modifier   // unsafe code support
+    ;
+    
+property_body
+    : '{' accessor_declarations '}' property_initializer?
+    | '=>' expression ';'
+    ;
+property_initializer
+    : '=' variable_initializer ';'
+    ;
+ref_property_body
+    : '{' ref_get_accessor_declaration '}'
+    | '=>' 'ref' variable_reference ';'
+    ;The first declares a non-ref-valued property. Its value has type type. This kind of
+property may be readable and/or writeable.
+The second declares a ref-valued property. Its value is a variable_r eference (§9.5),
+that may be readonly, to a variable of type type. This kind of property is only
+readable.
+A property_declar ation  may include a set of attributes (§22) and any one of the permitted
+kinds of declared accessibility ( §15.3.6 ), the new (§15.3.5 ), static (§15.7.2 ), virtual
+(§15.6.4 , §15.7.6 ), override (§15.6.5 , §15.7.6 ), sealed (§15.6.6 ), abstract (§15.6.7 , §15.7.6 ),
+and extern (§15.6.8 ) modifiers.
+Property declarations are subject to the same rules as method declarations ( §15.6 ) with
+regard to valid combinations of modifiers.
+The member_name  (§15.6.1 ) specifies the name of the property. Unless the property is
+an explicit interface member implementation, the member_name  is simply an identi fier.
+For an explicit interface member implementation ( §18.6.2 ), the member_name  consists of
+an interface_type  followed by a “ .” and an identi fier.
+The type of a property shall be at least as accessible as the property itself ( §7.5.5 ).
+A property_body  may either consist of a statement body or an expression body. In a
+statement body, accessor_declar ations , which shall be enclosed in “ {” and “}” tokens,
+declare the accessors ( §15.7.3 ) of the property. The accessors specify the executable
+statements associated with reading and writing the property.
+In a property_body  an expression body consisting of => followed by an expression  E and
+a semicolon is exactly equivalent to the statement body { get { return E; } }, and can
+therefore only be used to specify read-only properties where the result of the get
+accessor is given by a single expression.
+A property_initializer  may only be given for an automatically implemented property
+(§15.7.4 ), and causes the initialization of the underlying field of such properties with the
+value given by the expression .
+A ref_pr operty_body  may either consist of a statement body or an expression body. In a
+statement body a get_ac cessor_declar ation  declares the get accessor ( §15.7.3 ) of the
+property. The accessor specifies the executable statements associated with reading the
+property.
+In a ref_pr operty_body  an expression body consisting of => followed by ref, a
+variable_r eference V and a semicolon is exactly equivalent to the statement body { get
+{ return ref V; } }.Note: Even though the syntax for accessing a property is the same as that for a field,
+a property is not classified as a variable. Thus, it is not possible to pass a property as
+an in, out, or ref argument unless the property is ref-valued and therefore returns
+a variable reference ( §9.7). end not e
+When a property declaration includes an extern modifier, the property is said to be an
+external pr operty. Because an external property declaration provides no actual
+implementation, each of its accessor_declar ations  consists of a semicolon.
+When a property declaration includes a static modifier, the property is said to be a
+static pr operty. When no static modifier is present, the property is said to be an
+instance property.
+A static property is not associated with a specific instance, and it is a compile-time error
+to refer to this in the accessors of a static property.
+An instance property is associated with a given instance of a class, and that instance can
+be accessed as this (§12.8.13 ) in the accessors of that property.
+The differences between static and instance members are discussed further in §15.3.8 .
+Note: This clause applies to both properties ( §15.7 ) and indexers ( §15.9 ). The clause is
+written in terms of properties, when reading for indexers substitute indexer/indexers for
+property/properties and consult the list of differences between properties and indexers
+given in §15.9.2 . end not e
+The accessor_declar ations  of a property specify the executable statements associated
+with writing and/or reading that property.
+ANTLR15.7.2 Static and instance properties
+15.7.3 Accessors
+accessor_declarations
+    : get_accessor_declaration set_accessor_declaration?
+    | set_accessor_declaration get_accessor_declaration?
+    ;
+get_accessor_declaration
+    : attributes? accessor_modifier? 'get' accessor_body
+    ;The accessor_declar ations  consist of a get_ac cessor_declar ation , a
+set_ac cessor_declar ation , or both. Each accessor declaration consists of optional
+attributes, an optional accessor_modi fier, the token get or set, followed by an
+accessor_body .
+For a ref-valued property the ref_get_ac cessor_declar ation  consists optional attributes, an
+optional accessor_modi fier, the token get, followed by an ref_ac cessor_body .
+The use of accessor_modi fiers is governed by the following restrictions:
+An accessor_modi fier shall not be used in an interface or in an explicit interface
+member implementation.
+For a property or indexer that has no override modifier, an accessor_modi fier is
+permitted only if the property or indexer has both a get and set accessor, and then
+is permitted only on one of those accessors.
+For a property or indexer that includes an override modifier, an accessor shall
+match the accessor_modi fier, if any, of the accessor being overridden.set_accessor_declaration
+    : attributes? accessor_modifier? 'set' accessor_body
+    ;
+accessor_modifier
+    : 'protected'
+    | 'internal'
+    | 'private'
+    | 'protected'  'internal'
+    | 'internal'  'protected'
+    | 'protected'  'private'
+    | 'private'  'protected'
+    ;
+accessor_body
+    : block
+    | '=>' expression ';'
+    | ';' 
+    ;
+ref_get_accessor_declaration
+    : attributes? accessor_modifier? 'get' ref_accessor_body
+    ;
+    
+ref_accessor_body
+    : block
+    | '=>' 'ref' variable_reference ';'
+    | ';'
+    ;The accessor_modi fier shall declare an accessibility that is strictly more restrictive
+than the declared accessibility of the property or indexer itself. T o be precise:
+If the property or indexer has a declared accessibility of public, the accessibility
+declared by accessor_modi fier may be either private protected, protected
+internal, internal, protected, or private.
+If the property or indexer has a declared accessibility of protected internal, the
+accessibility declared by accessor_modi fier may be either private protected,
+protected private, internal, protected, or private.
+If the property or indexer has a declared accessibility of internal or protected,
+the accessibility declared by accessor_modi fier shall be either private protected
+or private.
+If the property or indexer has a declared accessibility of private protected, the
+accessibility declared by accessor_modi fier shall be private.
+If the property or indexer has a declared accessibility of private, no
+accessor_modi fier may be used.
+For abstract and extern non-ref-valued properties, any accessor_body  for each
+accessor specified is simply a semicolon. A non-abstract, non-extern property, but not
+an indexer, may also have the accessor_body  for all accessors specified be a semicolon, in
+which case it is an automatically implement ed pr operty (§15.7.4 ). An automatically
+implemented property shall have at least a get accessor. For the accessors of any other
+non-abstract, non-extern property, the accessor_body  is either:
+a block  that specifies the statements to be executed when the corresponding
+accessor is invoked; or
+an expression body, which consists of => followed by an expression  and a
+semicolon, and denotes a single expression to be executed when the
+corresponding accessor is invoked.
+For abstract and extern ref-valued properties the ref_ac cessor_body  is simply a
+semicolon. For the accessor of any other non-abstract, non-extern property, the
+ref_ac cessor_body  is either:
+a block  that specifies the statements to be executed when the get accessor is
+invoked; or
+an expression body, which consists of => followed by ref, a variable_r eference and
+a semicolon. The variable reference is evaluated when the get accessor is invoked.
+A get accessor for a non-ref-valued property corresponds to a parameterless method
+with a return value of the property type. Except as the target of an assignment, whensuch a property is referenced in an expression its get accessor is invoked to compute
+the value of the property ( §12.2.2 ).
+The body of a get accessor for a non-ref-valued property shall conform to the rules for
+value-returning methods described in §15.6.11 . In particular, all return statements in
+the body of a get accessor shall specify an expression that is implicitly convertible to the
+property type. Furthermore, the endpoint of a get accessor shall not be reachable.
+A get accessor for a ref-valued property corresponds to a parameterless method with a
+return value of a variable_r eference to a variable of the property type. When such a
+property is referenced in an expression its get accessor is invoked to compute the
+variable_r eference value of the property. That variable r eference, like any other, is then
+used to read or, for non-readonly variable_r eferences, write the referenced variable as
+required by the context.
+Example : The following example illustrates a ref-valued property as the target of an
+assignment:
+C#
+end ex ample
+The body of a get accessor for a ref-valued property shall conform to the rules for ref-
+valued methods described in §15.6.11 .
+A set accessor corresponds to a method with a single value parameter of the property
+type and a void return type. The implicit parameter of a set accessor is always named
+value. When a property is referenced as the target of an assignment ( §12.21 ), or as the
+operand of ++ or –- (§12.8.15 , §12.9.6 ), the set accessor is invoked with an argumentclass Program
+{
+    static int field;
+    static ref int Property => ref field;
+    static void Main()
+    {
+        field = 10;
+        Console.WriteLine(Property); // Prints 10
+        Property = 20;               // This invokes the getter, then  
+assigns
+                                     // via the resulting variable  
+reference
+        Console.WriteLine(field);    // Prints 20
+    }
+}that provides the new value ( §12.21.2 ). The body of a set accessor shall conform to the
+rules for void methods described in §15.6.11 . In particular, return statements in the set
+accessor body are not permitted to specify an expression. Since a set accessor implicitly
+has a parameter named value, it is a compile-time error for a local variable or constant
+declaration in a set accessor to have that name.
+Based on the presence or absence of the get and set accessors, a property is classified
+as follows:
+A property that includes both a get accessor and a set accessor is said to be a
+read-wr ite property.
+A property that has only a get accessor is said to be a read-only pr operty. It is a
+compile-time error for a read-only property to be the target of an assignment.
+A property that has only a set accessor is said to be a write-only pr operty. Except
+as the target of an assignment, it is a compile-time error to reference a write-only
+property in an expression.
+Note: The pre- and postfix ++ and -- operators and compound assignment
+operators cannot be applied to write-only properties, since these operators read the
+old value of their operand before they write the new one. end not e
+Example : In the following code
+C#
+public class Button : Control
+{
+    private string caption;
+    public string Caption
+    {
+        get => caption;
+        set
+        {
+            if (caption != value)
+            {
+                caption = value;
+                Repaint();
+            }
+        }
+    }
+    public override  void Paint(Graphics g, Rectangle r )
+    {
+        // Painting code goes herethe Button control declares a public Caption property. The get accessor of the
+Caption property returns the string stored in the private caption field. The set
+accessor checks if the new value is different from the current value, and if so, it
+stores the new value and repaints the control. Properties often follow the pattern
+shown above: The get accessor simply returns a value stored in a private field, and
+the set accessor modifies that private field and then performs any additional
+actions required to update fully the state of the object. Given the Button class
+above, the following is an example of use of the Caption property:
+C#
+Here, the set accessor is invoked by assigning a value to the property, and the get
+accessor is invoked by referencing the property in an expression.
+end ex ample
+The get and set accessors of a property are not distinct members, and it is not possible
+to declare the accessors of a property separately.
+Example : The example
+C#    }
+}
+Button okButton = new Button();
+okButton.Caption = "OK"; // Invokes set accessor
+string s = okButton.Caption; // Invokes get accessor
+class A
+{
+    private string name;
+    // Error, duplicate member name
+    public string Name
+    { 
+        get => name;
+    }
+    // Error, duplicate member name
+    public string Name
+    { 
+        set => name = value;does not declare a single read-write property. Rather, it declares two properties with
+the same name, one read-only and one write-only. Since two members declared in
+the same class cannot have the same name, the example causes a compile-time
+error to occur.
+end ex ample
+When a derived class declares a property by the same name as an inherited property,
+the derived property hides the inherited property with respect to both reading and
+writing.
+Example : In the following code
+C#
+the P property in B hides the P property in A with respect to both reading and
+writing. Thus, in the statements
+C#
+the assignment to b.P causes a compile-time error to be reported, since the read-
+only P property in B hides the write-only P property in  A. Note, however, that a
+cast can be used to access the hidden P property.    }
+}
+class A
+{
+    public int P
+    {
+        set {...}
+    }
+}
+class B : A
+{
+    public new int P
+    {
+        get {...}
+    }
+}
+B b = new B();
+b.P = 1;       // Error, B.P is read-only
+((A)b).P = 1;  // Ok, reference to A.Pend ex ample
+Unlike public fields, properties provide a separation between an object’s internal state
+and its public interface.
+Example : Consider the following code, which uses a Point struct to represent a
+location:
+C#
+Here, the Label class uses two int fields, x and y, to store its location. The
+location is publicly exposed both as an X and a Y property and as a Location
+property of type Point. If, in a future version of Label, it becomes more convenient
+to store the location as a Point internally, the change can be made without
+affecting the public interface of the class:
+C#class Label
+{
+    private int x, y;
+    private string caption;
+    public Label(int x, int y, string caption )
+    {
+        this.x = x;
+        this.y = y;
+        this.caption = caption;
+    }
+    public int X => x;
+    public int Y => y;
+    public Point Location => new Point(x, y);
+    public string Caption => caption;
+}
+class Label
+{
+    private Point location;
+    private string caption;
+    public Label(int x, int y, string caption )
+    {
+        this.location = new Point(x, y);
+        this.caption = caption;
+    }
+    public int X => location.X;Had x and y instead been public readonly fields, it would have been impossible to
+make such a change to the Label class.
+end ex ample
+Note: Exposing state through properties is not necessarily any less efficient than
+exposing fields directly. In particular, when a property is non-virtual and contains
+only a small amount of code, the execution environment might replace calls to
+accessors with the actual code of the accessors. This process is known as inlining ,
+and it makes property access as efficient as field access, yet preserves the increased
+flexibility of properties. end not e
+Example : Since invoking a get accessor is conceptually equivalent to reading the
+value of a field, it is considered bad programming style for get accessors to have
+observable side-effects. In the example
+C#
+the value of the Next property depends on the number of times the property has
+previously been accessed. Thus, accessing the property produces an observable side
+effect, and the property should be implemented as a method instead.
+The “no side-effects” convention for get accessors doesn’t mean that get accessors
+should always be written simply to return values stored in fields. Indeed, get
+accessors often compute the value of a property by accessing multiple fields or
+invoking methods. However, a properly designed get accessor performs no actions
+that cause observable changes in the state of the object.
+end ex ample    public int Y => location.Y;
+    public Point Location => location;
+    public string Caption => caption;
+}
+class Counter
+{
+    private int next;
+    public int Next => next++;
+}Properties can be used to delay initialization of a resource until the moment it is first
+referenced.
+Example :
+C#
+public class Console
+{
+    private static TextReader reader;
+    private static TextWriter writer;
+    private static TextWriter error;
+    public static TextReader In
+    {
+        get
+        {
+            if (reader == null)
+            {
+                reader = new StreamReader(Console.OpenStandardInput());
+            }
+            return reader;
+        }
+    }
+    public static TextWriter Out
+    {
+        get
+        {
+            if (writer == null)
+            {
+                writer = new StreamWriter(Console.OpenStandardOutput());
+            }
+            return writer;
+        }
+    }
+    public static TextWriter Error
+    {
+        get
+        {
+            if (error == null)
+            {
+                error = new StreamWriter(Console.OpenStandardError());
+            }
+            return error;
+        }
+    }
+...
+}The Console class contains three properties, In, Out, and Error, that represent the
+standard input, output, and error devices, respectively. By exposing these members
+as properties, the Console class can delay their initialization until they are actually
+used. For example, upon first referencing the Out property, as in
+C#
+the underlying TextWriter for the output device is created. However, if the
+application makes no reference to the In and Error properties, then no objects are
+created for those devices.
+end ex ample
+An automatically implemented property (or auto-property for short), is a non-abstract,
+non-extern, non-ref-valued property with semicolon-only accessor bodies. Auto-
+properties shall have a get accessor and may optionally have a set accessor.
+When a property is specified as an automatically implemented property, a hidden
+backing field is automatically available for the property, and the accessors are
+implemented to read from and write to that backing field. The hidden backing field is
+inaccessible, it can be read and written only through the automatically implemented
+property accessors, even within the containing type. If the auto-property has no set
+accessor, the backing field is considered readonly (§15.5.3 ). Just like a readonly field, a
+read-only auto-property may also be assigned to in the body of a constructor of the
+enclosing class. Such an assignment assigns directly to the read-only backing field of the
+property.
+An auto-property may optionally have a property_initializer , which is applied directly to
+the backing field as a variable_initializer  (§17.7 ).
+Example :
+C#Console.Out.WriteLine( "hello, world" );
+15.7.4 Automatically implemented properties
+public class Point
+{
+    public int X { get; set; } // Automatically implemented
+    public int Y { get; set; } // Automatically implemented
+}is equivalent to the following declaration:
+C#
+end ex ample
+Example : In the following
+C#
+is equivalent to the following declaration:
+C#public class Point
+{
+    private int x;
+    private int y;
+    public int X { get { return x; } set { x = value; } }
+    public int Y { get { return y; } set { y = value; } }
+}
+public class ReadOnlyPoint
+{
+    public int X { get; }
+    public int Y { get; }
+    public ReadOnlyPoint (int x, int y)
+    {
+        X = x;
+        Y = y;
+    }
+}
+public class ReadOnlyPoint
+{
+    private readonly  int __x;
+    private readonly  int __y;
+    public int X { get { return __x; } }
+    public int Y { get { return __y; } }
+    public ReadOnlyPoint (int x, int y)
+    {
+        __x = x;
+        __y = y;
+    }
+}The assignments to the read-only field are valid, because they occur within the
+constructor.
+end ex ample
+Although the backing field is hidden, that field may have field-targeted attributes
+applied directly to it via the automatically implemented property’s property_declar ation
+(§15.7.1 ).
+Example : The following code
+C#
+results in the field-targeted attribute NonSerialized being applied to the compiler-
+generated backing field, as if the code had been written as follows:
+C#
+end ex ample
+If an accessor has an accessor_modi fier, the accessibility domain ( §7.5.3 ) of the accessor
+is determined using the declared accessibility of the accessor_modi fier. If an accessor
+does not have an accessor_modi fier, the accessibility domain of the accessor is
+determined from the declared accessibility of the property or indexer.[Serializable ]
+public class Foo
+{
+    [field: NonSerialized ]
+    public string MySecret { get; set; }
+}
+[Serializable ]
+public class Foo
+{
+    [NonSerialized ]
+    private string _mySecretBackingField;
+    public string MySecret
+    {
+        get { return _mySecretBackingField; }
+        set { _mySecretBackingField = value; }
+    }
+}
+15.7.5 AccessibilityThe presence of an accessor_modi fier never affects member lookup ( §12.5 ) or overload
+resolution ( §12.6.4 ). The modifiers on the property or indexer always determine which
+property or indexer is bound to, regardless of the context of the access.
+Once a particular non-ref-valued property or non-ref-valued indexer has been selected,
+the accessibility domains of the specific accessors involved are used to determine if that
+usage is valid:
+If the usage is as a value ( §12.2.2 ), the get accessor shall exist and be accessible.
+If the usage is as the target of a simple assignment ( §12.21.2 ), the set accessor shall
+exist and be accessible.
+If the usage is as the target of compound assignment ( §12.21.4 ), or as the target of
+the ++ or -- operators ( §12.8.15 , §12.9.6 ), both the get accessors and the set
+accessor shall exist and be accessible.
+Example : In the following example, the property  A.Text is hidden by the property
+B.Text, even in contexts where only the set accessor is called. In contrast, the
+property  B.Count is not accessible to class M, so the accessible property  A.Count is
+used instead.
+C#
+class A
+{
+    public string Text
+    {
+        get => "hello";
+        set { }
+    }
+    public int Count
+    {
+        get => 5;
+        set { }
+    }
+}
+class B : A
+{
+    private string text = "goodbye" ;
+    private int count = 0;
+    public new string Text
+    {
+        get => text;
+        protected  set => text = value;
+    }
+    protected  new int Countend ex ample
+Once a particular ref-valued property or ref-valued indexer has been selected; whether
+the usage is as a value, the target of a simple assignment, or the target of a compound
+assignment; the accessibility domain of the get accessor involved is used to determine if
+that usage is valid.
+An accessor that is used to implement an interface shall not have an accessor_modi fier. If
+only one accessor is used to implement an interface, the other accessor may be declared
+with an accessor_modi fier:
+Example :
+C#
+end ex ample    {
+        get => count;
+        set => count = value;
+    }
+}
+class M
+{
+    static void Main()
+    {
+        B b = new B();
+        b.Count = 12;       // Calls A.Count set accessor
+        int i = b.Count;    // Calls A.Count get accessor
+        b.Text = "howdy";   // Error, B.Text set accessor not accessible
+        string s = b.Text;  // Calls B.Text get accessor
+    }
+}
+public interface  I
+{
+    string Prop { get; }
+}
+public class C : I
+{
+    public string Prop
+    {
+        get => "April";     // Must not have a modifier here
+        internal  set {...}  // Ok, because I.Prop has no set accessor
+    }
+}Note: This clause applies to both properties ( §15.7 ) and indexers ( §15.9 ). The clause is
+written in terms of properties, when reading for indexers substitute indexer/indexers for
+property/properties and consult the list of differences between properties and indexers
+given in §15.9.2 . end not e
+A virtual property declaration specifies that the accessors of the property are virtual. The
+virtual modifier applies to all non-private accessors of a property. When an accessor of
+a virtual property has the private accessor_modi fier, the private accessor is implicitly not
+virtual.
+An abstract property declaration specifies that the accessors of the property are virtual,
+but does not provide an actual implementation of the accessors. Instead, non-abstract
+derived classes are required to provide their own implementation for the accessors by
+overriding the property. Because an accessor for an abstract property declaration
+provides no actual implementation, its accessor_body  simply consists of a semicolon. An
+abstract property shall not have a private accessor.
+A property declaration that includes both the abstract and override modifiers specifies
+that the property is abstract and overrides a base property. The accessors of such a
+property are also abstract.
+Abstract property declarations are only permitted in abstract classes ( §15.2.2.2 ). The
+accessors of an inherited virtual property can be overridden in a derived class by
+including a property declaration that specifies an override directive. This is known as an
+overriding pr operty declar ation . An overriding property declaration does not declare a
+new property. Instead, it simply specializes the implementations of the accessors of an
+existing virtual property.
+The override declaration and the overridden base property are required to have the
+same declared accessibility. In other words, an override declaration may not change the
+accessibility of the base property. However, if the overridden base property is protected
+internal and it is declared in a different assembly than the assembly containing the
+override declaration then the override declaration’s declared accessibility shall be
+protected. If the inherited property has only a single accessor (i.e., if the inherited
+property is read-only or write-only), the overriding property shall include only that
+accessor. If the inherited property includes both accessors (i.e., if the inherited property
+is read-write), the overriding property can include either a single accessor or both
+accessors. There shall be an identity conversion between the type of the overriding and
+the inherited property.15.7.6 Virtual, sealed, override, and abstract accessorsAn overriding property declaration may include the sealed modifier. Use of this
+modifier prevents a derived class from further overriding the property. The accessors of
+a sealed property are also sealed.
+Except for differences in declaration and invocation syntax, virtual, sealed, override, and
+abstract accessors behave exactly like virtual, sealed, override and abstract methods.
+Specifically, the rules described in §15.6.4 , §15.6.5 , §15.6.6 , and §15.6.7  apply as if
+accessors were methods of a corresponding form:
+A get accessor corresponds to a parameterless method with a return value of the
+property type and the same modifiers as the containing property.
+A set accessor corresponds to a method with a single value parameter of the
+property type, a void return type, and the same modifiers as the containing
+property.
+Example : In the following code
+C#
+X is a virtual read-only property, Y is a virtual read-write property, and Z is an
+abstract read-write property. Because Z is abstract, the containing class A shall also
+be declared abstract.
+A class that derives from A is shown below:
+C#abstract  class A
+{
+    int y;
+    public virtual int X
+    {
+        get => 0;
+    }
+    public virtual int Y
+    {
+        get => y;
+        set => y = value;
+    }
+    public abstract  int Z { get; set; }
+}
+class B : A
+{Here, the declarations of X, Y, and Z are overriding property declarations. Each
+property declaration exactly matches the accessibility modifiers, type, and name of
+the corresponding inherited property. The get accessor of X and the set accessor of
+Y use the base keyword to access the inherited accessors. The declaration of Z
+overrides both abstract accessors—thus, there are no outstanding abstract
+function members in  B, and B is permitted to be a non-abstract class.
+end ex ample
+When a property is declared as an override, any overridden accessors shall be accessible
+to the overriding code. In addition, the declared accessibility of both the property or
+indexer itself, and of the accessors, shall match that of the overridden member and
+accessors.
+Example :
+C#    int z;
+    public override  int X
+    {
+        get => base.X + 1;
+    }
+    public override  int Y
+    {
+        set => base.Y = value < 0 ? 0: value;
+    }
+    public override  int Z
+    {
+        get => z;
+        set => z = value;
+    }
+}
+public class B
+{
+    public virtual int P
+    {
+        get {...}
+        protected  set {...}
+    }
+}
+public class D: B
+{end ex ample
+An event is a member that enables an object or class to provide notifications. Clients can
+attach executable code for events by supplying event handler s.
+Events are declared using event_declar ation s:
+ANTLR    public override  int P
+    {
+        get {...}            // Must not have a modifier here
+        protected  set {...}  // Must specify protected here
+    }
+}
+15.8 Events
+15.8.1 General
+event_declaration
+    : attributes? event_modifier* 'event' type variable_declarators ';'
+    | attributes? event_modifier* 'event' type member_name
+        '{' event_accessor_declarations '}'
+    ;
+event_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | 'static'
+    | 'virtual'
+    | 'sealed'
+    | 'override'
+    | 'abstract'
+    | 'extern'
+    | unsafe_modifier   // unsafe code support
+    ;
+event_accessor_declarations
+    : add_accessor_declaration remove_accessor_declaration
+    | remove_accessor_declaration add_accessor_declaration
+    ;
+add_accessor_declaration
+    : attributes? 'add' block
+    ;unsafe_modi fier (§23.2 ) is only available in unsafe code ( §23).
+An event_declar ation  may include a set of attributes (§22) and any one of the permitted
+kinds of declared accessibility ( §15.3.6 ), the new (§15.3.5 ), static (§15.6.3 , §15.8.4 ),
+virtual (§15.6.4 , §15.8.5 ), override (§15.6.5 , §15.8.5 ), sealed (§15.6.6 ), abstract
+(§15.6.7 , §15.8.5 ), and extern (§15.6.8 ) modifiers.
+Event declarations are subject to the same rules as method declarations ( §15.6 ) with
+regard to valid combinations of modifiers.
+The type of an event declaration shall be a delegat e_type  (§8.2.8 ), and that delegat e_type
+shall be at least as accessible as the event itself ( §7.5.5 ).
+An event declaration can include event_ac cessor_declar ation s. However, if it does not, for
+non-extern, non-abstract events, the compiler shall supply them automatically ( §15.8.2 );
+for extern events, the accessors are provided externally.
+An event declaration that omits event_ac cessor_declar ation s defines one or more events
+—one for each of the variable_declar ators. The attributes and modifiers apply to all of
+the members declared by such an event_declar ation .
+It is a compile-time error for an event_declar ation  to include both the abstract modifier
+and event_ac cessor_declar ation s.
+When an event declaration includes an extern modifier, the event is said to be an
+external ev ent. Because an external event declaration provides no actual
+implementation, it is an error for it to include both the extern modifier and
+event_ac cessor_declar ation s.
+It is a compile-time error for a variable_declar ator of an event declaration with an
+abstract or external modifier to include a variable_initializer .
+An event can be used as the left operand of the += and -= operators. These operators
+are used, respectively, to attach event handlers to, or to remove event handlers from an
+event, and the access modifiers of the event control the contexts in which such
+operations are permitted.
+The only operations that are permitted on an event by code that is outside the type in
+which that event is declared, are += and -=. Therefore, while such code can add andremove_accessor_declaration
+    : attributes? 'remove'  block
+    ;remove handlers for an event, it cannot directly obtain or modify the underlying list of
+event handlers.
+In an operation of the form x += y or x –= y, when x is an event the result of the
+operation has type void (§12.21.5 ) (as opposed to having the type of x, with the value
+of x after the assignment, as for other the += and -= operators defined on non-event
+types). This prevents external code from indirectly examining the underlying delegate of
+an event.
+Example : The following example shows how event handlers are attached to
+instances of the Button class:
+C#
+Here, the LoginDialog instance constructor creates two Button instances and
+attaches event handlers to the Click events.
+end ex amplepublic delegate  void EventHandler (object sender, EventArgs e );
+public class Button : Control
+{
+    public event EventHandler Click;
+}
+public class LoginDialog  : Form
+{
+    Button okButton;
+    Button cancelButton;
+    public LoginDialog ()
+    {
+        okButton = new Button(...);
+        okButton.Click += new EventHandler(OkButtonClick);
+        cancelButton = new Button(...);
+        cancelButton.Click += new EventHandler(CancelButtonClick);
+    }
+    void OkButtonClick (object sender, EventArgs e )
+    {
+        // Handle okButton.Click event
+    }
+    void CancelButtonClick (object sender, EventArgs e )
+    {
+        // Handle cancelButton.Click event
+    }
+}Within the program text of the class or struct that contains the declaration of an event,
+certain events can be used like fields. T o be used in this way, an event shall not be
+abstract or extern, and shall not explicitly include event_ac cessor_declar ation s. Such an
+event can be used in any context that permits a field. The field contains a delegate ( §20),
+which refers to the list of event handlers that have been added to the event. If no event
+handlers have been added, the field contains null.
+Example : In the following code
+C#
+Click is used as a field within the Button class. As the example demonstrates, the
+field can be examined, modified, and used in delegate invocation expressions. The
+OnClick method in the Button class “raises” the Click event. The notion of raising
+an event is precisely equivalent to invoking the delegate represented by the event—
+thus, there are no special language constructs for raising events. Note that the
+delegate invocation is preceded by a check that ensures the delegate is non-null
+and that the check is made on a local copy to ensure thread safety.
+Outside the declaration of the Button class, the Click member can only be used on
+the left-hand side of the += and –= operators, as in
+C#15.8.2 Field-like events
+public delegate  void EventHandler (object sender, EventArgs e );
+public class Button : Control
+{
+    public event EventHandler Click;
+    protected  void OnClick(EventArgs e )
+    {
+        EventHandler handler = Click;
+        if (handler != null)
+        {
+            handler( this, e);
+        }
+    }
+    public void Reset() => Click = null;
+}
+b.Click += new EventHandler(...);which appends a delegate to the invocation list of the Click event, and
+C#
+which removes a delegate from the invocation list of the Click event.
+end ex ample
+When compiling a field-like event, the compiler automatically creates storage to hold
+the delegate, and creates accessors for the event that add or remove event handlers to
+the delegate field. The addition and removal operations are thread safe, and may (but
+are not required to) be done while holding the lock ( §13.13 ) on the containing object for
+an instance event, or the System.Type object ( §12.8.17 ) for a static event.
+Note: Thus, an instance event declaration of the form:
+C#
+shall be compiled to something equivalent to:
+C#Click –= new EventHandler(...);
+class X
+{
+    public event D Ev;
+}
+class X
+{
+    private D __Ev; // field to hold the delegate
+    public event D Ev
+    {
+        add
+        {
+            /* Add the delegate in a thread safe way */
+        }
+        remove
+        {
+            /* Remove the delegate in a thread safe way */
+        }
+    }
+}Within the class  X, references to  Ev on the left-hand side of the += and –
+= operators cause the add and remove accessors to be invoked. All other references
+to Ev are compiled to reference the hidden field __Ev instead ( §12.8.7 ). The name
+“__Ev” is arbitrary; the hidden field could have any name or no name at all.
+end not e
+Note: Event declarations typically omit event_ac cessor_declar ation s, as in the Button
+example above. For example, they might be included if the storage cost of one field
+per event is not acceptable. In such cases, a class can include
+event_ac cessor_declar ation s and use a private mechanism for storing the list of event
+handlers. end not e
+The event_ac cessor_declar ations  of an event specify the executable statements
+associated with adding and removing event handlers.
+The accessor declarations consist of an add_ac cessor_declar ation  and a
+remove_accessor_declar ation . Each accessor declaration consists of the token add or
+remove followed by a block . The block  associated with an add_ac cessor_declar ation
+specifies the statements to execute when an event handler is added, and the block
+associated with a remove_accessor_declar ation  specifies the statements to execute when
+an event handler is removed.
+Each add_ac cessor_declar ation  and remove_accessor_declar ation  corresponds to a
+method with a single value parameter of the event type, and a void return type. The
+implicit parameter of an event accessor is named value. When an event is used in an
+event assignment, the appropriate event accessor is used. Specifically, if the assignment
+operator is += then the add accessor is used, and if the assignment operator is –= then
+the remove accessor is used. In either case, the right operand of the assignment
+operator is used as the argument to the event accessor. The block of an
+add_ac cessor_declar ation  or a remove_accessor_declar ation  shall conform to the rules for
+void methods described in §15.6.9 . In particular, return statements in such a block are
+not permitted to specify an expression.
+Since an event accessor implicitly has a parameter named value, it is a compile-time
+error for a local variable or constant declared in an event accessor to have that name.
+Example : In the following code15.8.3 Event accessorsC#
+the Control class implements an internal storage mechanism for events. The
+AddEventHandler method associates a delegate value with a key, the
+GetEventHandler method returns the delegate currently associated with a key, and
+the RemoveEventHandler method removes a delegate as an event handler for the
+specified event. Presumably, the underlying storage mechanism is designed suchclass Control : Component
+{
+    // Unique keys for events
+    static readonly  object mouseDownEventKey = new object();
+    static readonly  object mouseUpEventKey = new object();
+    // Return event handler associated with key
+    protected  Delegate GetEventHandler (object key) {...}
+    // Add event handler associated with key
+    protected  void AddEventHandler (object key, Delegate handler ) {...}
+    // Remove event handler associated with key
+    protected  void RemoveEventHandler (object key, Delegate handler ) 
+{...}
+    // MouseDown event
+    public event MouseEventHandler MouseDown
+    {
+        add { AddEventHandler(mouseDownEventKey, value); }
+        remove { RemoveEventHandler(mouseDownEventKey, value); }
+    }
+    // MouseUp event
+    public event MouseEventHandler MouseUp
+    {
+        add { AddEventHandler(mouseUpEventKey, value); }
+        remove { RemoveEventHandler(mouseUpEventKey, value); }
+    }
+    // Invoke the MouseUp event
+    protected  void OnMouseUp (MouseEventArgs args )
+    {
+        MouseEventHandler handler;
+        handler = (MouseEventHandler)GetEventHandler(mouseUpEventKey);
+        if (handler != null)
+        {
+            handler( this, args);
+        }
+    }
+}that there is no cost for associating a null delegate value with a key, and thus
+unhandled events consume no storage.
+end ex ample
+When an event declaration includes a static modifier, the event is said to be a static
+event. When no static modifier is present, the event is said to be an instance event.
+A static event is not associated with a specific instance, and it is a compile-time error to
+refer to this in the accessors of a static event.
+An instance event is associated with a given instance of a class, and this instance can be
+accessed as this (§12.8.13 ) in the accessors of that event.
+The differences between static and instance members are discussed further in §15.3.8 .
+A virtual event declaration specifies that the accessors of that event are virtual. The
+virtual modifier applies to both accessors of an event.
+An abstract event declaration specifies that the accessors of the event are virtual, but
+does not provide an actual implementation of the accessors. Instead, non-abstract
+derived classes are required to provide their own implementation for the accessors by
+overriding the event. Because an accessor for an abstract event declaration provides no
+actual implementation, it shall not provide event_ac cessor_declar ation s.
+An event declaration that includes both the abstract and override modifiers specifies
+that the event is abstract and overrides a base event. The accessors of such an event are
+also abstract.
+Abstract event declarations are only permitted in abstract classes ( §15.2.2.2 ).
+The accessors of an inherited virtual event can be overridden in a derived class by
+including an event declaration that specifies an override modifier. This is known as an
+overriding ev ent declar ation . An overriding event declaration does not declare a new
+event. Instead, it simply specializes the implementations of the accessors of an existing
+virtual event.
+An overriding event declaration shall specify the exact same accessibility modifiers and
+name as the overridden event, there shall be an identity conversion between the type of15.8.4 Static and instance events
+15.8.5 Virtual, sealed, override, and abstract accessorsthe overriding and the overridden event, and both the add and remove accessors shall
+be specified within the declaration.
+An overriding event declaration can include the sealed modifier. Use of this modifier
+prevents a derived class from further overriding the event. The accessors of a sealed
+event are also sealed.
+It is a compile-time error for an overriding event declaration to include a new modifier.
+Except for differences in declaration and invocation syntax, virtual, sealed, override, and
+abstract accessors behave exactly like virtual, sealed, override and abstract methods.
+Specifically, the rules described in §15.6.4 , §15.6.5 , §15.6.6 , and §15.6.7  apply as if
+accessors were methods of a corresponding form. Each accessor corresponds to a
+method with a single value parameter of the event type, a void return type, and the
+same modifiers as the containing event.
+An index er is a member that enables an object to be indexed in the same way as an
+array. Indexers are declared using index er_declar ation s:
+ANTLR15.9 Indexers
+15.9.1 General
+indexer_declaration
+    : attributes? indexer_modifier* indexer_declarator indexer_body
+    | attributes? indexer_modifier* ref_kind indexer_declarator  
+ref_indexer_body
+    ;
+indexer_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | 'virtual'
+    | 'sealed'
+    | 'override'
+    | 'abstract'
+    | 'extern'
+    | unsafe_modifier   // unsafe code support
+    ;
+indexer_declarator
+    : type 'this' '[' formal_parameter_list ']'unsafe_modi fier (§23.2 ) is only available in unsafe code ( §23).
+There are two kinds of index er_declar ation :
+The first declares a non-ref-valued indexer. Its value has type type. This kind of
+indexer may be readable and/or writeable.
+The second declares a ref-valued indexer. Its value is a variable_r eference (§9.5),
+that may be readonly, to a variable of type type. This kind of indexer is only
+readable.
+An index er_declar ation  may include a set of attributes (§22) and any one of the permitted
+kinds of declared accessibility ( §15.3.6 ), the new (§15.3.5 ), virtual (§15.6.4 ), override
+(§15.6.5 ), sealed (§15.6.6 ), abstract (§15.6.7 ), and extern (§15.6.8 ) modifiers.
+Indexer declarations are subject to the same rules as method declarations ( §15.6 ) with
+regard to valid combinations of modifiers, with the one exception being that the static
+modifier is not permitted on an indexer declaration.
+The type of an indexer declaration specifies the element type of the indexer introduced
+by the declaration.
+Note: As indexers are designed to be used in array element-like contexts, the term
+element type  as defined for an array is also used with an indexer. end not e
+Unless the indexer is an explicit interface member implementation, the type is followed
+by the keyword this. For an explicit interface member implementation, the type is
+followed by an interface_type , a “.”, and the keyword this. Unlike other members,
+indexers do not have user-defined names.
+The formal_p aramet er_list  specifies the parameters of the indexer. The formal parameter
+list of an indexer corresponds to that of a method ( §15.6.2 ), except that at least one    | type interface_type '.' 'this' '[' formal_parameter_list ']'
+    ;
+indexer_body
+    : '{' accessor_declarations '}' 
+    | '=>' expression ';'
+    ;  
+ref_indexer_body
+    : '{' ref_get_accessor_declaration '}'
+    | '=>' 'ref' variable_reference ';'
+    ;parameter shall be specified, and that the this, ref, and out parameter modifiers are
+not permitted.
+The type of an indexer and each of the types referenced in the formal_p aramet er_list
+shall be at least as accessible as the indexer itself ( §7.5.5 ).
+An index er_body  may either consist of a statement body ( §15.7.1 ) or an expression body
+(§15.6.1 ). In a statement body, accessor_declar ations , which shall be enclosed in “ {” and
+“}” tokens, declare the accessors ( §15.7.3 ) of the indexer. The accessors specify the
+executable statements associated with reading and writing indexer elements.
+In a index er_body  an expression body consisting of “ =>” followed by an expression E
+and a semicolon is exactly equivalent to the statement body { get { return E; } }, and
+can therefore only be used to specify read-only indexers where the result of the get
+accessor is given by a single expression.
+A ref_index er_body  may either consist of a statement body or an expression body. In a
+statement body a get_ac cessor_declar ation  declares the get accessor ( §15.7.3 ) of the
+property. The accessor specifies the executable statements associated with reading the
+property.
+In a ref_index er_body  an expression body consisting of => followed by ref, a
+variable_r eference V and a semicolon is exactly equivalent to the statement body { get
+{ return ref V; } }.
+Note: Even though the syntax for accessing an indexer element is the same as that
+for an array element, an indexer element is not classified as a variable. Thus, it is not
+possible to pass an indexer element as an in, out, or ref argument unless the
+indexer is ref-valued and therefore returns a reference ( §9.7). end not e
+The formal_p aramet er_list  of an indexer defines the signature ( §7.6) of the indexer.
+Specifically, the signature of an indexer consists of the number and types of its formal
+parameters. The element type and names of the formal parameters are not part of an
+indexer’s signature.
+The signature of an indexer shall differ from the signatures of all other indexers declared
+in the same class.
+When an indexer declaration includes an extern modifier, the indexer is said to be an
+external index er. Because an external indexer declaration provides no actual
+implementation, each of its accessor_declar ations  consists of a semicolon.Example : The example below declares a BitArray class that implements an indexer
+for accessing the individual bits in the bit array.
+C#
+An instance of the BitArray class consumes substantially less memory than a
+corresponding bool[] (since each value of the former occupies only one bit insteadclass BitArray
+{
+    int[] bits;
+    int length;
+    public BitArray (int length)
+    {
+        if (length < 0)
+        {
+            throw new ArgumentException();
+        }
+        bits = new int[((length - 1) >> 5) + 1];
+        this.length = length;
+    }
+    public int Length => length;
+    public bool this[int index]
+    {
+        get
+        {
+            if (index < 0 || index >= length)
+            {
+                throw new IndexOutOfRangeException();
+            }
+            return (bits[index >> 5] & 1 << index) != 0;
+        }
+        set
+        {
+            if (index < 0 || index >= length)
+            {
+                throw new IndexOutOfRangeException();
+            }
+            if (value)
+            {
+                bits[index >> 5] |= 1 << index;
+            }
+            else
+            {
+                bits[index >> 5] &= ~(1 << index);
+            }
+        }
+    }
+}of the latter’s one byte), but it permits the same operations as a bool[].
+The following CountPrimes class uses a BitArray and the classical “sieve” algorithm
+to compute the number of primes between 2 and a given maximum:
+C#
+Note that the syntax for accessing elements of the BitArray is precisely the same as
+for a bool[].
+The following example shows a 26×10 grid class that has an indexer with two
+parameters. The first parameter is required to be an upper- or lowercase letter in the
+range A–Z, and the second is required to be an integer in the range 0–9.
+C#class CountPrimes
+{
+    static int Count(int max)
+    {
+        BitArray flags = new BitArray(max + 1);
+        int count = 0;
+        for (int i = 2; i <= max; i++)
+        {
+            if (!flags[i])
+            {
+                for (int j = i * 2; j <= max; j += i)
+                {
+                    flags[j] = true;
+                }
+                count++;
+            }
+        }
+        return count;
+    }
+    static void Main(string[] args)
+    {
+        int max = int.Parse(args[ 0]);
+        int count = Count(max);
+        Console.WriteLine( $"Found {count} primes between 2 and {max}");
+    }
+}
+class Grid
+{
+    const int NumRows = 26;
+    const int NumCols = 10;
+    int[,] cells = new int[NumRows, NumCols];end ex ample
+Indexers and properties are very similar in concept, but differ in the following ways:
+A property is identified by its name, whereas an indexer is identified by its
+signature.
+A property is accessed through a simple_name  (§12.8.4 ) or a member_ac cess
+(§12.8.7 ), whereas an indexer element is accessed through an element_ac cess
+(§12.8.11.3 ).
+A property can be a static member, whereas an indexer is always an instance
+member.
+A get accessor of a property corresponds to a method with no parameters,
+whereas a get accessor of an indexer corresponds to a method with the same
+formal parameter list as the indexer.    public int this[char row, int col]
+    {
+        get
+        {
+            row = Char.ToUpper(row);
+            if (row < 'A' || row > 'Z')
+            {
+                throw new ArgumentOutOfRangeException( "row");
+            }
+            if (col < 0 || col >= NumCols)
+            {
+                throw new ArgumentOutOfRangeException ( "col");
+            }
+            return cells[row - 'A', col];
+        }
+        set
+        {
+            row = Char.ToUpper(row);
+            if (row < 'A' || row > 'Z')
+            {
+                throw new ArgumentOutOfRangeException ( "row");
+            }
+            if (col < 0 || col >= NumCols)
+            {
+                throw new ArgumentOutOfRangeException ( "col");
+            }
+            cells[row - 'A', col] = value;
+        }
+    }
+}
+15.9.2 Indexer and Property DifferencesA set accessor of a property corresponds to a method with a single parameter
+named value, whereas a set accessor of an indexer corresponds to a method with
+the same formal parameter list as the indexer, plus an additional parameter named
+value.
+It is a compile-time error for an indexer accessor to declare a local variable or local
+constant with the same name as an indexer parameter.
+In an overriding property declaration, the inherited property is accessed using the
+syntax base.P, where P is the property name. In an overriding indexer declaration,
+the inherited indexer is accessed using the syntax base[E], where E is a comma-
+separated list of expressions.
+There is no concept of an “automatically implemented indexer”. It is an error to
+have a non-abstract, non-external indexer with semicolon accessors.
+Aside from these differences, all rules defined in §15.7.3 , §15.7.5  and §15.7.6  apply to
+indexer accessors as well as to property accessors.
+This replacing of property/properties with indexer/indexers when reading §15.7.3 ,
+§15.7.5  and §15.7.6  applies to defined terms as well. Specifically, read-wr ite property
+becomes read-wr ite index er, read-only pr operty becomes read-only index er, and write-
+only pr operty becomes write-only index er.
+An operator is a member that defines the meaning of an expression operator that can
+be applied to instances of the class. Operators are declared using operator_declar ation s:
+ANTLR15.10 Operators
+15.10.1 General
+operator_declaration
+    : attributes? operator_modifier+ operator_declarator operator_body
+    ;
+operator_modifier
+    : 'public'
+    | 'static'
+    | 'extern'
+    | unsafe_modifier   // unsafe code support
+    ;
+operator_declarator
+    : unary_operator_declarator
+    | binary_operator_declaratorunsafe_modi fier (§23.2 ) is only available in unsafe code ( §23).
+There are three categories of overloadable operators: Unary operators ( §15.10.2 ), binary
+operators ( §15.10.3 ), and conversion operators ( §15.10.4 ).
+The operator_body  is either a semicolon, a block body ( §15.6.1 ) or an expression body
+(§15.6.1 ). A block body consists of a block , which specifies the statements to execute
+when the operator is invoked. The block  shall conform to the rules for value-returning
+methods described in §15.6.11 . An expression body consists of => followed by an
+expression and a semicolon, and denotes a single expression to perform when the
+operator is invoked.
+For extern operators, the operator_body  consists simply of a semicolon. For all other
+operators, the operator_body  is either a block body or an expression body.
+The following rules apply to all operator declarations:
+An operator declaration shall include both a public and a static modifier.    | conversion_operator_declarator
+    ;
+unary_operator_declarator
+    : type 'operator'  overloadable_unary_operator '(' fixed_parameter ')'
+    ;
+overloadable_unary_operator
+    : '+' | '-' | '!' | '~' | '++' | '--' | 'true' | 'false'
+    ;
+binary_operator_declarator
+    : type 'operator'  overloadable_binary_operator
+        '(' fixed_parameter ',' fixed_parameter ')'
+    ;
+overloadable_binary_operator
+    : '+'  | '-'  | '*'  | '/'  | '%'  | '&' | '|' | '^'  | '<<' 
+    | right_shift | '==' | '!=' | '>' | '<' | '>=' | '<='
+    ;
+conversion_operator_declarator
+    : 'implicit'  'operator'  type '(' fixed_parameter ')'
+    | 'explicit'  'operator'  type '(' fixed_parameter ')'
+    ;
+operator_body
+    : block
+    | '=>' expression ';'
+    | ';'
+    ;The parameter(s) of an operator shall have no modifiers other than in.
+The signature of an operator ( §15.10.2 , §15.10.3 , §15.10.4 ) shall differ from the
+signatures of all other operators declared in the same class.
+All types referenced in an operator declaration shall be at least as accessible as the
+operator itself ( §7.5.5 ).
+It is an error for the same modifier to appear multiple times in an operator
+declaration.
+Each operator category imposes additional restrictions, as described in the following
+subclauses.
+Like other members, operators declared in a base class are inherited by derived classes.
+Because operator declarations always require the class or struct in which the operator is
+declared to participate in the signature of the operator, it is not possible for an operator
+declared in a derived class to hide an operator declared in a base class. Thus, the new
+modifier is never required, and therefore never permitted, in an operator declaration.
+Additional information on unary and binary operators can be found in  §12.4 .
+Additional information on conversion operators can be found in  §10.5 .
+The following rules apply to unary operator declarations, where T denotes the instance
+type of the class or struct that contains the operator declaration:
+A unary +, -, !, or ~ operator shall take a single parameter of type  T or T? and
+can return any type.
+A unary ++ or -- operator shall take a single parameter of type  T or T? and shall
+return that same type or a type derived from it.
+A unary true or false operator shall take a single parameter of type  T or T? and
+shall return type bool.
+The signature of a unary operator consists of the operator token ( +, -, !, ~, ++, --,
+true, or false) and the type of the single formal parameter. The return type is not part
+of a unary operator’s signature, nor is the name of the formal parameter.
+The true and false unary operators require pair-wise declaration. A compile-time error
+occurs if a class declares one of these operators without also declaring the other. The
+true and false operators are described further in  §12.24 .15.10.2 Unary operatorsExample : The following example shows an implementation and subsequent usage of
+operator++ for an integer vector class:
+C#
+Note how the operator method returns the value produced by adding 1 to the
+operand, just like the postfix increment and decrement operators ( §12.8.15 ), and the
+prefix increment and decrement operators ( §12.9.6 ). Unlike in C++, this method
+should not modify the value of its operand directly as this would violate the
+standard semantics of the postfix increment operator ( §12.8.15 ).
+end ex ample
+The following rules apply to binary operator declarations, where T denotes the instance
+type of the class or struct that contains the operator declaration:public class IntVector
+{
+    public IntVector (int length) {...}
+    public int Length { get { ... } }                      // Read-only  
+property
+    public int this[int index] { get { ... } set { ... } } // Read-write  
+indexer
+    public static IntVector operator ++(IntVector iv)
+    {
+        IntVector temp = new IntVector(iv.Length);
+        for (int i = 0; i < iv.Length; i++)
+        {
+            temp[i] = iv[i] + 1;
+        }
+        return temp;
+    }
+}
+class Test
+{
+    static void Main()
+    {
+        IntVector iv1 = new IntVector( 4); // Vector of 4 x 0
+        IntVector iv2;
+        iv2 = iv1++;              // iv2 contains 4 x 0, iv1 contains 4  
+x 1
+        iv2 = ++iv1;              // iv2 contains 4 x 2, iv1 contains 4  
+x 2
+    }
+}
+15.10.3 Binary operatorsA binary non-shift operator shall take two parameters, at least one of which shall
+have type T or T?, and can return any type.
+A binary << or >> operator ( §12.11 ) shall take two parameters, the first of which
+shall have type T or T? and the second of which shall have type int or int?, and
+can return any type. The signature of a binary operator consists of the operator
+token (+, -, *, /, %, &, |, ^, <<, >>, ==, !=, >, <, >=, or <=) and the types of
+the two formal parameters. The return type and the names of the formal
+parameters are not part of a binary operator’s signature.
+Certain binary operators require pair-wise declaration. For every declaration of either
+operator of a pair, there shall be a matching declaration of the other operator of the
+pair. T wo operator declarations match if identity conversions exist between their return
+types and their corresponding parameter types. The following operators require pair-
+wise declaration:
+operator == and operator !=
+operator > and operator <
+operator >= and operator <=
+A conversion operator declaration introduces a user-defined c onversion (§10.5 ), which
+augments the pre-defined implicit and explicit conversions.
+A conversion operator declaration that includes the implicit keyword introduces a
+user-defined implicit conversion. Implicit conversions can occur in a variety of situations,
+including function member invocations, cast expressions, and assignments. This is
+described further in  §10.2 .
+A conversion operator declaration that includes the explicit keyword introduces a
+user-defined explicit conversion. Explicit conversions can occur in cast expressions, and
+are described further in  §10.3 .
+A conversion operator converts from a source type, indicated by the parameter type of
+the conversion operator, to a target type, indicated by the return type of the conversion
+operator.
+For a given source type  S and target type  T, if S or T are nullable value types, let  S₀
+and T₀ refer to their underlying types; otherwise,  S₀ and T₀ are equal to  S and T
+respectively. A class or struct is permitted to declare a conversion from a source type  S
+to a target type  T only if all of the following are true:15.10.4 Conversion operatorsS₀ and T₀ are different types.
+Either S₀ or T₀ is the instance type of the class or struct that contains the operator
+declaration.
+Neither S₀ nor T₀ is an interface_type .
+Excluding user-defined conversions, a conversion does not exist from S to T or
+from T to S.
+For the purposes of these rules, any type parameters associated with  S or T are
+considered to be unique types that have no inheritance relationship with other types,
+and any constraints on those type parameters are ignored.
+Example : In the following:
+C#
+the first two operator declarations are permitted because  T and int and string,
+respectively are considered unique types with no relationship. However, the third
+operator is an error because C<T> is the base class of D<T>.
+end ex ample
+From the second rule, it follows that a conversion operator shall convert either to or
+from the class or struct type in which the operator is declared.
+Example : It is possible for a class or struct type C to define a conversion from C to
+int and from int to C, but not from int to bool. end ex ample
+It is not possible to directly redefine a pre-defined conversion. Thus, conversion
+operators are not allowed to convert from or to object because implicit and explicit
+conversions already exist between object and all other types. Likewise, neither the
+source nor the target types of a conversion can be a base type of the other, since aclass C<T> {...}
+class D<T> : C<T>
+{
+    public static implicit  operator  C<int>(D<T> value) {...}     // Ok
+    public static implicit  operator  C<string>(D<T> value) {...}  // Ok
+    public static implicit  operator  C<T>(D<T> value) {...}       // 
+Error
+}conversion would then already exist. However, it is possible to declare operators on
+generic types that, for particular type arguments, specify conversions that already exist
+as pre-defined conversions.
+Example :
+C#
+when type object is specified as a type argument for  T, the second operator
+declares a conversion that already exists (an implicit, and therefore also an explicit,
+conversion exists from any type to type object).
+end ex ample
+In cases where a pre-defined conversion exists between two types, any user-defined
+conversions between those types are ignored. Specifically:
+If a pre-defined implicit conversion ( §10.2 ) exists from type  S to type  T, all user-
+defined conversions (implicit or explicit) from  S to T are ignored.
+If a pre-defined explicit conversion ( §10.3 ) exists from type  S to type  T, any user-
+defined explicit conversions from  S to T are ignored. Furthermore:
+If either S or T is an interface type, user-defined implicit conversions from  S
+to T are ignored.
+Otherwise, user-defined implicit conversions from  S to T are still considered.
+For all types but object, the operators declared by the Convertible<T> type above do
+not conflict with pre-defined conversions.
+Example :
+C#struct Convertible<T>
+{
+    public static implicit  operator  Convertible<T>(T value) {...}
+    public static explicit  operator  T(Convertible<T> value) {...}
+}
+void F(int i, Convertible< int> n)
+{
+    i = n;                    // Error
+    i = (int)n;               // User-defined explicit conversion
+    n = i;                    // User-defined implicit conversionHowever, for type object, pre-defined conversions hide the user-defined
+conversions in all cases but one:
+C#
+end ex ample
+User-defined conversions are not allowed to convert from or to interface_type s. In
+particular, this restriction ensures that no user-defined transformations occur when
+converting to an interface_type , and that a conversion to an interface_type  succeeds only
+if the object being converted actually implements the specified interface_type .
+The signature of a conversion operator consists of the source type and the target type.
+(This is the only form of member for which the return type participates in the signature.)
+The implicit or explicit classification of a conversion operator is not part of the
+operator’s signature. Thus, a class or struct cannot declare both an implicit and an
+explicit conversion operator with the same source and target types.
+Note: In general, user-defined implicit conversions should be designed to never
+throw exceptions and never lose information. If a user-defined conversion can give
+rise to exceptions (for example, because the source argument is out of range) or loss
+of information (such as discarding high-order bits), then that conversion should be
+defined as an explicit conversion. end not e
+Example : In the following code
+C#    n = (Convertible< int>)i;  // User-defined implicit conversion
+}
+void F(object o, Convertible< object> n)
+{
+    o = n;                       // Pre-defined boxing conversion
+    o = (object)n;               // Pre-defined boxing conversion
+    n = o;                       // User-defined implicit conversion
+    n = (Convertible< object>)o;  // Pre-defined unboxing conversion
+}
+public struct Digit
+{
+    byte value;
+    public Digit(byte value)
+    {the conversion from Digit to byte is implicit because it never throws exceptions or
+loses information, but the conversion from byte to Digit is explicit since Digit can
+only represent a subset of the possible values of a byte.
+end ex ample
+An instance constr uctor is a member that implements the actions required to initialize
+an instance of a class. Instance constructors are declared using constr uctor_declar ation s:
+ANTLR        if (value < 0 || value > 9)
+        {
+            throw new ArgumentException();
+        }
+        this.value = value;
+    }
+    public static implicit  operator  byte(Digit d) => d.value;
+    public static explicit  operator  Digit(byte b) => new Digit(b);
+}
+15.11 Instance constructors
+15.11.1 General
+constructor_declaration
+    : attributes? constructor_modifier* constructor_declarator  
+constructor_body
+    ;
+constructor_modifier
+    : 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | 'extern'
+    | unsafe_modifier   // unsafe code support
+    ;
+constructor_declarator
+    : identifier '(' formal_parameter_list? ')' constructor_initializer?
+    ;
+constructor_initializer
+    : ':' 'base' '(' argument_list? ')'
+    | ':' 'this' '(' argument_list? ')'
+    ;unsafe_modi fier (§23.2 ) is only available in unsafe code ( §23).
+A constr uctor_declar ation  may include a set of attributes (§22), any one of the permitted
+kinds of declared accessibility ( §15.3.6 ), and an extern (§15.6.8 ) modifier. A constructor
+declaration is not permitted to include the same modifier multiple times.
+The identi fier of a constr uctor_declar ator shall name the class in which the instance
+constructor is declared. If any other name is specified, a compile-time error occurs.
+The optional formal_p aramet er_list  of an instance constructor is subject to the same
+rules as the formal_p aramet er_list  of a method ( §15.6 ). As the this modifier for
+parameters only applies to extension methods ( §15.6.10 ), no parameter in a
+constructor’s formal_p aramet er_list  shall contain the this modifier. The formal
+parameter list defines the signature ( §7.6) of an instance constructor and governs the
+process whereby overload resolution ( §12.6.4 ) selects a particular instance constructor in
+an invocation.
+Each of the types referenced in the formal_p aramet er_list  of an instance constructor shall
+be at least as accessible as the constructor itself ( §7.5.5 ).
+The optional constr uctor_initializer  specifies another instance constructor to invoke
+before executing the statements given in the constr uctor_body  of this instance
+constructor. This is described further in §15.11.2 .
+When a constructor declaration includes an extern modifier, the constructor is said to
+be an external c onstr uctor. Because an external constructor declaration provides no
+actual implementation, its constr uctor_body  consists of a semicolon. For all other
+constructors, the constr uctor_body  consists of either
+a block , which specifies the statements to initialize a new instance of the class; or
+an expression body, which consists of => followed by an expression  and a
+semicolon, and denotes a single expression to initialize a new instance of the class.
+A constr uctor_body  that is a block  or expression body corresponds exactly to the block  of
+an instance method with a void return type ( §15.6.11 ).
+Instance constructors are not inherited. Thus, a class has no instance constructors other
+than those actually declared in the class, with the exception that if a class contains noconstructor_body
+    : block
+    | '=>' expression ';'
+    | ';'
+    ;instance constructor declarations, a default instance constructor is automatically
+provided ( §15.11.5 ).
+Instance constructors are invoked by object_cr eation_expr ession s (§12.8.16.2 ) and
+through constr uctor_initializer s.
+All instance constructors (except those for class object) implicitly include an invocation
+of another instance constructor immediately before the constr uctor_body . The
+constructor to implicitly invoke is determined by the constr uctor_initializer :
+An instance constructor initializer of the form base(argument_list ) (where
+argument_list  is optional) causes an instance constructor from the direct base class
+to be invoked. That constructor is selected using argument_list  and the overload
+resolution rules of §12.6.4 . The set of candidate instance constructors consists of all
+the accessible instance constructors of the direct base class. If this set is empty, or
+if a single best instance constructor cannot be identified, a compile-time error
+occurs.
+An instance constructor initializer of the form this(argument_list ) (where
+argument_list  is optional) invokes another instance constructor from the same
+class. The constructor is selected using argument_list  and the overload resolution
+rules of §12.6.4 . The set of candidate instance constructors consists of all instance
+constructors declared in the class itself. If the resulting set of applicable instance
+constructors is empty, or if a single best instance constructor cannot be identified,
+a compile-time error occurs. If an instance constructor declaration invokes itself
+through a chain of one or more constructor initializers, a compile-time error
+occurs.
+If an instance constructor has no constructor initializer, a constructor initializer of the
+form base() is implicitly provided.
+Note: Thus, an instance constructor declaration of the form
+C#
+is exactly equivalent to
+C#15.11.2 Constructor initializers
+C(...) {...}end not e
+The scope of the parameters given by the formal_p aramet er_list  of an instance
+constructor declaration includes the constructor initializer of that declaration. Thus, a
+constructor initializer is permitted to access the parameters of the constructor.
+Example :
+C#
+end ex ample
+An instance constructor initializer cannot access the instance being created. Therefore it
+is a compile-time error to reference this in an argument expression of the constructor
+initializer, as it is a compile-time error for an argument expression to reference any
+instance member through a simple_name .
+When an instance constructor has no constructor initializer, or it has a constructor
+initializer of the form base(...), that constructor implicitly performs the initializations
+specified by the variable_initializer s of the instance fields declared in its class. This
+corresponds to a sequence of assignments that are executed immediately upon entry to
+the constructor and before the implicit invocation of the direct base class constructor.
+The variable initializers are executed in the textual order in which they appear in the
+class declaration ( §15.5.6 ).C(...) : base() {...}
+class A
+{
+    public A(int x, int y) {}
+}
+class B: A
+{
+    public B(int x, int y) : base(x + y, x - y ) {}
+}
+15.11.3 Instance variable initializers
+15.11.4 Constructor executionVariable initializers are transformed into assignment statements, and these assignment
+statements are executed befor e the invocation of the base class instance constructor.
+This ordering ensures that all instance fields are initialized by their variable initializers
+before any statements that have access to that instance are executed.
+Example : Given the following:
+C#
+when new B() is used to create an instance of  B, the following output is produced:
+Console
+The value of x is 1 because the variable initializer is executed before the base class
+instance constructor is invoked. However, the value of y is 0 (the default value of an
+int) because the assignment to y is not executed until after the base class
+constructor returns. It is useful to think of instance variable initializers and
+constructor initializers as statements that are automatically inserted before the
+constr uctor_body . The example
+C#class A
+{
+    public A()
+    {
+        PrintFields();
+    }
+    public virtual void PrintFields () {}
+}
+class B: A
+{
+    int x = 1;
+    int y;
+    public B()
+    {
+        y = -1;
+    }
+    public override  void PrintFields () =>
+        Console.WriteLine( $"x = {x}, y = {y}");
+}
+x = 1, y = 0contains several variable initializers; it also contains constructor initializers of both
+forms (base and this). The example corresponds to the code shown below, where
+each comment indicates an automatically inserted statement (the syntax used for
+the automatically inserted constructor invocations isn’t valid, but merely serves to
+illustrate the mechanism).
+C#class A
+{
+    int x = 1, y = -1, count;
+    public A()
+    {
+        count = 0;
+    }
+    public A(int n)
+    {
+        count = n;
+    }
+}
+class B : A
+{
+    double sqrt2 = Math.Sqrt( 2.0);
+    ArrayList items = new ArrayList( 100);
+    int max;
+    public B(): this(100)
+    {
+        items.Add( "default" );
+    }
+    public B(int n) : base(n - 1)
+    {
+        max = n;
+    }
+}
+class A
+{
+    int x, y, count;
+    public A()
+    {
+        x = 1;      // Variable initializer
+        y = -1;     // Variable initializer
+        object();   // Invoke object() constructor
+        count = 0;
+    }end ex ample
+If a class contains no instance constructor declarations, a default instance constructor is
+automatically provided. That default constructor simply invokes a constructor of the
+direct base class, as if it had a constructor initializer of the form base(). If the class is
+abstract then the declared accessibility for the default constructor is protected.
+Otherwise, the declared accessibility for the default constructor is public.
+Note: Thus, the default constructor is always of the form
+C#
+or
+C#    public A(int n)
+    {
+        x = 1;      // Variable initializer
+        y = -1;     // Variable initializer
+        object();   // Invoke object() constructor
+        count = n;
+    }
+}
+class B : A
+{
+    double sqrt2;
+    ArrayList items;
+    int max;
+    public B() : this(100)
+    {
+        B(100);                      // Invoke B(int) constructor
+        items.Add( "default" );
+    }
+    public B(int n) : base(n - 1)
+    {
+        sqrt2 = Math.Sqrt( 2.0);      // Variable initializer
+        items = new ArrayList( 100);  // Variable initializer
+        A(n - 1);                    // Invoke A(int) constructor
+        max = n;
+    }
+}
+15.11.5 Default constructors
+protected  C(): base() {}where C is the name of the class.
+end not e
+If overload resolution is unable to determine a unique best candidate for the base-class
+constructor initializer then a compile-time error occurs.
+Example : In the following code
+C#
+a default constructor is provided because the class contains no instance constructor
+declarations. Thus, the example is precisely equivalent to
+C#
+end ex ample
+A static c onstr uctor is a member that implements the actions required to initialize a
+closed class. S tatic constructors are declared using static_c onstr uctor_declar ation s:
+ANTLRpublic C(): base() {}
+class Message
+{
+    object sender;
+    string text;
+}
+class Message
+{
+    object sender;
+    string text;
+    public Message() : base() {}
+}
+15.12 Static constructors
+static_constructor_declaration
+    : attributes? static_constructor_modifiers identifier '(' ')'
+        static_constructor_body
+    ;unsafe_modi fier (§23.2 ) is only available in unsafe code ( §23).
+A static_c onstr uctor_declar ation  may include a set of attributes (§22) and an extern
+modifier ( §15.6.8 ).
+The identi fier of a static_c onstr uctor_declar ation  shall name the class in which the static
+constructor is declared. If any other name is specified, a compile-time error occurs.
+When a static constructor declaration includes an extern modifier, the static constructor
+is said to be an external st atic c onstr uctor. Because an external static constructor
+declaration provides no actual implementation, its static_c onstr uctor_body  consists of a
+semicolon. For all other static constructor declarations, the static_c onstr uctor_body
+consists of either
+a block , which specifies the statements to execute in order to initialize the class; or
+an expression body, which consists of => followed by an expression  and a
+semicolon, and denotes a single expression to execute in order to initialize the
+class.
+A static_c onstr uctor_body  that is a block  or expression body corresponds exactly to the
+method_body  of a static method with a void return type ( §15.6.11 ).
+Static constructors are not inherited, and cannot be called directly.
+The static constructor for a closed class executes at most once in a given application
+domain. The execution of a static constructor is triggered by the first of the following
+events to occur within an application domain:
+An instance of the class is created.
+Any of the static members of the class are referenced.static_constructor_modifiers
+    : 'static'
+    | 'static'  'extern'  unsafe_modifier?
+    | 'static'  unsafe_modifier 'extern' ?
+    | 'extern'  'static'  unsafe_modifier?
+    | 'extern'  unsafe_modifier 'static'
+    | unsafe_modifier 'static'  'extern' ?
+    | unsafe_modifier 'extern'  'static'
+    ;
+static_constructor_body
+    : block
+    | '=>' expression ';'
+    | ';'
+    ;If a class contains the Main method ( §7.1) in which execution begins, the static
+constructor for that class executes before the Main method is called.
+To initialize a new closed class type, first a new set of static fields ( §15.5.2 ) for that
+particular closed type is created. Each of the static fields is initialized to its default value
+(§15.5.5 ). Next, the static field initializers ( §15.5.6.2 ) are executed for those static fields.
+Finally, the static constructor is executed.
+Example : The example
+C#
+must produce the output:
+Consoleclass Test
+{
+    static void Main()
+    {
+        A.F();
+        B.F();
+    }
+}
+class A
+{
+    static A()
+    {
+        Console.WriteLine( "Init A" );
+    }
+    public static void F()
+    {
+        Console.WriteLine( "A.F");
+    }
+}
+class B
+{
+    static B()
+    {
+        Console.WriteLine( "Init B" );
+    }
+    public static void F()
+    {
+        Console.WriteLine( "B.F");
+    }
+}because the execution of A’s static constructor is triggered by the call to A.F, and
+the execution of B’s static constructor is triggered by the call to B.F.
+end ex ample
+It is possible to construct circular dependencies that allow static fields with variable
+initializers to be observed in their default value state.
+Example : The example
+C#
+produces the output
+ConsoleInit A
+A.F
+Init B
+B.F
+class A
+{
+    public static int X;
+    static A()
+    {
+        X = B.Y + 1;
+    }
+}
+class B
+{
+    public static int Y = A.X + 1;
+    static B() {}
+    static void Main()
+    {
+        Console.WriteLine( $"X = {A.X}, Y = {B.Y}");
+    }
+}
+X = 1, Y = 2To execute the Main method, the system first runs the initializer for B.Y, prior to
+class B’s static constructor. Y’s initializer causes A’s static constructor to be run
+because the value of A.X is referenced. The static constructor of  A in turn proceeds
+to compute the value of  X, and in doing so fetches the default value of  Y, which is
+zero. A.X is thus initialized to 1. The process of running A’s static field initializers
+and static constructor then completes, returning to the calculation of the initial
+value of  Y, the result of which becomes 2.
+end ex ample
+Because the static constructor is executed exactly once for each closed constructed class
+type, it is a convenient place to enforce run-time checks on the type parameter that
+cannot be checked at compile-time via constraints ( §15.2.5 ).
+Example : The following type uses a static constructor to enforce that the type
+argument is an enum:
+C#
+end ex ample
+Note: In an earlier version of this specification, what is now referred to as a “finalizer”
+was called a “destructor”. Experience has shown that the term “destructor” caused
+confusion and often resulted to incorrect expectations, especially to programmers
+knowing C++. In C++, a destructor is called in a determinate manner, whereas,
+in C#, a finalizer is not. T o get determinate behavior from C#, one should use
+Dispose. end not eclass Gen<T> where T : struct
+{
+    static Gen()
+    {
+        if (!typeof(T).IsEnum)
+        {
+            throw new ArgumentException( "T must be an enum" );
+        }
+    }
+}
+15.13 FinalizersA finalizer  is a member that implements the actions required to finalize an instance of a
+class. A finalizer is declared using a finalizer_declar ation :
+ANTLR
+unsafe_modi fier (§23.2 ) is only available in unsafe code ( §23).
+A finalizer_declar ation  may include a set of attributes (§22).
+The identi fier of a finalizer_declar ator shall name the class in which the finalizer is
+declared. If any other name is specified, a compile-time error occurs.
+When a finalizer declaration includes an extern modifier, the finalizer is said to be an
+external finalizer . Because an external finalizer declaration provides no actual
+implementation, its finalizer_body  consists of a semicolon. For all other finalizers, the
+finalizer_body  consists of either
+a block , which specifies the statements to execute in order to finalize an instance of
+the class.
+or an expression body, which consists of => followed by an expression  and a
+semicolon, and denotes a single expression to execute in order to finalize an
+instance of the class.
+A finalizer_body  that is a block  or expression body corresponds exactly to the
+method_body  of an instance method with a void return type ( §15.6.11 ).
+Finalizers are not inherited. Thus, a class has no finalizers other than the one that may be
+declared in that class.
+Note: Since a finalizer is required to have no parameters, it cannot be overloaded, so
+a class can have, at most, one finalizer. end not efinalizer_declaration
+    : attributes? '~' identifier '(' ')' finalizer_body
+    | attributes? 'extern'  unsafe_modifier? '~' identifier '(' ')'
+      finalizer_body
+    | attributes? unsafe_modifier 'extern' ? '~' identifier '(' ')'
+      finalizer_body
+    ;
+finalizer_body
+    : block
+    | '=>' expression ';'
+    | ';'
+    ;Finalizers are invoked automatically, and cannot be invoked explicitly. An instance
+becomes eligible for finalization when it is no longer possible for any code to use that
+instance. Execution of the finalizer for the instance may occur at any time after the
+instance becomes eligible for finalization ( §7.9). When an instance is finalized, the
+finalizers in that instance’s inheritance chain are called, in order, from most derived to
+least derived. A finalizer may be executed on any thread. For further discussion of the
+rules that govern when and how a finalizer is executed, see §7.9.
+Example : The output of the example
+C#
+is
+Console
+since finalizers in an inheritance chain are called in order, from most derived to least
+derived.class A
+{
+    ~A()
+    {
+        Console.WriteLine( "A's finalizer" );
+    }
+}
+class B : A
+{
+    ~B()
+    {
+        Console.WriteLine( "B's finalizer" );
+    }
+}
+class Test
+{
+    static void Main()
+    {
+        B b = new B();
+        b = null;
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+    }
+}
+B's finalizer
+A's finalizerend ex ample
+Finalizers are implemented by overriding the virtual method Finalize on
+System.Object. C# programs are not permitted to override this method or call it (or
+overrides of it) directly.
+Example : For instance, the program
+C#
+contains two errors.
+end ex ample
+The compiler behaves as if this method, and overrides of it, do not exist at all.
+Example : Thus, this program:
+C#
+is valid and the method shown hides System.Object’s Finalize method.
+end ex ample
+For a discussion of the behavior when an exception is thrown from a finalizer, see §21.4 .class A
+{
+    override  protected  void Finalize () {}  // Error
+    public void F()
+    {
+        this.Finalize();                   // Error
+    }
+}
+class A
+{
+    void Finalize () {}  // Permitted
+}
+15.14 Iterators
+15.14.1 GeneralA function member ( §12.6 ) implemented using an iterator block ( §13.3 ) is called an
+iterator.
+An iterator block may be used as the body of a function member as long as the return
+type of the corresponding function member is one of the enumerator interfaces
+(§15.14.2 ) or one of the enumerable interfaces ( §15.14.3 ). It may occur as a method_body ,
+operator_body  or accessor_body , whereas events, instance constructors, static
+constructors and finalizers may not be implemented as iterators.
+When a function member is implemented using an iterator block, it is a compile-time
+error for the formal parameter list of the function member to specify any in, out, or
+ref parameters, or an parameter of a ref struct type.
+The enumer ator int erfaces are the non-generic interface
+System.Collections.IEnumerator and all instantiations of the generic interface
+System.Collections.Generic.IEnumerator<T>. For the sake of brevity, in this subclause
+and its siblings these interfaces are referenced as IEnumerator and IEnumerator<T>,
+respectively.
+The enumer able int erfaces are the non-generic interface
+System.Collections.IEnumerable and all instantiations of the generic interface
+System.Collections.Generic.IEnumerable<T>. For the sake of brevity, in this subclause
+and its siblings these interfaces are referenced as IEnumerable and IEnumerable<T>,
+respectively.
+An iterator produces a sequence of values, all of the same type. This type is called the
+yield type  of the iterator.
+The yield type of an iterator that returns IEnumerator or IEnumerable is object.
+The yield type of an iterator that returns IEnumerator<T> or IEnumerable<T> is T.15.14.2 Enumerator interfaces
+15.14.3 Enumerable interfaces
+15.14.4 Yield type
+15.14.5 Enumerator objects
+15.14.5.1 GeneralWhen a function member returning an enumerator interface type is implemented using
+an iterator block, invoking the function member does not immediately execute the code
+in the iterator block. Instead, an enumer ator object  is created and returned. This object
+encapsulates the code specified in the iterator block, and execution of the code in the
+iterator block occurs when the enumerator object’s MoveNext method is invoked. An
+enumerator object has the following characteristics:
+It implements IEnumerator and IEnumerator<T>, where T is the yield type of the
+iterator.
+It implements System.IDisposable.
+It is initialized with a copy of the argument values (if any) and instance value
+passed to the function member.
+It has four potential states, befor e, running , suspended , and after, and is initially in
+the befor e state.
+An enumerator object is typically an instance of a compiler-generated enumerator class
+that encapsulates the code in the iterator block and implements the enumerator
+interfaces, but other methods of implementation are possible. If an enumerator class is
+generated by the compiler, that class will be nested, directly or indirectly, in the class
+containing the function member, it will have private accessibility, and it will have a name
+reserved for compiler use ( §6.4.3 ).
+An enumerator object may implement more interfaces than those specified above.
+The following subclauses describe the required behavior of the MoveNext, Current, and
+Dispose members of the IEnumerator and IEnumerator<T> interface implementations
+provided by an enumerator object.
+Enumerator objects do not support the IEnumerator.Reset method. Invoking this
+method causes a System.NotSupportedException to be thrown.
+The MoveNext method of an enumerator object encapsulates the code of an iterator
+block. Invoking the MoveNext method executes code in the iterator block and sets the
+Current property of the enumerator object as appropriate. The precise action
+performed by MoveNext depends on the state of the enumerator object when MoveNext
+is invoked:
+If the state of the enumerator object is befor e, invoking MoveNext:
+Changes the state to running .15.14.5.2 The MoveNext methodInitializes the parameters (including this) of the iterator block to the argument
+values and instance value saved when the enumerator object was initialized.
+Executes the iterator block from the beginning until execution is interrupted (as
+described below).
+If the state of the enumerator object is running , the result of invoking MoveNext is
+unspecified.
+If the state of the enumerator object is suspended , invoking MoveNext:
+Changes the state to running .
+Restores the values of all local variables and parameters (including this) to the
+values saved when execution of the iterator block was last suspended.
+Note: The contents of any objects referenced by these variables may have
+changed since the previous call to MoveNext. end not e
+Resumes execution of the iterator block immediately following the yield return
+statement that caused the suspension of execution and continues until
+execution is interrupted (as described below).
+If the state of the enumerator object is after, invoking MoveNext returns false.
+When MoveNext executes the iterator block, execution can be interrupted in four ways:
+By a yield return statement, by a yield break statement, by encountering the end of
+the iterator block, and by an exception being thrown and propagated out of the iterator
+block.
+When a yield return statement is encountered ( §9.4.4.20 ):
+The expression given in the statement is evaluated, implicitly converted to the
+yield type, and assigned to the Current property of the enumerator object.
+Execution of the iterator body is suspended. The values of all local variables and
+parameters (including this) are saved, as is the location of this yield return
+statement. If the yield return statement is within one or more try blocks, the
+associated finally blocks are not executed at this time.
+The state of the enumerator object is changed to suspended .
+The MoveNext method returns true to its caller, indicating that the iteration
+successfully advanced to the next value.
+When a yield break statement is encountered ( §9.4.4.20 ):
+If the yield break statement is within one or more try blocks, the associated
+finally blocks are executed.
+The state of the enumerator object is changed to after.
+The MoveNext method returns false to its caller, indicating that the iteration is
+complete.When the end of the iterator body is encountered:
+The state of the enumerator object is changed to after.
+The MoveNext method returns false to its caller, indicating that the iteration is
+complete.
+When an exception is thrown and propagated out of the iterator block:
+Appropriate finally blocks in the iterator body will have been executed by the
+exception propagation.
+The state of the enumerator object is changed to after.
+The exception propagation continues to the caller of the MoveNext method.
+An enumerator object’s Current property is affected by yield return statements in the
+iterator block.
+When an enumerator object is in the suspended  state, the value of Current is the value
+set by the previous call to MoveNext. When an enumerator object is in the befor e,
+running , or after states, the result of accessing Current is unspecified.
+For an iterator with a yield type other than object, the result of accessing Current
+through the enumerator object’s IEnumerable implementation corresponds to accessing
+Current through the enumerator object’s IEnumerator<T> implementation and casting
+the result to object.
+The Dispose method is used to clean up the iteration by bringing the enumerator object
+to the after state.
+If the state of the enumerator object is befor e, invoking Dispose changes the state
+to after.
+If the state of the enumerator object is running , the result of invoking Dispose is
+unspecified.
+If the state of the enumerator object is suspended , invoking Dispose:
+Changes the state to running .
+Executes any finally blocks as if the last executed yield return statement were
+a yield break statement. If this causes an exception to be thrown and
+propagated out of the iterator body, the state of the enumerator object is set to
+after and the exception is propagated to the caller of the Dispose method.
+Changes the state to after.15.14.5.3 The Current property
+15.14.5.4 The Dispose methodIf the state of the enumerator object is after, invoking Dispose has no affect.
+When a function member returning an enumerable interface type is implemented using
+an iterator block, invoking the function member does not immediately execute the code
+in the iterator block. Instead, an enumer able object  is created and returned. The
+enumerable object’s GetEnumerator method returns an enumerator object that
+encapsulates the code specified in the iterator block, and execution of the code in the
+iterator block occurs when the enumerator object’s MoveNext method is invoked. An
+enumerable object has the following characteristics:
+It implements IEnumerable and IEnumerable<T>, where  T is the yield type of the
+iterator.
+It is initialized with a copy of the argument values (if any) and instance value
+passed to the function member.
+An enumerable object is typically an instance of a compiler-generated enumerable class
+that encapsulates the code in the iterator block and implements the enumerable
+interfaces, but other methods of implementation are possible. If an enumerable class is
+generated by the compiler, that class will be nested, directly or indirectly, in the class
+containing the function member, it will have private accessibility, and it will have a name
+reserved for compiler use ( §6.4.3 ).
+An enumerable object may implement more interfaces than those specified above.
+Note: For example, an enumerable object may also implement IEnumerator and
+IEnumerator<T>, enabling it to serve as both an enumerable and an enumerator.
+Typically, such an implementation would return its own instance (to save allocations)
+from the first call to GetEnumerator. Subsequent invocations of GetEnumerator, if
+any, would return a new class instance, typically of the same class, so that calls to
+different enumerator instances will not affect each other. It cannot return the same
+instance even if the previous enumerator has already enumerated past the end of
+the sequence, since all future calls to an exhausted enumerator must throw
+exceptions. end not e15.14.6 Enumerable objects
+15.14.6.1 General
+15.14.6.2 The GetEnumerator methodAn enumerable object provides an implementation of the GetEnumerator methods of
+the IEnumerable and IEnumerable<T> interfaces. The two GetEnumerator methods share
+a common implementation that acquires and returns an available enumerator object.
+The enumerator object is initialized with the argument values and instance value saved
+when the enumerable object was initialized, but otherwise the enumerator object
+functions as described in §15.14.5 .
+A method ( §15.6 ) or anonymous function ( §12.19 ) with the async modifier is called an
+async f unction . In general, the term async is used to describe any kind of function that
+has the async modifier.
+It is a compile-time error for the formal parameter list of an async function to specify
+any in, out, or ref parameters, or any parameter of a ref struct type.
+The return_type  of an async method shall be either void or a task type . For an async
+method that returns a value, a task type shall be generic. For an async method that does
+not return a value, a task type shall not be generic. Such types are referred to in this
+specification as «TaskType»<T> and «TaskType», respectively. The S tandard library type
+System.Threading.Tasks.Task and types constructed from
+System.Threading.Tasks.Task<TResult> are task types, as well as a class, struct or
+interface type that is associated with a task builder type  via the attribute
+System.Runtime.CompilerServices.AsyncMethodBuilderAttribute. Such types are referred
+to in this specification as «TaskBuilderType»<T> and «TaskBuilderType». A task type can
+have at most one type parameter and cannot be nested in a generic type.
+An async method returning a task type is said to be task-returning.
+Task types can vary in their exact definition, but from the language’s point of view, a task
+type is in one of the states incomplet e, succeeded  or faulted. A faulted task records a
+pertinent exception. A succeeded  «TaskType»<T> records a result of type T. Task types
+are awaitable, and tasks can therefore be the operands of await expressions ( §12.9.8 ).
+Example : The task type MyTask<T> is associated with the task builder type
+MyTaskMethodBuilder<T> and the awaiter type Awaiter<T>:
+C#15.15 Async Functions
+15.15.1 Generalend ex ample
+A task builder type is a class or struct type that corresponds to a specific task type
+(§15.15.2 ).
+An async function has the ability to suspend evaluation by means of await expressions
+(§12.9.8 ) in its body. Evaluation may later be resumed at the point of the suspending
+await expression by means of a resumption delegat e. The resumption delegate is of
+type System.Action, and when it is invoked, evaluation of the async function invocation
+will resume from the await expression where it left off. The current caller  of an async
+function invocation is the original caller if the function invocation has never been
+suspended or the most recent caller of the resumption delegate otherwise.
+A task builder type can have at most one type parameter and cannot be nested in a
+generic type. A task builder type shall have the following accessible members (for non-
+generic task builder types, SetResult has no parameters):
+C#using System.Runtime.CompilerServices; 
+[AsyncMethodBuilder(typeof(MyTaskMethodBuilder<>)) ]
+class MyTask<T>
+{
+    public Awaiter<T> GetAwaiter () { ... }
+}
+class Awaiter<T> : INotifyCompletion
+{
+    public void OnCompleted (Action completion ) { ... }
+    public bool IsCompleted { get; }
+    public T GetResult () { ... }
+}
+15.15.2 Task-type builder pattern
+class «TaskBuilderType »<T>
+{
+    public static «TaskBuilderType»<T> Create();
+    public void Start<TStateMachine>( ref TStateMachine stateMachine)
+                where TStateMachine : IAsyncStateMachine;
+    public void SetStateMachine (IAsyncStateMachine stateMachine );
+    public void SetException (Exception exception );
+    public void SetResult (T result );
+    public void AwaitOnCompleted<TAwaiter, TStateMachine>(
+        ref TAwaiter awaiter, ref TStateMachine stateMachine)
+        where TAwaiter : INotifyCompletionThe compiler generates code that uses the «T askBuilderT ype» to implement the
+semantics of suspending and resuming the evaluation of the async function. The
+compiler uses the «T askBuilderT ype» as follows:
+«TaskBuilderType».Create() is invoked to create an instance of the
+«TaskBuilderT ype», named builder in this list.
+builder.Start(ref stateMachine) is invoked to associate the builder with a
+compiler-generated state machine instance, stateMachine.
+The builder shall call stateMachine.MoveNext() either in Start() or after
+Start() has returned to advance the state machine.
+After Start() returns, the async method invokes builder.Task for the task to
+return from the async method.
+Each call to stateMachine.MoveNext() will advance the state machine.
+If the state machine completes successfully, builder.SetResult() is called, with the
+method return value, if any.
+Otherwise, if an exception, e is thrown in the state machine,
+builder.SetException(e) is called.
+If the state machine reaches an await expr expression, expr.GetAwaiter() is
+invoked.
+If the awaiter implements ICriticalNotifyCompletion and IsCompleted is false, the
+state machine invokes builder.AwaitUnsafeOnCompleted(ref awaiter, ref
+stateMachine).
+AwaitUnsafeOnCompleted() should call awaiter.UnsafeOnCompleted(action) with
+an Action that calls stateMachine.MoveNext() when the awaiter completes.
+Otherwise, the state machine invokes builder.AwaitOnCompleted(ref awaiter, ref
+stateMachine).
+AwaitOnCompleted() should call awaiter.OnCompleted(action) with an Action
+that calls stateMachine.MoveNext() when the awaiter completes.
+SetStateMachine(IAsyncStateMachine) may be called by the compiler-generated
+IAsyncStateMachine implementation to identify the instance of the builder
+associated with a state machine instance, particularly for cases where the state
+machine is implemented as a value type.        where TStateMachine : IAsyncStateMachine;
+    public void AwaitUnsafeOnCompleted<TAwaiter, TStateMachine>(
+        ref TAwaiter awaiter, ref TStateMachine stateMachine)
+        where TAwaiter : ICriticalNotifyCompletion
+        where TStateMachine : IAsyncStateMachine;
+    public «TaskType»<T> Task { get; }
+}If the builder calls stateMachine.SetStateMachine(stateMachine), the
+stateMachine will call builder.SetStateMachine(stateMachine) on the builder
+instance ass ociat ed with  stateMachine.
+Invocation of a task-returning async function causes an instance of the returned task
+type to be generated. This is called the return task of the async function. The task is
+initially in an incomplet e state.
+The async function body is then evaluated until it is either suspended (by reaching an
+await expression) or terminates, at which point control is returned to the caller, along
+with the return task.
+When the body of the async function terminates, the return task is moved out of the
+incomplete state:
+If the function body terminates as the result of reaching a return statement or the
+end of the body, any result value is recorded in the return task, which is put into a
+succeeded  state.
+If the function body terminates as the result of an uncaught exception ( §13.10.6 )
+the exception is recorded in the return task which is put into a faulted state.
+If the return type of the async function is void, evaluation differs from the above in the
+following way: Because no task is returned, the function instead communicates
+completion and exceptions to the current thread’s synchr onization c ontext. The exact
+definition of synchronization context is implementation-dependent, but is a
+representation of “where” the current thread is running. The synchronization context is
+notified when evaluation of a void-returning async function commences, completes
+successfully, or causes an uncaught exception to be thrown.
+This allows the context to keep track of how many void-returning async functions are
+running under it, and to decide how to propagate exceptions coming out of them.15.15.3 Evaluation of a task-returning async function
+15.15.4 Evaluation of a void-returning async function
+６ Collaborat e with us on
+GitHub
+The source for this content can
+be found on GitHub, where youC# Standar d documentation
+feedb ack
+C# Standard documentation is an
+open source project. Select a link tocan also create and review
+issues and pull requests. For
+more information, see our
+contributor guide .provide feedback:
+ Open a documentation issue
+ Provide product feedback16 Structs
+Article •06/08/2023
+Structs are similar to classes in that they represent data structures that can contain data
+members and function members. However, unlike classes, structs are value types and do
+not require heap allocation. A variable of a struct type directly contains the data of the
+struct, whereas a variable of a class type contains a reference to the data, the latter
+known as an object.
+Note: Structs are particularly useful for small data structures that have value
+semantics. Complex numbers, points in a coordinate system, or key-value pairs in a
+dictionary are all good examples of structs. K ey to these data structures is that they
+have few data members, that they do not require use of inheritance or reference
+semantics, rather they can be conveniently implemented using value semantics
+where assignment copies the value instead of the reference. end not e
+As described in §8.3.5 , the simple types provided by C#, such as int, double, and bool,
+are, in fact, all struct types.
+A struct_declar ation  is a type_declar ation  (§14.7 ) that declares a new struct:
+ANTLR
+A struct_declar ation  consists of an optional set of attributes (§22), followed by an
+optional set of struct_modi fiers (§16.2.2 ), followed by an optional ref modifier ( §16.2.3 ),
+followed by an optional partial modifier ( §15.2.7 ), followed by the keyword struct and
+an identi fier that names the struct, followed by an optional type_p aramet er_list16.1 General
+16.2 Struct declarations
+16.2.1 General
+struct_declaration
+    : attributes? struct_modifier* 'ref'? 'partial' ? 'struct'
+      identifier type_parameter_list? struct_interfaces?
+      type_parameter_constraints_clause* struct_body ';'?
+    ;specification ( §15.2.3 ), followed by an optional struct_int erfaces specification ( §16.2.5 ),
+followed by an optional type_p aramet er_constr aints-claus es specification ( §15.2.5 ),
+followed by a struct_body  (§16.2.6 ), optionally followed by a semicolon.
+A struct declaration shall not supply a type_p aramet er_constr aints_claus es unless it also
+supplies a type_p aramet er_list .
+A struct declaration that supplies a type_p aramet er_list  is a generic struct declaration.
+Additionally, any struct nested inside a generic class declaration or a generic struct
+declaration is itself a generic struct declaration, since type arguments for the containing
+type shall be supplied to create a constructed type ( §8.4).
+A struct declaration that includes a ref keyword shall not have a struct_int erfaces part.
+A struct_declar ation  may optionally include a sequence of struct_modi fiers:
+ANTLR
+unsafe_modi fier (§23.2 ) is only available in unsafe code ( §23).
+It is a compile-time error for the same modifier to appear multiple times in a struct
+declaration.
+Except for readonly, the modifiers of a struct declaration have the same meaning as
+those of a class declaration ( §15.2.2 ).
+The readonly modifier indicates that the struct_declar ation  declares a type whose
+instances are immutable.
+A readonly struct has the following constraints:
+Each of its instance fields shall also be declared readonly.
+None of its instance properties shall have a set_ac cessor_declar ation  (§15.7.3 ).
+It shall not declare any field-like events ( §15.8.2 ).16.2.2 Struct modifiers
+struct_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | 'readonly'
+    | unsafe_modifier   // unsafe code support
+    ;When an instance of a readonly struct is passed to a method, its this is treated like an
+in argument/parameter, which disallows write access to any instance fields (except by
+constructors).
+The ref modifier indicates that the struct_declar ation  declares a type whose instances
+are allocated on the execution stack. These types are are called ref str uct types. The ref
+modifier declares that instances may contain ref-like fields, and may not be copied out
+of its safe-context ( §16.4.12 ). The rules for determining the safe context of a ref struct
+are described in §16.4.12 .
+It is a compile-time error if a ref struct type is used in any of the following contexts:
+As the element type of an array.
+As the declared type of a field of a class or a struct that does not have the ref
+modifier.
+Being boxed to System.ValueType or System.Object.
+As a type argument.
+As the type of a tuple element.
+An async method.
+An iterator.
+There is no conversion from a ref struct type to the type object or the type
+System.ValueType.
+A ref struct type shall not be declared to implement any interface.
+An instance method declared in object or in System.ValueType but not overridden
+in a ref struct type shall not be called with a receiver of that ref struct type.
+An instance method of a ref struct type shall not be captured by method group
+conversion to a delegate type.
+A ref struct shall not be captured by a lambda expression or a local function.
+Note: A ref struct shall not declare async instance methods nor use a yield
+return or yield break statement within an instance method, because the implicit
+this parameter cannot be used in those contexts. end not e
+These constraints ensure that a variable of ref struct type does not refer to stack
+memory that is no longer valid, or to variables that are no longer valid.16.2.3 Ref modifier
+16.2.4 Partial modifierThe partial modifier indicates that this struct_declar ation  is a partial type declaration.
+Multiple partial struct declarations with the same name within an enclosing namespace
+or type declaration combine to form one struct declaration, following the rules specified
+in §15.2.7 .
+A struct declaration may include a struct_int erfaces specification, in which case the struct
+is said to directly implement the given interface types. For a constructed struct type,
+including a nested type declared within a generic type declaration ( §15.3.9.7 ), each
+implemented interface type is obtained by substituting, for each type_p aramet er in the
+given interface, the corresponding type_ar gument  of the constructed type.
+ANTLR
+The handling of interfaces on multiple parts of a partial struct declaration ( §15.2.7 ) are
+discussed further in §15.2.4.3 .
+Interface implementations are discussed further in §18.6 .
+The struct_body  of a struct defines the members of the struct.
+ANTLR
+The members of a struct consist of the members introduced by its
+struct_member_declar ation s and the members inherited from the type System.ValueType.
+ANTLR16.2.5 Struct interfaces
+struct_interfaces
+    : ':' interface_type_list
+    ;
+16.2.6 Struct body
+struct_body
+    : '{' struct_member_declaration* '}'
+    ;
+16.3 Struct members
+struct_member_declaration
+    : constant_declarationfixed_size_buf fer_declar ation  (§23.8.2 ) is only available in unsafe code ( §23).
+Note: All kinds of class_member_declar ation s except finalizer_declar ation  are also
+struct_member_declar ation s. end not e
+Except for the differences noted in §16.4 , the descriptions of class members provided in
+§15.3  through §15.12  apply to struct members as well.
+Structs differ from classes in several important ways:
+Structs are value types ( §16.4.2 ).
+All struct types implicitly inherit from the class System.ValueType (§16.4.3 ).
+Assignment to a variable of a struct type creates a copy of the value being assigned
+(§16.4.4 ).
+The default value of a struct is the value produced by setting all fields to their
+default value ( §16.4.5 ).
+Boxing and unboxing operations are used to convert between a struct type and
+certain reference types ( §16.4.6 ).
+The meaning of this is different within struct members ( §16.4.7 ).
+Instance field declarations for a struct are not permitted to include variable
+initializers ( §16.4.8 ).
+A struct is not permitted to declare a parameterless instance constructor ( §16.4.9 ).
+A struct is not permitted to declare a finalizer.    | field_declaration
+    | method_declaration
+    | property_declaration
+    | event_declaration
+    | indexer_declaration
+    | operator_declaration
+    | constructor_declaration
+    | static_constructor_declaration
+    | type_declaration
+    | fixed_size_buffer_declaration   // unsafe code support
+    ;
+16.4 Class and struct differences
+16.4.1 General
+16.4.2 Value semanticsStructs are value types ( §8.3) and are said to have value semantics. Classes, on the other
+hand, are reference types ( §8.2) and are said to have reference semantics.
+A variable of a struct type directly contains the data of the struct, whereas a variable of a
+class type contains a reference to an object that contains the data. When a struct B
+contains an instance field of type A and A is a struct type, it is a compile-time error for
+A to depend on B or a type constructed from B. A struct X directly depends on  a struct
+Y if X contains an instance field of type Y. Given this definition, the complete set of
+structs upon which a struct depends is the transitive closure of the directly depends on
+relationship.
+Example :
+C#
+is an error because Node contains an instance field of its own type. Another example
+C#
+is an error because each of the types A, B, and C depend on each other.
+end ex ample
+With classes, it is possible for two variables to reference the same object, and thus
+possible for operations on one variable to affect the object referenced by the other
+variable. With structs, the variables each have their own copy of the data (except in the
+case of in, out and ref parameter variables), and it is not possible for operations on
+one to affect the other. Furthermore, except when explicitly nullable ( §8.3.12 ), it is not
+possible for values of a struct type to be null.
+Note: If a struct contains a field of reference type then the contents of the object
+referenced can be altered by other operations. However the value of the field itself,struct Node
+{
+    int data;
+    Node next; // error, Node directly depends on itself
+}
+struct A { B b; }
+struct B { C c; }
+struct C { A a; }i.e., which object it references, cannot be changed through a mutation of a different
+struct value. end not e
+Example : Given the following
+C#
+the output is 10. The assignment of a to b creates a copy of the value, and b is
+thus unaffected by the assignment to a.x. Had Point instead been declared as a
+class, the output would be 100 because a and b would reference the same object.
+end ex ample
+All struct types implicitly inherit from the class System.ValueType, which, in turn, inherits
+from class object. A struct declaration may specify a list of implemented interfaces, but
+it is not possible for a struct declaration to specify a base class.
+Struct types are never abstract and are always implicitly sealed. The abstract and
+sealed modifiers are therefore not permitted in a struct declaration.
+Since inheritance isn’t supported for structs, the declared accessibility of a struct
+member cannot be protected, private protected, or protected internal.struct Point
+{
+    public int x, y;
+    public Point(int x, int y) 
+    {
+        this.x = x;
+        this.y = y;
+    }
+}
+class A
+{
+    static void Main()
+    {
+        Point a = new Point(10, 10);
+        Point b = a;
+        a.x = 100;
+        Console.WriteLine(b.x);
+    }
+}
+16.4.3 InheritanceFunction members in a struct cannot be abstract or virtual, and the override modifier is
+allowed only to override methods inherited from System.ValueType.
+Assignment to a variable of a struct type creates a copy of the value being assigned. This
+differs from assignment to a variable of a class type, which copies the reference but not
+the object identified by the reference.
+Similar to an assignment, when a struct is passed as a value parameter or returned as
+the result of a function member, a copy of the struct is created. A struct may be passed
+by reference to a function member using an in, out, or ref parameter.
+When a property or indexer of a struct is the target of an assignment, the instance
+expression associated with the property or indexer access shall be classified as a
+variable. If the instance expression is classified as a value, a compile-time error occurs.
+This is described in further detail in §12.21.2 .
+As described in §9.3, several kinds of variables are automatically initialized to their
+default value when they are created. For variables of class types and other reference
+types, this default value is null. However, since structs are value types that cannot be
+null, the default value of a struct is the value produced by setting all value type fields
+to their default value and all reference type fields to null.
+Example : Referring to the Point struct declared above, the example
+C#
+initializes each Point in the array to the value produced by setting the x and y
+fields to zero.
+end ex ample
+The default value of a struct corresponds to the value returned by the default
+constructor of the struct ( §8.3.3 ). Unlike a class, a struct is not permitted to declare a
+parameterless instance constructor. Instead, every struct implicitly has a parameterless16.4.4 Assignment
+16.4.5 Default values
+Point[] a = new Point[100];instance constructor, which always returns the value that results from setting all fields to
+their default values.
+Note: Structs should be designed to consider the default initialization state a valid
+state. In the example
+C#
+the user-defined instance constructor protects against null values only where it is
+explicitly called. In cases where a KeyValuePair variable is subject to default value
+initialization, the key and value fields will be null, and the struct should be
+prepared to handle this state.
+end not e
+A value of a class type can be converted to type object or to an interface type that is
+implemented by the class simply by treating the reference as another type at compile-
+time. Likewise, a value of type object or a value of an interface type can be converted
+back to a class type without changing the reference (but, of course, a run-time type
+check is required in this case).
+Since structs are not reference types, these operations are implemented differently for
+struct types. When a value of a struct type is converted to certain reference types (as
+defined in §10.2.9 ), a boxing operation takes place. Likewise, when a value of certain
+reference types (as defined in §10.3.7 ) is converted back to a struct type, an unboxingstruct KeyValuePair
+{
+    string key;
+    string value;
+    public KeyValuePair (string key, string value)
+    {
+        if (key == null || value == null)
+        {
+            throw new ArgumentException();
+        }
+        this.key = key;
+        this.value = value;
+    }
+}
+16.4.6 Boxing and unboxingoperation takes place. A key difference from the same operations on class types is that
+boxing and unboxing copies  the struct value either into or out of the boxed instance.
+Note: Thus, following a boxing or unboxing operation, changes made to the
+unboxed struct are not reflected in the boxed struct. end not e
+For further details on boxing and unboxing, see §10.2.9  and §10.3.7 .
+The meaning of this in a struct differs from the meaning of this in a class, as
+described in §12.8.13 . When a struct type overrides a virtual method inherited from
+System.ValueType (such as Equals, GetHashCode, or ToString), invocation of the virtual
+method through an instance of the struct type does not cause boxing to occur. This is
+true even when the struct is used as a type parameter and the invocation occurs
+through an instance of the type parameter type.
+Example :
+C#
+The output of the program is:16.4.7 Meaning of this
+struct Counter
+{
+    int value;
+    public override  string ToString () 
+    {
+        value++;
+        return value.ToString();
+    }
+}
+class Program
+{
+    static void Test<T>() where T : new()
+    {
+        T x = new T();
+        Console.WriteLine(x.ToString());
+        Console.WriteLine(x.ToString());
+        Console.WriteLine(x.ToString());
+    }
+    static void Main() => Test<Counter>();
+}Console
+Although it is bad style for ToString to have side effects, the example demonstrates
+that no boxing occurred for the three invocations of x.ToString().
+end ex ample
+Similarly, boxing never implicitly occurs when accessing a member on a constrained
+type parameter when the member is implemented within the value type. For example,
+suppose an interface ICounter contains a method Increment, which can be used to
+modify a value. If ICounter is used as a constraint, the implementation of the Increment
+method is called with a reference to the variable that Increment was called on, never a
+boxed copy.
+Example :
+C#1
+2
+3
+interface  ICounter
+{
+    void Increment ();
+}
+struct Counter : ICounter
+{
+    int value;
+    public override  string ToString () => value.ToString();
+    void ICounter.Increment() => value++;
+}
+class Program
+{
+    static void Test<T>() where T : ICounter, new()
+    {
+        T x = new T();
+        Console.WriteLine(x);
+        x.Increment();              // Modify x
+        Console.WriteLine(x);
+        ((ICounter)x).Increment();  // Modify boxed copy of x
+        Console.WriteLine(x);
+    }The first call to Increment modifies the value in the variable x. This is not equivalent
+to the second call to Increment, which modifies the value in a boxed copy of x.
+Thus, the output of the program is:
+Console
+end ex ample
+As described in §16.4.5 , the default value of a struct consists of the value that results
+from setting all value type fields to their default value and all reference type fields to
+null. For this reason, a struct does not permit instance field declarations to include
+variable initializers. This restriction applies only to instance fields. S tatic fields of a struct
+are permitted to include variable initializers.
+Example : The following
+C#
+is in error because the instance field declarations include variable initializers.
+end ex ample
+Unlike a class, a struct is not permitted to declare a parameterless instance constructor.
+Instead, every struct implicitly has a parameterless instance constructor, which always
+returns the value that results from setting all value type fields to their default value and    static void Main() => Test<Counter>();
+}
+0
+1
+1
+16.4.8 Field initializers
+struct Point
+{
+    public int x = 1; // Error, initializer not permitted
+    public int y = 1; // Error, initializer not permitted
+}
+16.4.9 Constructorsall reference type fields to null (§8.3.3 ). A struct can declare instance constructors
+having parameters.
+Example : Given the following
+C#
+the statements both create a Point with x and y initialized to zero.
+end ex ample
+A struct instance constructor is not permitted to include a constructor initializer of the
+form base(argument_list ), where argument_list  is optional.
+The this parameter of a struct instance constructor corresponds to an out parameter
+of the struct type. As such, this shall be definitely assigned ( §9.4) at every location
+where the constructor returns. Similarly, it cannot be read (even implicitly) in the
+constructor body before being definitely assigned.
+If the struct instance constructor specifies a constructor initializer, that initializer is
+considered a definite assignment to this that occurs prior to the body of the constructor.
+Therefore, the body itself has no initialization requirements.
+Example : Consider the instance constructor implementation below:
+C#struct Point
+{
+    int x, y;
+    public Point(int x, int y) 
+    {
+        this.x = x;
+        this.y = y;
+    }
+}
+class A
+{
+    static void Main()
+    {
+        Point p1 = new Point();
+        Point p2 = new Point(0, 0);
+    }
+}No instance function member (including the set accessors for the properties X and
+Y) can be called until all fields of the struct being constructed have been definitely
+assigned. Note, however, that if Point were a class instead of a struct, the instance
+constructor implementation would be permitted. There is one exception to this, and
+that involves automatically implemented properties ( §15.7.4 ). The definite
+assignment rules ( §12.21.2 ) specifically exempt assignment to an auto-property of a
+struct type within an instance constructor of that struct type: such an assignment is
+considered a definite assignment of the hidden backing field of the auto-property.
+Thus, the following is allowed:
+C#
+end ex ample ]struct Point
+{
+    int x, y;
+    public int X
+    {
+        set { x = value; }
+    }
+    public int Y 
+    {
+        set { y = value; }
+    }
+    public Point(int x, int y) 
+    {
+        X = x; // error, this is not yet definitely assigned
+        Y = y; // error, this is not yet definitely assigned
+    }
+}
+struct Point
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+    public Point(int x, int y)
+    {
+        X = x; // allowed, definitely assigns backing field
+        Y = y; // allowed, definitely assigns backing field
+   }
+}Static constructors for structs follow most of the same rules as for classes. The execution
+of a static constructor for a struct type is triggered by the first of the following events to
+occur within an application domain:
+A static member of the struct type is referenced.
+An explicitly declared constructor of the struct type is called.
+Note: The creation of default values ( §16.4.5 ) of struct types does not trigger the
+static constructor. (An example of this is the initial value of elements in an array.)
+end not e
+Automatically implemented properties ( §15.7.4 ) use hidden backing fields, which are
+only accessible to the property accessors.
+Note: This access restriction means that constructors in structs containing
+automatically implemented properties often need an explicit constructor initializer
+where they would not otherwise need one, to satisfy the requirement of all fields
+being definitely assigned before any function member is invoked or the constructor
+returns. end not e
+At compile-time, each expression is associated with a context where that instance and
+all its fields can be safely accessed, its safe-c ontext. The safe-context is a context,
+enclosing an expression, which it is safe for the value to escape to.
+Any expression whose compile-time type is not a ref struct has a safe-context of caller-
+context.
+A default expression, for any type, has safe-context of caller-context.
+For any non-default expression whose compile-time type is a ref struct has a safe-
+context defined by the following sections.
+The safe-context records which context a value may be copied into. Given an
+assignment from an expression E1 with a safe-context S1, to an expression E2 with16.4.10 Static constructors
+16.4.11 Automatically implemented properties
+16.4.12 Safe context constraint
+16.4.12.1 Generalsafe-context S2, it is an error if S2 is a wider context than S1.
+There are three different safe-context values, the same as the ref-safe-context values
+defined for reference variables ( §9.7.2 ): declaration-block , function-member , and caller -
+context. The safe-context of an expression constrains its use as follows:
+For a return statement return e1, the safe-context of e1 shall be caller-context.
+For an assignment e1 = e2 the safe-context of e2 shall be at least as wide a
+context as the safe-context of e1.
+For a method invocation if there is a ref or out argument of a ref struct type
+(including the receiver unless the type is readonly), with safe-context S1, then no
+argument (including the receiver) may have a narrower safe-context than S1.
+A formal parameter of a ref struct type, including the this parameter of an instance
+method, has a safe-context of caller-context.
+A local variable of a ref struct type has a safe-context as follows:
+If the variable is an iteration variable of a foreach loop, then the variable’s safe-
+context is the same as the safe-context of the foreach loop’s expression.
+Otherwise if the variable’s declaration has an initializer then the variable’s safe-
+context is the same as the safe-context of that initializer.
+Otherwise the variable is uninitialized at the point of declaration and has a safe-
+context of caller-context.
+A reference to a field e.F, where the type of F is a ref struct type, has a safe-context
+that is the same as the safe-context of e.
+The application of a user-defined operator is treated as a method invocation
+(§16.4.12.6 ).16.4.12.2 Parameter safe context
+16.4.12.3 Local variable safe context
+16.4.12.4 Field safe context
+16.4.12.5 OperatorsFor an operator that yields a value, such as e1 + e2 or c ? e1 : e2, the safe-context of
+the result is the narrowest context among the safe-contexts of the operands of the
+operator. As a consequence, for a unary operator that yields a value, such as +e, the
+safe-context of the result is the safe-context of the operand.
+Note: The first operand of a conditional operator is a bool, so its safe-context is
+caller-context. It follows that the resulting safe-context is the narrowest safe-context
+of the second and third operand. end not e
+A value resulting from a method invocation e1.M(e2, ...) or property invocation e.P
+has safe-context of the smallest of the following contexts:
+caller-context.
+The safe-context of all argument expressions (including the receiver).
+A property invocation (either get or set) is treated as a method invocation of the
+underlying method by the above rules.
+The result of a stackalloc expression has safe-context of function-member.
+A new expression that invokes a constructor obeys the same rules as a method
+invocation that is considered to return the type being constructed.
+In addition the safe-context is the smallest of the safe-contexts of all arguments and
+operands of all object initializer expressions, recursively, if any initializer is present.
+Note: These rules rely on Span<T> not having a constructor of the following form:
+C#
+Such a constructor makes instances of Span<T> used as fields indistinguishable from
+a ref field. The safety rules described in this document depend on ref fields not
+being a valid construct in C# or .NET. end not e16.4.12.6 Method and property invocation
+16.4.12.7 stackalloc
+16.4.12.8 Constructor invocations
+public Span<T>( ref T p)６ Collaborat e with us on
+GitHub
+The source for this content can
+be found on GitHub, where you
+can also create and review
+issues and pull requests. For
+more information, see our
+contributor guide .C# Standar d documentation
+feedb ack
+The C# S tandard documentation is
+open source. Provide feedback here.
+ Open a documentation issue
+ Provide product feedback17 Arrays
+Article •04/07/2023
+An array is a data structure that contains a number of variables that are accessed
+through computed indices. The variables contained in an array, also called the elements
+of the array, are all of the same type, and this type is called the element type  of the
+array.
+An array has a rank that determines the number of indices associated with each array
+element. The rank of an array is also referred to as the dimensions of the array. An array
+with a rank of one is called a single-dimensional arr ay. An array with a rank greater
+than one is called a multi-dimensional arr ay. Specific sized multi-dimensional arrays are
+often referred to as two-dimensional arrays, three-dimensional arrays, and so on. Each
+dimension of an array has an associated length that is an integral number greater than
+or equal to zero. The dimension lengths are not part of the type of the array, but rather
+are established when an instance of the array type is created at run-time. The length of a
+dimension determines the valid range of indices for that dimension: For a dimension of
+length N, indices can range from 0 to N – 1 inclusive. The total number of elements in
+an array is the product of the lengths of each dimension in the array. If one or more of
+the dimensions of an array have a length of zero, the array is said to be empty.
+The element type of an array can itself be an array type ( §17.2.1 ). Such arrays of arrays
+are distinct from multi-dimensional arrays and can be used to represent “jagged arrays”.
+Example :
+C#
+end ex ample17.1 General
+int[][] pascals = 
+{
+    new int[] {1},
+    new int[] {1, 1},
+    new int[] {1, 2, 1},
+    new int[] {1, 3, 3, 1}
+};Every array type is a reference type ( §8.2). The element type of an array can be any type,
+including value types and array types.
+The grammar productions for array types are provided in §8.2.1 .
+An array type is written as a non_arr ay_type  followed by one or more rank_speci fiers.
+A non_arr ay_type  is any type that is not itself an array_type .
+The rank of an array type is given by the leftmost rank_speci fier in the array_type : A
+rank_speci fier indicates that the array is an array with a rank of one plus the number of
+“,” tokens in the rank_speci fier.
+The element type of an array type is the type that results from deleting the leftmost
+rank_speci fier:
+An array type of the form T[R] is an array with rank R and a non-array element
+type T.
+An array type of the form T[R][R₁]...[Rₓ] is an array with rank R and an element
+type T[R₁]...[Rₓ].
+In effect, the rank_speci fiers are read from left to right befor e the final non-array element
+type.
+Example : The type in T[][,,][,] is a single-dimensional array of three-dimensional
+arrays of two-dimensional arrays of int. end ex ample
+At run-time, a value of an array type can be null or a reference to an instance of that
+array type.
+Note: Following the rules of §17.6 , the value may also be a reference to a covariant
+array type. end not e
+The type System.Array is the abstract base type of all array types. An implicit reference
+conversion ( §10.2.8 ) exists from any array type to System.Array and to any interface type17.2 Array types
+17.2.1 General
+17.2.2 The System.Array typeimplemented by System.Array. An explicit reference conversion ( §10.3.5 ) exists from
+System.Array and any interface type implemented by System.Array to any array type.
+System.Array is not itself an array_type . Rather, it is a class_type  from which all
+array_type s are derived.
+At run-time, a value of type System.Array can be null or a reference to an instance of
+any array type.
+A single-dimensional array T[] implements the interface
+System.Collections.Generic.IList<T> (IList<T> for short) and its base interfaces.
+Accordingly, there is an implicit conversion from T[] to IList<T> and its base
+interfaces. In addition, if there is an implicit reference conversion from S to T then S[]
+implements IList<T> and there is an implicit reference conversion from S[] to
+IList<T> and its base interfaces ( §10.2.8 ). If there is an explicit reference conversion
+from S to T then there is an explicit reference conversion from S[] to IList<T> and its
+base interfaces ( §10.3.5 ).
+Similarly, a single-dimensional array T[] also implements the interface
+System.Collections.Generic.IReadOnlyList<T> (IReadOnlyList<T> for short) and its base
+interfaces. Accordingly, there is an implicit conversion from T[] to IReadOnlyList<T>
+and its base interfaces. In addition, if there is an implicit reference conversion from S to
+T then S[] implements IReadOnlyList<T> and there is an implicit reference conversion
+from S[] to IReadOnlyList<T> and its base interfaces ( §10.2.8 ). If there is an explicit
+reference conversion from S to T then there is an explicit reference conversion from
+S[] to IReadOnlyList<T> and its base interfaces ( §10.3.5 ).
+Example : For example:
+C#17.2.3 Arrays and the generic collection interfaces
+class Test
+{
+    static void Main()
+    {
+        string[] sa = new string[5];
+        object[] oa1 = new object[5];
+        object[] oa2 = sa;
+        IList<string> lst1 = sa;  // Ok
+        IList<string> lst2 = oa1; // Error, cast needed
+        IList<object> lst3 = sa;  // OkThe assignment lst2 = oa1 generates a compile-time error since the conversion
+from object[] to IList<string> is an explicit conversion, not implicit. The cast
+(IList<string>)oa1 will cause an exception to be thrown at run-time since oa1
+references an object[] and not a string[]. However the cast ( IList<string>)oa2
+will not cause an exception to be thrown since oa2 references a string[].
+end ex ample
+Whenever there is an implicit or explicit reference conversion from S[] to IList<T>,
+there is also an explicit reference conversion from IList<T> and its base interfaces to
+S[] (§10.3.5 ).
+When an array type S[] implements IList<T>, some of the members of the
+implemented interface may throw exceptions. The precise behavior of the
+implementation of the interface is beyond the scope of this specification.
+Array instances are created by array_cr eation_expr ession s (§12.8.16.5 ) or by field or local
+variable declarations that include an array_initializer  (§17.7 ). Array instances can also be
+created implicitly as part of evaluating an argument list involving a parameter array
+(§15.6.2.6 ).
+When an array instance is created, the rank and length of each dimension are
+established and then remain constant for the entire lifetime of the instance. In other
+words, it is not possible to change the rank of an existing array instance, nor is it
+possible to resize its dimensions.        IList<object> lst4 = oa1; // Ok
+        IList<string> lst5 = (IList< string>)oa1; // Exception
+        IList<string> lst6 = (IList< string>)oa2; // Ok
+        IReadOnlyList< string> lst7 = sa;        // Ok
+        IReadOnlyList< string> lst8 = oa1;       // Error, cast needed
+        IReadOnlyList< object> lst9 = sa;        // Ok
+        IReadOnlyList< object> lst10 = oa1;      // Ok
+        IReadOnlyList< string> lst11 = (IReadOnlyList< string>)oa1; // 
+Exception
+        IReadOnlyList< string> lst12 = (IReadOnlyList< string>)oa2; // Ok
+    }
+}
+17.3 Array creationAn array instance is always of an array type. The System.Array type is an abstract type
+that cannot be instantiated.
+Elements of arrays created by array_cr eation_expr ession s are always initialized to their
+default value ( §9.3).
+Array elements are accessed using element_ac cess expressions ( §12.8.11.2 ) of the form
+A[I₁, I₂, ..., Iₓ], where A is an expression of an array type and each Iₑ is an
+expression of type int, uint, long, ulong, or can be implicitly converted to one or
+more of these types. The result of an array element access is a variable, namely the array
+element selected by the indices.
+The elements of an array can be enumerated using a foreach statement ( §13.9.5 ).
+Every array type inherits the members declared by the System.Array type.
+For any two reference_type s A and B, if an implicit reference conversion ( §10.2.8 ) or
+explicit reference conversion ( §10.3.5 ) exists from A to B, then the same reference
+conversion also exists from the array type A[R] to the array type B[R], where R is any
+given rank_speci fier (but the same for both array types). This relationship is known as
+array covariance. Array covariance, in particular, means that a value of an array type
+A[R] might actually be a reference to an instance of an array type B[R], provided an
+implicit reference conversion exists from B to A.
+Because of array covariance, assignments to elements of reference type arrays include a
+run-time check which ensures that the value being assigned to the array element is
+actually of a permitted type ( §12.21.2 ).
+Example :
+C#17.4 Array element access
+17.5 Array members
+17.6 Array covariance
+class Test
+{
+    static void Fill(object[] array, int index, int count, object value) 
+    {The assignment to array[i] in the Fill method implicitly includes a run-time
+check, which ensures that value is either a null reference or a reference to an
+object of a type that is compatible with the actual element type of array. In Main,
+the first two invocations of Fill succeed, but the third invocation causes a
+System.ArrayTypeMismatchException to be thrown upon executing the first
+assignment to array[i]. The exception occurs because a boxed int cannot be
+stored in a string array.
+end ex ample
+Array covariance specifically does not extend to arrays of value_type s. For example, no
+conversion exists that permits an int[] to be treated as an object[].
+Array initializers may be specified in field declarations ( §15.5 ), local variable declarations
+(§13.6.2 ), and array creation expressions ( §12.8.16.5 ):
+ANTLR        for (int i = index; i < index + count; i++)
+        {
+            array[i] = value;
+        }
+    }
+    static void Main() 
+    {
+        string[] strings = new string[100];
+        Fill(strings, 0, 100, "Undefined" );
+        Fill(strings, 0, 10, null);
+        Fill(strings, 90, 10, 0);
+    }
+}
+17.7 Array initia lizers
+array_initializer
+    : '{' variable_initializer_list? '}'
+    | '{' variable_initializer_list ',' '}'
+    ;
+variable_initializer_list
+    : variable_initializer ( ',' variable_initializer)*
+    ;
+    
+variable_initializer
+    : expressionAn array initializer consists of a sequence of variable initializers, enclosed by “ {” and “}”
+tokens and separated by “ ,” tokens. Each variable initializer is an expression or, in the
+case of a multi-dimensional array, a nested array initializer.
+The context in which an array initializer is used determines the type of the array being
+initialized. In an array creation expression, the array type immediately precedes the
+initializer, or is inferred from the expressions in the array initializer. In a field or variable
+declaration, the array type is the type of the field or variable being declared. When an
+array initializer is used in a field or variable declaration,
+C#
+it is simply shorthand for an equivalent array creation expression:
+C#
+For a single-dimensional array, the array initializer shall consist of a sequence of
+expressions, each having an implicit conversion to the element type of the array ( §10.2 ).
+The expressions initialize array elements in increasing order, starting with the element at
+index zero. The number of expressions in the array initializer determines the length of
+the array instance being created.
+Example : The array initializer above creates an int[] instance of length 5 and then
+initializes the instance with the following values:
+C#
+end ex ample
+For a multi-dimensional array, the array initializer shall have as many levels of nesting as
+there are dimensions in the array. The outermost nesting level corresponds to the
+leftmost dimension and the innermost nesting level corresponds to the rightmost
+dimension. The length of each dimension of the array is determined by the number of    | array_initializer
+    ;
+int[] a = { 0, 2, 4, 6, 8};
+int[] a = new int[] {0, 2, 4, 6, 8};
+a[0] = 0; a[1] = 2; a[2] = 4; a[3] = 6; a[4] = 8;elements at the corresponding nesting level in the array initializer. For each nested array
+initializer, the number of elements shall be the same as the other array initializers at the
+same level.
+Example : The example:
+C#
+creates a two-dimensional array with a length of five for the leftmost dimension and
+a length of two for the rightmost dimension:
+C#
+and then initializes the array instance with the following values:
+C#
+end ex ample
+If a dimension other than the rightmost is given with length zero, the subsequent
+dimensions are assumed to also have length zero.
+Example :
+C#
+creates a two-dimensional array with a length of zero for both the leftmost and the
+rightmost dimension:
+C#int[,] b = {{ 0, 1}, {2, 3}, {4, 5}, {6, 7}, {8, 9}};
+int[,] b = new int[5, 2];
+b[0, 0] = 0; b[0, 1] = 1;
+b[1, 0] = 2; b[1, 1] = 3;
+b[2, 0] = 4; b[2, 1] = 5;
+b[3, 0] = 6; b[3, 1] = 7;
+b[4, 0] = 8; b[4, 1] = 9;
+int[,] c = {};end ex ample
+When an array creation expression includes both explicit dimension lengths and an array
+initializer, the lengths shall be constant expressions and the number of elements at each
+nesting level shall match the corresponding dimension length.
+Example : Here are some examples:
+C#
+Here, the initializer for y results in a compile-time error because the dimension
+length expression is not a constant, and the initializer for  z results in a compile-time
+error because the length and the number of elements in the initializer do not agree.
+end ex ample
+Note: C# allows a trailing comma at the end of an array_initializer . This syntax
+provides flexibility in adding or deleting members from such a list, and simplifies
+machine generation of such lists. end not eint[,] c = new int[0, 0];
+int i = 3;
+int[] x = new int[3] {0, 1, 2}; // OK
+int[] y = new int[i] {0, 1, 2}; // Error, i not a constant
+int[] z = new int[3] {0, 1, 2, 3}; // Error, length/initializer mismatch
+６ Collaborat e with us on
+GitHub
+The source for this content can
+be found on GitHub, where you
+can also create and review
+issues and pull requests. For
+more information, see our
+contributor guide .C# Standar d documentation
+feedb ack
+C# Standard documentation is an
+open source project. Select a link to
+provide feedback:
+ Open a documentation issue
+ Provide product feedback18 Interfaces
+Article •04/07/2023
+An interface defines a contract. A class or struct that implements an interface shall
+adhere to its contract. An interface may inherit from multiple base interfaces, and a class
+or struct may implement multiple interfaces.
+Interfaces can contain methods, properties, events, and indexers. The interface itself
+does not provide implementations for the members that it declares. The interface
+merely specifies the members that shall be supplied by classes or structs that implement
+the interface.
+An interface_declar ation  is a type_declar ation  (§14.7 ) that declares a new interface type.
+ANTLR
+An interface_declar ation  consists of an optional set of attributes (§22), followed by an
+optional set of interface_modi fiers (§18.2.2 ), followed by an optional partial modifier
+(§15.2.7 ), followed by the keyword interface and an identi fier that names the interface,
+followed by an optional variant_type_p aramet er_list  specification ( §18.2.3 ), followed by
+an optional interface_base specification ( §18.2.4 ), followed by an optional
+type_p aramet er_constr aints_claus es specification ( §15.2.5 ), followed by an interface_body
+(§18.3 ), optionally followed by a semicolon.
+An interface declaration shall not supply a type_p aramet er_constr aints_claus es unless it
+also supplies a type_p aramet er_list .18.1 General
+18.2 Interface declarations
+18.2.1 General
+interface_declaration
+    : attributes? interface_modifier* 'partial' ? 'interface'
+      identifier variant_type_parameter_list? interface_base?
+      type_parameter_constraints_clause* interface_body ';'?
+    ;An interface declaration that supplies a type_p aramet er_list  is a generic interface
+declaration. Additionally, any interface nested inside a generic class declaration or a
+generic struct declaration is itself a generic interface declaration, since type arguments
+for the containing type shall be supplied to create a constructed type ( §8.4).
+An interface_declar ation  may optionally include a sequence of interface modifiers:
+ANTLR
+unsafe_modi fier (§23.2 ) is only available in unsafe code ( §23).
+It is a compile-time error for the same modifier to appear multiple times in an interface
+declaration.
+The new modifier is only permitted on interfaces defined within a class. It specifies that
+the interface hides an inherited member by the same name, as described in §15.3.5 .
+The public, protected, internal, and private modifiers control the accessibility of the
+interface. Depending on the context in which the interface declaration occurs, only some
+of these modifiers might be permitted ( §7.5.2 ). When a partial type declaration ( §15.2.7 )
+includes an accessibility specification (via the public, protected, internal, and private
+modifiers), the rules in §15.2.2  apply.
+Variant type parameter lists can only occur on interface and delegate types. The
+difference from ordinary type_p aramet er_list s is the optional variance_annot ation  on
+each type parameter.
+ANTLR18.2.2 Interface modifiers
+interface_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | unsafe_modifier   // unsafe code support
+    ;
+18.2.3 Variant type parameter lists
+18.2.3.1 GeneralANTLR
+ANTLR
+If the variance annotation is out, the type parameter is said to be covariant. If the
+variance annotation is in, the type parameter is said to be contravariant. If there is no
+variance annotation, the type parameter is said to be invariant.
+Example : In the following:
+C#
+X is covariant, Y is contravariant and Z is invariant.
+end ex ample
+If a generic interface is declared in multiple parts ( §15.2.3 ), each partial declaration shall
+specify the same variance for each type parameter.
+The occurrence of variance annotations in the type parameter list of a type restricts the
+places where types can occur within the type declaration.variant_type_parameter_list
+    : '<' variant_type_parameters '>'
+    ;
+variant_type_parameters
+    : attributes? variance_annotation? type_parameter
+    | variant_type_parameters ',' attributes? variance_annotation?
+      type_parameter
+    ;
+variance_annotation
+    : 'in'
+    | 'out'
+    ;
+interface  C<out X, in Y, Z>
+{
+    X M(Y y);
+    Z P { get; set; }
+}
+18.2.3.2 Variance safetyA type T is output -unsafe if one of the following holds:
+T is a contravariant type parameter
+T is an array type with an output-unsafe element type
+T is an interface or delegate type Sᵢ,... Aₑ constructed from a generic type
+S<Xᵢ, ... Xₑ> where for at least one Aᵢ one of the following holds:
+Xᵢ is covariant or invariant and Aᵢ is output-unsafe.
+Xᵢ is contravariant or invariant and Aᵢ is input-unsafe.
+A type T is input -unsafe if one of the following holds:
+T is a covariant type parameter
+T is an array type with an input-unsafe element type
+T is an interface or delegate type S<Aᵢ,... Aₑ> constructed from a generic type
+S<Xᵢ, ... Xₑ> where for at least one Aᵢ one of the following holds:
+Xᵢ is covariant or invariant and Aᵢ is input-unsafe.
+Xᵢ is contravariant or invariant and Aᵢ is output-unsafe.
+Intuitively, an output-unsafe type is prohibited in an output position, and an input-
+unsafe type is prohibited in an input position.
+A type is output -safe if it is not output-unsafe, and input -safe if it is not input-unsafe.
+The purpose of variance annotations is to provide for more lenient (but still type safe)
+conversions to interface and delegate types. T o this end the definitions of implicit ( §10.2 )
+and explicit conversions ( §10.3 ) make use of the notion of variance-convertibility, which
+is defined as follows:
+A type T<Aᵢ, ..., Aᵥ> is variance-convertible to a type T<Bᵢ, ..., Bᵥ> if T is either an
+interface or a delegate type declared with the variant type parameters T<Xᵢ, ..., Xᵥ>,
+and for each variant type parameter Xᵢ one of the following holds:
+Xᵢ is covariant and an implicit reference or identity conversion exists from  Aᵢ
+to Bᵢ
+Xᵢ is contravariant and an implicit reference or identity conversion exists from  Bᵢ
+to Aᵢ
+Xᵢ is invariant and an identity conversion exists from  Aᵢ to Bᵢ18.2.3.3 Variance conversion
+18.2.4 Base interfacesAn interface can inherit from zero or more interface types, which are called the explicit
+base interfaces of the interface. When an interface has one or more explicit base
+interfaces, then in the declaration of that interface, the interface identifier is followed by
+a colon and a comma-separated list of base interface types.
+ANTLR
+The explicit base interfaces can be constructed interface types ( §8.4, §18.2 ). A base
+interface cannot be a type parameter on its own, though it can involve the type
+parameters that are in scope.
+For a constructed interface type, the explicit base interfaces are formed by taking the
+explicit base interface declarations on the generic type declaration, and substituting, for
+each type_p aramet er in the base interface declaration, the corresponding type_ar gument
+of the constructed type.
+The explicit base interfaces of an interface shall be at least as accessible as the interface
+itself ( §7.5.5 ).
+Note: For example, it is a compile-time error to specify a private or internal
+interface in the interface_base of a public interface. end not e
+It is a compile-time error for an interface to directly or indirectly inherit from itself.
+The base interfaces of an interface are the explicit base interfaces and their base
+interfaces. In other words, the set of base interfaces is the complete transitive closure of
+the explicit base interfaces, their explicit base interfaces, and so on. An interface inherits
+all members of its base interfaces.
+Example : In the following code
+C#interface_base
+    : ':' interface_type_list
+    ;
+interface  IControl
+{
+    void Paint();
+}
+interface  ITextBox  : IControl
+{
+    void SetText(string text);the base interfaces of IComboBox are IControl, ITextBox, and IListBox. In other
+words, the IComboBox interface above inherits members SetText and SetItems as
+well as Paint.
+end ex ample
+Members inherited from a constructed generic type are inherited after type substitution.
+That is, any constituent types in the member have the base class declaration’s type
+parameters replaced with the corresponding type arguments used in the class_b ase
+specification.
+Example : In the following code
+C#
+the interface IDerived inherits the Combine method after the type parameter T is
+replaced with string[,].
+end ex ample
+A class or struct that implements an interface also implicitly implements all of the
+interface’s base interfaces.
+The handling of interfaces on multiple parts of a partial interface declaration ( §15.2.7 )
+are discussed further in  §15.2.4.3 .
+Every base interface of an interface shall be output-safe ( §18.2.3.2 ).}
+interface  IListBox  : IControl
+{
+    void SetItems (string[] items );
+}
+interface  IComboBox : ITextBox , IListBox  {}
+interface  IBase<T>
+{
+    T[] Combine(T a, T b );
+}
+interface  IDerived  : IBase<string[,]>
+{
+    // Inherited: string[][,] Combine(string[,] a, string[,] b);
+}The interface_body  of an interface defines the members of the interface.
+ANTLR
+The members of an interface are the members inherited from the base interfaces and
+the members declared by the interface itself.
+ANTLR
+An interface declaration declares zero or more members. The members of an interface
+shall be methods, properties, events, or indexers. An interface cannot contain constants,
+fields, operators, instance constructors, finalizers, or types, nor can an interface contain
+static members of any kind.
+All interface members implicitly have public access. It is a compile-time error for
+interface member declarations to include any modifiers.
+An interface_declar ation  creates a new declaration space ( §7.3), and the type parameters
+and interface_member_declar ation s immediately contained by the interface_declar ation
+introduce new members into this declaration space. The following rules apply to
+interface_member_declar ation s:
+The name of a type parameter in the type_p aramet er_list  of an interface declaration
+shall differ from the names of all other type parameters in the same
+type_p aramet er_list  and shall differ from the names of all members of the interface.18.3 Interface body
+interface_body
+    : '{' interface_member_declaration* '}'
+    ;
+18.4 Interface members
+18.4.1 General
+interface_member_declaration
+    : interface_method_declaration
+    | interface_property_declaration
+    | interface_event_declaration
+    | interface_indexer_declaration
+    ;The name of a method shall differ from the names of all properties and events
+declared in the same interface. In addition, the signature ( §7.6) of a method shall
+differ from the signatures of all other methods declared in the same interface, and
+two methods declared in the same interface may not have signatures that differ
+solely by in, out, and ref.
+The name of a property or event shall differ from the names of all other members
+declared in the same interface.
+The signature of an indexer shall differ from the signatures of all other indexers
+declared in the same interface.
+The inherited members of an interface are specifically not part of the declaration space
+of the interface. Thus, an interface is allowed to declare a member with the same name
+or signature as an inherited member. When this occurs, the derived interface member is
+said to hide the base interface member. Hiding an inherited member is not considered
+an error, but it does cause the compiler to issue a warning. T o suppress the warning, the
+declaration of the derived interface member shall include a new modifier to indicate that
+the derived member is intended to hide the base member. This topic is discussed further
+in §7.7.2.3 .
+If a new modifier is included in a declaration that doesn’t hide an inherited member, a
+warning is issued to that effect. This warning is suppressed by removing the new
+modifier.
+Note: The members in class object are not, strictly speaking, members of any
+interface ( §18.4 ). However, the members in class object are available via member
+lookup in any interface type ( §12.5 ). end not e
+The set of members of an interface declared in multiple parts ( §15.2.7 ) is the union of
+the members declared in each part. The bodies of all parts of the interface declaration
+share the same declaration space ( §7.3), and the scope of each member ( §7.7) extends to
+the bodies of all the parts.
+Interface methods are declared using interface_method_declar ation s:
+ANTLR18.4.2 Interface methods
+interface_method_declaration
+    : attributes? 'new'? return_type interface_method_header
+    | attributes? 'new'? ref_kind ref_return_type interface_method_header
+    ;The attributes, return_type , ref_return_type , identi fier, and formal_p aramet er_list  of an
+interface method declaration have the same meaning as those of a method declaration
+in a class ( §15.6 ). An interface method declaration is not permitted to specify a method
+body, and the declaration therefore always ends with a semicolon.
+All formal parameter types of an interface method shall be input-safe ( §18.2.3.2 ), and the
+return type shall be either void or output-safe. In addition, any output or reference
+formal parameter types shall also be output-safe.
+Note: Output parameters are required to be input-safe due to common
+implementation restrictions. end not e
+Furthermore, each class type constraint, interface type constraint and type parameter
+constraint on any type parameters of the method shall be input-safe.
+Furthermore, each class type constraint, interface type constraint and type parameter
+constraint on any type parameter of the method shall be input-safe.
+These rules ensure that any covariant or contravariant usage of the interface remains
+typesafe.
+Example :
+C#
+is ill-formed because the usage of T as a type parameter constraint on U is not
+input-safe.
+Were this restriction not in place it would be possible to violate type safety in the
+following manner:
+C#interface_method_header
+    : identifier '(' formal_parameter_list? ')' ';'
+    | identifier type_parameter_list '(' formal_parameter_list? ')'
+      type_parameter_constraints_clause* ';'
+    ;
+interface  I<out T>
+{
+    void M<U>() where U : T;     // Error
+}This is actually a call to C.M<E>. But that call requires that E derive from  D, so type
+safety would be violated here.
+end ex ample
+Interface properties are declared using interface_property_declar ation s:
+ANTLR
+The attributes, type, and identi fier of an interface property declaration have the same
+meaning as those of a property declaration in a class ( §15.7 ).
+The accessors of an interface property declaration correspond to the accessors of a class
+property declaration ( §15.7.3 ), except that the accessor_body  shall always be a semicolon.class B {}
+class D : B {}
+class E : B {}
+class C : I<D>
+{
+    public void M<U>() {...} 
+}
+...
+I<B> b = new C();
+b.M<E>();
+18.4.3 Interface properties
+interface_property_declaration
+    : attributes? 'new'? type identifier '{' interface_accessors '}'
+    | attributes? 'new'? ref_kind type identifier '{' ref_interface_accessor  
+'}'
+    ;
+interface_accessors
+    : attributes? 'get' ';'
+    | attributes? 'set' ';'
+    | attributes? 'get' ';' attributes? 'set' ';'
+    | attributes? 'set' ';' attributes? 'get' ';'
+    ;
+ref_interface_accessor
+    : attributes? 'get' ';'
+    ;Thus, the accessors simply indicate whether the property is read-write, read-only, or
+write-only.
+The type of an interface property shall be output-safe if there is a get accessor, and shall
+be input-safe if there is a set accessor.
+Interface events are declared using interface_event_declar ation s:
+ANTLR
+The attributes, type, and identi fier of an interface event declaration have the same
+meaning as those of an event declaration in a class ( §15.8 ).
+The type of an interface event shall be input-safe.
+Interface indexers are declared using interface_index er_declar ation s:
+ANTLR
+The attributes, type, and formal_p aramet er_list  of an interface indexer declaration have
+the same meaning as those of an indexer declaration in a class ( §15.9 ).
+The accessors of an interface indexer declaration correspond to the accessors of a class
+indexer declaration ( §15.9 ), except that the accessor_body  shall always be a semicolon.
+Thus, the accessors simply indicate whether the indexer is read-write, read-only, or
+write-only.
+All the formal parameter types of an interface indexer shall be input-safe ( §18.2.3.2 ). In
+addition, any output or reference formal parameter types shall also be output-safe.18.4.4 Interface events
+interface_event_declaration
+    : attributes? 'new'? 'event' type identifier ';'
+    ;
+18.4.5 Interface indexers
+interface_indexer_declaration
+    : attributes? 'new'? type 'this' '[' formal_parameter_list ']'
+      '{' interface_accessors '}'
+    | attributes? 'new'? ref_kind type 'this' '[' formal_parameter_list ']'
+      '{' ref_interface_accessor '}'
+    ;Note: Output parameters are required to be input-safe due to common
+implementation restrictions. end not e
+The type of an interface indexer shall be output-safe if there is a get accessor, and shall
+be input-safe if there is a set accessor.
+Interface members are accessed through member access ( §12.8.7 ) and indexer access
+(§12.8.11.3 ) expressions of the form I.M and I[A], where I is an interface type, M is a
+method, property, or event of that interface type, and A is an indexer argument list.
+For interfaces that are strictly single-inheritance (each interface in the inheritance chain
+has exactly zero or one direct base interface), the effects of the member lookup ( §12.5 ),
+method invocation ( §12.8.9.2 ), and indexer access ( §12.8.11.3 ) rules are exactly the same
+as for classes and structs: More derived members hide less derived members with the
+same name or signature. However, for multiple-inheritance interfaces, ambiguities can
+occur when two or more unrelated base interfaces declare members with the same
+name or signature. This subclause shows several examples, some of which lead to
+ambiguities and others which don’t. In all cases, explicit casts can be used to resolve the
+ambiguities.
+Example : In the following code
+C#18.4.6 Interface member access
+interface  IList
+{
+    int Count { get; set; }
+}
+interface  ICounter
+{
+    void Count(int i);
+}
+interface  IListCounter  : IList, ICounter  {}
+class C
+{
+    void Test(IListCounter x )
+    {
+        x.Count( 1);             // Error
+        x.Count = 1;            // Error
+        ((IList)x).Count = 1;   // Ok, invokes IList.Count.set
+        ((ICounter)x).Count( 1); // Ok, invokes ICounter.Countthe first two statements cause compile-time errors because the member lookup
+(§12.5 ) of Count in IListCounter is ambiguous. As illustrated by the example, the
+ambiguity is resolved by casting x to the appropriate base interface type. Such casts
+have no run-time costs—they merely consist of viewing the instance as a less
+derived type at compile-time.
+end ex ample
+Example : In the following code
+C#
+the invocation n.Add(1) selects IInteger.Add by applying overload resolution rules
+of §12.6.4 . Similarly, the invocation n.Add(1.0) selects IDouble.Add. When explicit
+casts are inserted, there is only one candidate method, and thus no ambiguity.
+end ex ample
+Example : In the following code
+C#    }
+}
+interface  IInteger
+{
+    void Add(int i);
+}
+interface  IDouble
+{
+    void Add(double d);
+}
+interface  INumber : IInteger , IDouble {}
+class C
+{
+    void Test(INumber n )
+    {
+        n.Add(1);             // Invokes IInteger.Add
+        n.Add(1.0);           // Only IDouble.Add is applicable
+        ((IInteger)n).Add( 1); // Only IInteger.Add is a candidate
+        ((IDouble)n).Add( 1);  // Only IDouble.Add is a candidate
+    }
+}the IBase.F member is hidden by the ILeft.F member. The invocation d.F(1) thus
+selects ILeft.F, even though IBase.F appears to not be hidden in the access path
+that leads through IRight.
+The intuitive rule for hiding in multiple-inheritance interfaces is simply this: If a
+member is hidden in any access path, it is hidden in all access paths. Because the
+access path from IDerived to ILeft to IBase hides IBase.F, the member is also
+hidden in the access path from IDerived to IRight to IBase.
+end ex ample
+An interface member is sometimes referred to by its quali fied int erface member name .
+The qualified name of an interface member consists of the name of the interface in
+which the member is declared, followed by a dot, followed by the name of the member.
+The qualified name of a member references the interface in which the member is
+declared.interface  IBase
+{
+    void F(int i);
+}
+interface  ILeft : IBase
+{
+    new void F(int i);
+}
+interface  IRight : IBase
+{
+    void G();
+}
+interface  IDerived  : ILeft, IRight {}
+class A
+{
+    void Test(IDerived d )
+    {
+        d.F(1);           // Invokes ILeft.F
+        ((IBase)d).F( 1);  // Invokes IBase.F
+        ((ILeft)d).F( 1);  // Invokes ILeft.F
+        ((IRight)d).F( 1); // Invokes IBase.F
+    }
+}
+18.5 Qualified interface member namesExample : Given the declarations
+C#
+the qualified name of Paint is IControl.Paint and the qualified name of SetT ext is
+ITextBox.SetText. In the example above, it is not possible to refer to Paint as
+ITextBox.Paint.
+end ex ample
+When an interface is part of a namespace, a qualified interface member name can
+include the namespace name.
+Example :
+C#
+Within the System namespace, both ICloneable.Clone and System.ICloneable.Clone
+are qualified interface member names for the Clone method.
+end ex ampleinterface  IControl
+{
+    void Paint();
+}
+interface  ITextBox  : IControl
+{
+    void SetText(string text);
+}
+namespace  System
+{
+    public interface  ICloneable
+    {
+        object Clone();
+    }
+}
+18.6 Interface implementations
+18.6.1 GeneralInterfaces may be implemented by classes and structs. T o indicate that a class or struct
+directly implements an interface, the interface is included in the base class list of the
+class or struct.
+Example :
+C#
+end ex ample
+A class or struct that directly implements an interface also implicitly implements all of
+the interface’s base interfaces. This is true even if the class or struct doesn’t explicitly list
+all base interfaces in the base class list.
+Example :
+C#interface  ICloneable
+{
+    object Clone();
+}
+interface  IComparable
+{
+    int CompareTo (object other);
+}
+class ListEntry  : ICloneable , IComparable
+{
+    public object Clone() {...}    
+    public int CompareTo (object other) {...}
+}
+interface  IControl
+{
+    void Paint();
+}
+interface  ITextBox  : IControl
+{
+    void SetText(string text);
+}
+class TextBox : ITextBox
+{
+    public void Paint() {...}Here, class TextBox implements both IControl and ITextBox.
+end ex ample
+When a class  C directly implements an interface, all classes derived from  C also
+implement the interface implicitly.
+The base interfaces specified in a class declaration can be constructed interface types
+(§8.4, §18.2 ).
+Example : The following code illustrates how a class can implement constructed
+interface types:
+C#
+end ex ample
+The base interfaces of a generic class declaration shall satisfy the uniqueness rule
+described in §18.6.3 .
+For purposes of implementing interfaces, a class or struct may declare explicit int erface
+member implement ations . An explicit interface member implementation is a method,
+property, event, or indexer declaration that references a qualified interface member
+name.
+Example :
+C#    public void SetText(string text) {...}
+}
+class C<U, V> {}
+interface  I1<V> {}
+class D : C<string, int>, I1<string> {}
+class E<T> : C<int, T>, I1<T> {}
+18.6.2 Explicit interface member implementations
+interface  IList<T>
+{
+    T[] GetElements ();
+}Here IDictionary<int,T>.this and IDictionary<int,T>.Add are explicit interface
+member implementations.
+end ex ample
+Example : In some cases, the name of an interface member might not be appropriate
+for the implementing class, in which case, the interface member may be
+implemented using explicit interface member implementation. A class implementing
+a file abstraction, for example, would likely implement a Close member function
+that has the effect of releasing the file resource, and implement the Dispose
+method of the IDisposable interface using explicit interface member
+implementation:
+C#
+end ex ampleinterface  IDictionary <K, V>
+{
+    V this[K key] { get; }
+    void Add(K key, V value);
+}
+class List<T> : IList<T>, IDictionary <int, T>
+{
+    T[] IList<T>. GetElements() {...}
+    T IDictionary< int, T>.this[int index] {...}
+    void IDictionary< int, T>.Add( int index, T value) {...}
+}
+interface  IDisposable
+{
+    void Dispose();
+}
+class MyFile : IDisposable
+{
+    void IDisposable.Dispose() => Close();
+    public void Close()
+    {
+        // Do what's necessary to close the file
+        System.GC.SuppressFinalize( this);
+    }
+}It is not possible to access an explicit interface member implementation through its
+qualified interface member name in a method invocation, property access, event access,
+or indexer access. An explicit interface member implementation can only be accessed
+through an interface instance, and is in that case referenced simply by its member name.
+It is a compile-time error for an explicit interface member implementation to include any
+modifiers ( §15.6 ) other than extern or async.
+It is a compile-time error for an explicit interface method implementation to include
+type_p aramet er_constr aints_claus es. The constraints for a generic explicit interface
+method implementation are inherited from the interface method.
+Note: Explicit interface member implementations have different accessibility
+characteristics than other members. Because explicit interface member
+implementations are never accessible through a qualified interface member name in
+a method invocation or a property access, they are in a sense private. However,
+since they can be accessed through the interface, they are in a sense also as public
+as the interface in which they are declared. Explicit interface member
+implementations serve two primary purposes:
+Because explicit interface member implementations are not accessible through
+class or struct instances, they allow interface implementations to be excluded
+from the public interface of a class or struct. This is particularly useful when a
+class or struct implements an internal interface that is of no interest to a
+consumer of that class or struct.
+Explicit interface member implementations allow disambiguation of interface
+members with the same signature. Without explicit interface member
+implementations it would be impossible for a class or struct to have different
+implementations of interface members with the same signature and return
+type, as would it be impossible for a class or struct to have any implementation
+at all of interface members with the same signature but with different return
+types.
+end not e
+For an explicit interface member implementation to be valid, the class or struct shall
+name an interface in its base class list that contains a member whose qualified interface
+member name, type, number of type parameters, and parameter types exactly match
+those of the explicit interface member implementation. If an interface function member
+has a parameter array, the corresponding parameter of an associated explicit interface
+member implementation is allowed, but not required, to have the params modifier. If theinterface function member does not have a parameter array then an associated explicit
+interface member implementation shall not have a parameter array.
+Example : Thus, in the following class
+C#
+the declaration of IComparable.CompareTo results in a compile-time error because
+IComparable is not listed in the base class list of Shape and is not a base interface of
+ICloneable. Likewise, in the declarations
+C#
+the declaration of ICloneable.Clone in Ellipse results in a compile-time error
+because ICloneable is not explicitly listed in the base class list of Ellipse.
+end ex ample
+The qualified interface member name of an explicit interface member implementation
+shall reference the interface in which the member was declared.
+Example : Thus, in the declarations
+C#class Shape : ICloneable
+{
+    object ICloneable.Clone() {...}
+    int IComparable.CompareTo( object other) {...} // invalid
+}
+class Shape : ICloneable
+{
+    object ICloneable.Clone() {...}
+}
+class Ellipse : Shape
+{
+    object ICloneable.Clone() {...} // invalid
+}
+interface  IControl
+{
+    void Paint();
+}
+interface  ITextBox  : IControlthe explicit interface member implementation of P aint must be written as
+IControl.Paint, not ITextBox.Paint.
+end ex ample
+The interfaces implemented by a generic type declaration shall remain unique for all
+possible constructed types. Without this rule, it would be impossible to determine the
+correct method to call for certain constructed types.
+Example : Suppose a generic class declaration were permitted to be written as
+follows:
+C#
+Were this permitted, it would be impossible to determine which code to execute in
+the following case:
+C#
+end ex ample{
+    void SetText(string text);
+}
+class TextBox : ITextBox
+{
+    void IControl.Paint() {...}
+    void ITextBox.SetText( string text) {...}
+}
+18.6.3 Uniqueness of implemented interfaces
+interface  I<T>
+{
+    void F();
+}
+class X<U ,V> : I<U>, I<V> // Error: I<U> and I<V> conflict
+{
+    void I<U>.F() {...}
+    void I<V>.F() {...}
+}
+I<int> x = new X<int, int>();
+x.F();To determine if the interface list of a generic type declaration is valid, the following steps
+are performed:
+Let L be the list of interfaces directly specified in a generic class, struct, or interface
+declaration  C.
+Add to L any base interfaces of the interfaces already in  L.
+Remove any duplicates from  L.
+If any possible constructed type created from  C would, after type arguments are
+substituted into  L, cause two interfaces in  L to be identical, then the declaration
+of C is invalid. Constraint declarations are not considered when determining all
+possible constructed types.
+Note: In the class declaration X above, the interface list L consists of l<U> and
+I<V>. The declaration is invalid because any constructed type with U and V being
+the same type would cause these two interfaces to be identical types. end not e
+It is possible for interfaces specified at different inheritance levels to unify:
+C#
+This code is valid even though Derived<U,V> implements both I<U> and I<V>. The code
+C#
+invokes the method in Derived, since Derived<int,int>' effectively re-implements
+I<int> (§18.6.7 ).interface  I<T>
+{
+    void F();
+}
+class Base<U> : I<U>
+{
+    void I<U>.F() {...}
+}
+class Derived<U, V> : Base<U>, I<V> // Ok
+{
+    void I<V>.F() {...}
+}
+I<int> x = new Derived< int, int>();
+x.F();When a generic method implicitly implements an interface method, the constraints
+given for each method type parameter shall be equivalent in both declarations (after any
+interface type parameters are replaced with the appropriate type arguments), where
+method type parameters are identified by ordinal positions, left to right.
+Example : In the following code:
+C#
+the method C.F<T> implicitly implements I<object,C,string>.F<T>. In this case,
+C.F<T> is not required (nor permitted) to specify the constraint T: object since
+object is an implicit constraint on all type parameters. The method C.G<T> implicitly
+implements I<object,C,string>.G<T> because the constraints match those in the
+interface, after the interface type parameters are replaced with the corresponding
+type arguments. The constraint for method C.H<T> is an error because sealed types
+(string in this case) cannot be used as constraints. Omitting the constraint would
+also be an error since constraints of implicit interface method implementations are
+required to match. Thus, it is impossible to implicitly implement
+I<object,C,string>.H<T>. This interface method can only be implemented using an
+explicit interface member implementation:
+C#18.6.4 Implementation of generic methods
+interface  I<X, Y, Z>
+{
+    void F<T>(T t) where T : X;
+    void G<T>(T t) where T : Y;
+    void H<T>(T t) where T : Z;
+}
+class C : I<object, C, string>
+{
+    public void F<T>(T t) {...}                  // Ok
+    public void G<T>(T t) where T : C {...}      // Ok
+    public void H<T>(T t) where T : string {...} // Error
+}
+class C : I<object, C, string>
+{
+    ...
+    public void H<U>(U u) where U : class {...}
+    void I<object, C, string>.H<T>(T t)
+    {In this case, the explicit interface member implementation invokes a public method
+having strictly weaker constraints. The assignment from t to s is valid since T
+inherits a constraint of T: string, even though this constraint is not expressible in
+source code. end ex ample
+Note: When a generic method explicitly implements an interface method no
+constraints are allowed on the implementing method ( §15.7.1 , §18.6.2 ). end not e
+A class or struct shall provide implementations of all members of the interfaces that are
+listed in the base class list of the class or struct. The process of locating implementations
+of interface members in an implementing class or struct is known as interface mapping .
+Interface mapping for a class or struct C locates an implementation for each member of
+each interface specified in the base class list of  C. The implementation of a particular
+interface member I.M, where I is the interface in which the member M is declared, is
+determined by examining each class or struct  S, starting with C and repeating for each
+successive base class of  C, until a match is located:
+If S contains a declaration of an explicit interface member implementation that
+matches I and M, then this member is the implementation of I.M.
+Otherwise, if S contains a declaration of a non-static public member that
+matches  M, then this member is the implementation of I.M. If more than one
+member matches, it is unspecified which member is the implementation of I.M.
+This situation can only occur if  S is a constructed type where the two members as
+declared in the generic type have different signatures, but the type arguments
+make their signatures identical.
+A compile-time error occurs if implementations cannot be located for all members of all
+interfaces specified in the base class list of  C. The members of an interface include those
+members that are inherited from base interfaces.
+Members of a constructed interface type are considered to have any type parameters
+replaced with the corresponding type arguments as specified in §15.3.3 .        string s = t; // Ok
+        H<T>(t);
+    }
+}
+18.6.5 Interface mappingExample : For example, given the generic interface declaration:
+C#
+the constructed interface I<string[]> has the members:
+C#
+end ex ample
+For purposes of interface mapping, a class or struct member A matches an interface
+member B when:
+A and B are methods, and the name, type, and formal parameter lists of A and B
+are identical.
+A and B are properties, the name and type of A and B are identical, and A has
+the same accessors as B (A is permitted to have additional accessors if it is not an
+explicit interface member implementation).
+A and B are events, and the name and type of A and B are identical.
+A and B are indexers, the type and formal parameter lists of A and B are identical,
+and A has the same accessors as  B (A is permitted to have additional accessors if
+it is not an explicit interface member implementation).
+Notable implications of the interface-mapping algorithm are:
+Explicit interface member implementations take precedence over other members
+in the same class or struct when determining the class or struct member that
+implements an interface member.
+Neither non-public nor static members participate in interface mapping.
+Example : In the following code
+C#interface  I<T>
+{
+    T F(int x, T[,] y );
+    T this[int y] { get; }
+}
+string[] F(int x, string[,][] y);
+string[] this[int y] { get; }the ICloneable.Clone member of C becomes the implementation of Clone in
+‘ICloneable’ because explicit interface member implementations take precedence
+over other members.
+end ex ample
+If a class or struct implements two or more interfaces containing a member with the
+same name, type, and parameter types, it is possible to map each of those interface
+members onto a single class or struct member.
+Example :
+C#
+Here, the Paint methods of both IControl and IForm are mapped onto the Paint
+method in Page. It is of course also possible to have separate explicit interface
+member implementations for the two methods.
+end ex ampleinterface  ICloneable
+{
+    object Clone();
+}
+class C : ICloneable
+{
+    object ICloneable.Clone() {...}
+    public object Clone() {...}
+}
+interface  IControl
+{
+    void Paint();
+}
+interface  IForm
+{
+    void Paint();
+}
+class Page : IControl , IForm
+{
+    public void Paint() {...}
+}If a class or struct implements an interface that contains hidden members, then some
+members may need to be implemented through explicit interface member
+implementations.
+Example :
+C#
+An implementation of this interface would require at least one explicit interface
+member implementation, and would take one of the following forms
+C#
+end ex ample
+When a class implements multiple interfaces that have the same base interface, there
+can be only one implementation of the base interface.
+Example : In the following code
+C#interface  IBase
+{
+    int P { get; }
+}
+interface  IDerived  : IBase
+{
+    new int P();
+}
+class C1 : IDerived
+{
+    int IBase.P { get; }
+    int IDerived.P() {...}
+}
+class C2 : IDerived
+{
+    public int P { get; }
+    int IDerived.P() {...}
+}
+class C3 : IDerived
+{
+    int IBase.P { get; }
+    public int P() {...}
+}it is not possible to have separate implementations for the IControl named in the
+base class list, the IControl inherited by ITextBox, and the IControl inherited by
+IListBox. Indeed, there is no notion of a separate identity for these interfaces.
+Rather, the implementations of ITextBoxand IListBox share the same
+implementation of IControl, and ComboBox is simply considered to implement three
+interfaces, IControl, ITextBox, and IListBox.
+end ex ample
+The members of a base class participate in interface mapping.
+Example : In the following code
+C#interface  IControl
+{
+    void Paint();
+}
+interface  ITextBox  : IControl
+{
+    void SetText(string text);
+}
+interface  IListBox  : IControl
+{
+    void SetItems (string[] items );
+}
+class ComboBox  : IControl , ITextBox , IListBox
+{
+    void IControl.Paint() {...}
+    void ITextBox.SetText( string text) {...}
+    void IListBox.SetItems( string[] items) {...}
+}
+interface  Interface1
+{
+    void F();
+}
+class Class1
+{
+    public void F() {}
+    public void G() {}
+}the method  F in Class1 is used in Class2's implementation of Interface1.
+end ex ample
+A class inherits all interface implementations provided by its base classes.
+Without explicitly re-implementing an interface, a derived class cannot in any way alter
+the interface mappings it inherits from its base classes.
+Example : In the declarations
+C#
+the Paint method in TextBox hides the Paint method in Control, but it does not
+alter the mapping of Control.Paint onto IControl.Paint, and calls to Paint
+through class instances and interface instances will have the following effects
+C#class Class2 : Class1, Interface1
+{
+    public new void G() {}
+}
+18.6.6 Interface implementation inheritance
+interface  IControl
+{
+    void Paint();
+}
+class Control : IControl
+{
+    public void Paint() {...}
+}
+class TextBox : Control
+{
+    public new void Paint() {...}
+}
+Control c = new Control();
+TextBox t = new TextBox();
+IControl ic = c;
+IControl it = t;
+c.Paint();  // invokes Control.Paint();
+t.Paint();  // invokes TextBox.Paint();end ex ample
+However, when an interface method is mapped onto a virtual method in a class, it is
+possible for derived classes to override the virtual method and alter the implementation
+of the interface.
+Example : Rewriting the declarations above to
+C#
+the following effects will now be observed
+C#
+end ex ample
+Since explicit interface member implementations cannot be declared virtual, it is not
+possible to override an explicit interface member implementation. However, it isic.Paint(); // invokes Control.Paint();
+it.Paint(); // invokes Control.Paint();
+interface  IControl
+{
+    void Paint();
+}
+class Control : IControl
+{
+    public virtual void Paint() {...}
+}
+class TextBox : Control
+{
+    public override  void Paint() {...}
+}
+Control c = new Control();
+TextBox t = new TextBox();
+IControl ic = c;
+IControl it = t;
+c.Paint();  // invokes Control.Paint();
+t.Paint();  // invokes TextBox.Paint();
+ic.Paint(); // invokes Control.Paint();
+it.Paint(); // invokes TextBox.Paint();perfectly valid for an explicit interface member implementation to call another method,
+and that other method can be declared virtual to allow derived classes to override it.
+Example :
+C#
+Here, classes derived from Control can specialize the implementation of
+IControl.Paint by overriding the PaintControl method.
+end ex ample
+A class that inherits an interface implementation is permitted to re-implement  the
+interface by including it in the base class list.
+A re-implementation of an interface follows exactly the same interface mapping rules as
+an initial implementation of an interface. Thus, the inherited interface mapping has no
+effect whatsoever on the interface mapping established for the re-implementation of
+the interface.
+Example : In the declarations
+C#interface  IControl
+{
+    void Paint();
+}
+class Control : IControl
+{
+    void IControl.Paint() { PaintControl(); }
+    protected  virtual void PaintControl () {...}
+}
+class TextBox : Control
+{
+    protected  override  void PaintControl () {...}
+}
+18.6.7 Interface re-implementation
+interface  IControl
+{
+    void Paint();
+}the fact that Control maps IControl.Paint onto Control.IControl.Paint doesn’t
+affect the re-implementation in MyControl, which maps IControl.Paint onto
+MyControl.Paint.
+end ex ample
+Inherited public member declarations and inherited explicit interface member
+declarations participate in the interface mapping process for re-implemented interfaces.
+Example :
+C#
+Here, the implementation of IMethods in Derived maps the interface methods onto
+Derived.F, Base.IMethods.G, Derived.IMethods.H, and Base.I.class Control : IControl
+{
+    void IControl.Paint() {...}
+}
+class MyControl  : Control, IControl
+{
+    public void Paint() {}
+}
+interface  IMethods
+{
+    void F();
+    void G();
+    void H();
+    void I();
+}
+class Base : IMethods
+{
+    void IMethods.F() {}
+    void IMethods.G() {}
+    public void H() {}
+    public void I() {}
+}
+class Derived : Base, IMethods
+{
+    public void F() {}
+    void IMethods.H() {}
+}end ex ample
+When a class implements an interface, it implicitly also implements all that interface’s
+base interfaces. Likewise, a re-implementation of an interface is also implicitly a re-
+implementation of all of the interface’s base interfaces.
+Example :
+C#
+Here, the re-implementation of IDerived also re-implements IBase, mapping
+IBase.F onto D.F.
+end ex ample
+Like a non-abstract class, an abstract class shall provide implementations of all members
+of the interfaces that are listed in the base class list of the class. However, an abstract
+class is permitted to map interface methods onto abstract methods.
+Example :
+C#interface  IBase
+{
+    void F();
+}
+interface  IDerived  : IBase
+{
+    void G();
+}
+class C : IDerived
+{
+    void IBase.F() {...}
+    void IDerived.G() {...}
+}
+class D : C, IDerived
+{
+    public void F() {...}
+    public void G() {...}
+}
+18.6.8 Abstract classes and interfacesHere, the implementation of IMethods maps F and G onto abstract methods, which
+shall be overridden in non-abstract classes that derive from  C.
+end ex ample
+Explicit interface member implementations cannot be abstract, but explicit interface
+member implementations are of course permitted to call abstract methods.
+Example :
+C#
+Here, non-abstract classes that derive from C would be required to override FF and
+GG, thus providing the actual implementation of IMethods.
+end ex ampleinterface  IMethods
+{
+    void F();
+    void G();
+}
+abstract  class C : IMethods
+{
+    public abstract  void F();
+    public abstract  void G();
+    }
+interface  IMethods
+{
+    void F();
+    void G();
+}
+abstract  class C: IMethods
+{
+    void IMethods.F() { FF(); }
+    void IMethods.G() { GG(); }
+    protected  abstract  void FF();
+    protected  abstract  void GG();
+}19 Enums
+Article •04/07/2023
+An enum type  is a distinct value type ( §8.3) that declares a set of named constants.
+Example:  The example
+C#
+declares an enum type named Color with members Red, Green, and Blue.
+end ex ample
+An enum declaration declares a new enum type. An enum declaration begins with the
+keyword enum, and defines the name, accessibility, underlying type, and members of the
+enum.
+ANTLR19.1 General
+enum Color 
+{ 
+    Red,  
+    Green,  
+    Blue  
+} 
+19.2 Enum  declarations
+enum_declaration  
+    : attributes? enum_modifier* 'enum' identifier enum_base? enum_body ';'? 
+    ; 
+enum_base  
+    : ':' integral_type
+    | ':' integral_type_name  
+    ; 
+integral_type_name  
+    : type_name // Shall resolve to an integral type other than char  
+    ; 
+enum_body  
+    : '{' enum_member_declarations? '}' Each enum type has a corresponding integral type called the underlying type  of the
+enum type. This underlying type shall be able to represent all the enumerator values
+defined in the enumeration. If the enum_b ase is present, it explicitly declares the
+underlying type. The underlying type shall be one of the integral types  (§8.3.6 ) other
+than char. The underlying type may be specified either by an integral_type (§8.3.5 ), or
+an integral_type_name. The integral_type_name is resolved in the same way as
+type_name (§7.8.1 ), including taking any using directives ( §14.5 ) into account.
+Note: The char type cannot be used as an underlying type, either by keyword or via
+an integral_type_name. end not e
+An enum declaration that does not explicitly declare an underlying type has an
+underlying type of int.
+Example : The example
+C#
+declares an enum with an underlying type of long.
+end ex ample
+Note: A developer might choose to use an underlying type of long, as in the
+example, to enable the use of values that are in the range of long but not in the
+range of int, or to preserve this option for the future. end not e
+Note: C# allows a trailing comma in an enum_body , just like it allows one in an
+array_initializer  (§17.7 ). end not e
+An enum declaration cannot include a type parameter list, but any enum nested inside a
+generic class declaration or a generic struct declaration is a generic enum declaration,    | '{' enum_member_declarations ',' '}' 
+    ; 
+enum Color : long 
+{ 
+    Red,  
+    Green,  
+    Blue  
+} since type arguments for the containing type shall be supplied to create a constructed
+type ( §8.4).
+An enum_declar ation  may optionally include a sequence of enum modifiers:
+ANTLR
+It is a compile-time error for the same modifier to appear multiple times in an enum
+declaration.
+The modifiers of an enum declaration have the same meaning as those of a class
+declaration ( §15.2.2 ). However, the abstract, and sealed, and static modifiers are not
+permitted in an enum declaration. Enums cannot be abstract and do not permit
+derivation.
+The body of an enum type declaration defines zero or more enum members, which are
+the named constants of the enum type. No two enum members can have the same
+name.
+ANTLR
+ANTLR19.3 Enum  modifiers
+enum_modifier  
+    : 'new' 
+    | 'public'  
+    | 'protected'  
+    | 'internal'  
+    | 'private'  
+    ; 
+19.4 Enum  members
+enum_member_declarations  
+    : enum_member_declaration ( ',' enum_member_declaration)*  
+    ; 
+enum_member_declaration  
+    : attributes? identifier ( '=' constant_expression)?  
+    ; Each enum member has an associated constant value. The type of this value is the
+underlying type for the containing enum. The constant value for each enum member
+shall be in the range of the underlying type for the enum.
+Example : The example
+C#
+results in a compile-time error because the constant values  -1, -2, and -3 are not
+in the range of the underlying integral type uint.
+end ex ample
+Multiple enum members may share the same associated value.
+Example : The example
+C#
+shows an enum in which two enum members— Blue and Max—have the same
+associated value.
+end ex ample
+The associated value of an enum member is assigned either implicitly or explicitly. If the
+declaration of the enum member has a constant_expr ession  initializer, the value of that
+constant expression, implicitly converted to the underlying type of the enum, is the
+associated value of the enum member. If the declaration of the enum member has no
+initializer, its associated value is set implicitly, as follows:enum Color: uint  
+{ 
+    Red = -1, 
+    Green = -2, 
+    Blue = -3 
+} 
+enum Color 
+{ 
+    Red,  
+    Green,  
+    Blue,  
+    Max = Blue  
+} If the enum member is the first enum member declared in the enum type, its
+associated value is zero.
+Otherwise, the associated value of the enum member is obtained by increasing the
+associated value of the textually preceding enum member by one. This increased
+value shall be within the range of values that can be represented by the underlying
+type, otherwise a compile-time error occurs.
+Example : The example
+C#
+prints out the enum member names and their associated values. The output is:
+Consoleenum Color 
+{ 
+    Red,  
+    Green = 10, 
+    Blue  
+} 
+ 
+class Test 
+{ 
+    static void Main() 
+    { 
+        Console.WriteLine(StringFromColor(Color.Red));  
+        Console.WriteLine(StringFromColor(Color.Green));  
+        Console.WriteLine(StringFromColor(Color.Blue));  
+    } 
+ 
+    static string StringFromColor (Color c)
+    { 
+        switch (c) 
+        {  
+            case Color.Red:  
+                return $"Red = {(int) c}"; 
+            case Color.Green:
+                return $"Green = {(int) c}"; 
+            case Color.Blue:  
+                return $"Blue = {(int) c}"; 
+            default: 
+                return "Invalid color" ; 
+      } 
+   } 
+} 
+Red = 0 
+Green = 10  
+Blue = 11  for the following reasons:
+the enum member Red is automatically assigned the value zero (since it has no
+initializer and is the first enum member);
+the enum member Green is explicitly given the value 10;
+and the enum member Blue is automatically assigned the value one greater
+than the member that textually precedes it.
+end ex ample
+The associated value of an enum member may not, directly or indirectly, use the value of
+its own associated enum member. Other than this circularity restriction, enum member
+initializers may freely refer to other enum member initializers, regardless of their textual
+position. Within an enum member initializer, values of other enum members are always
+treated as having the type of their underlying type, so that casts are not necessary when
+referring to other enum members.
+Example : The example
+C#
+results in a compile-time error because the declarations of A and B are circular. A
+depends on B explicitly, and B depends on A implicitly.
+end ex ample
+Enum members are named and scoped in a manner exactly analogous to fields within
+classes. The scope of an enum member is the body of its containing enum type. Within
+that scope, enum members can be referred to by their simple name. From all other
+code, the name of an enum member shall be qualified with the name of its enum type.
+Enum members do not have any declared accessibility—an enum member is accessible
+if its containing enum type is accessible.enum Circular  
+{ 
+    A = B,  
+    B 
+} 
+19.5 The System.Enum  typeThe type System.Enum is the abstract base class of all enum types (this is distinct and
+different from the underlying type of the enum type), and the members inherited from
+System.Enum are available in any enum type. A boxing conversion ( §10.2.9 ) exists from
+any enum type to System.Enum, and an unboxing conversion ( §10.3.7 ) exists from
+System.Enum to any enum type.
+Note that System.Enum is not itself an enum_type . Rather, it is a class_type  from which all
+enum_type s are derived. The type System.Enum inherits from the type System.ValueType
+(§8.3.2 ), which, in turn, inherits from type object. At run-time, a value of type
+System.Enum can be null or a reference to a boxed value of any enum type.
+Each enum type defines a distinct type; an explicit enumeration conversion ( §10.3.3 ) is
+required to convert between an enum type and an integral type, or between two enum
+types. The set of values of the enum type is the same as the set of values of the
+underlying type and is not restricted to the values of the named constants. Any value of
+the underlying type of an enum can be cast to the enum type, and is a distinct valid
+value of that enum type.
+Enum members have the type of their containing enum type (except within other enum
+member initializers: see §19.4 ). The value of an enum member declared in enum type E
+with associated value v is (E)v.
+The following operators can be used on values of enum types:
+==, !=, <, >, <=, >= (§12.12.6 )
+binary + (§12.10.5 )
+binary - (§12.10.6 )
+^, &, | (§12.13.3 )
+~ (§12.9.5 )
+++, -- (§12.8.15  and §12.9.6 )
+sizeof (§23.6.9 )
+Every enum type automatically derives from the class System.Enum (which, in turn,
+derives from System.ValueType and object). Thus, inherited methods and properties of
+this class can be used on values of an enum type.19.6 Enum  values and operations20 Delegates
+Article •06/08/2023
+A delegate declaration defines a class that is derived from the class System.Delegate. A
+delegate instance encapsulates an invocation list , which is a list of one or more
+methods, each of which is referred to as a callable entity . For instance methods, a
+callable entity consists of an instance and a method on that instance. For static methods,
+a callable entity consists of just a method. Invoking a delegate instance with an
+appropriate set of arguments causes each of the delegate’s callable entities to be
+invoked with the given set of arguments.
+Note: An interesting and useful property of a delegate instance is that it does not
+know or care about the classes of the methods it encapsulates; all that matters is
+that those methods be compatible ( §20.4 ) with the delegate’s type. This makes
+delegates perfectly suited for “anonymous” invocation. end not e
+A delegat e_declar ation  is a type_declar ation  (§14.7 ) that declares a new delegate type.
+ANTLR20.1 General
+20.2 Delegate declarations
+delegate_declaration
+    : attributes? delegate_modifier* 'delegate'  return_type delegate_header
+    | attributes? delegate_modifier* 'delegate'  ref_kind ref_return_type
+      delegate_header
+    ;
+delegate_header
+    : identifier '(' formal_parameter_list? ')' ';'
+    | identifier variant_type_parameter_list '(' formal_parameter_list? ')'
+      type_parameter_constraints_clause* ';'
+    ;
+    
+delegate_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | unsafe_modifier   // unsafe code support
+    ;unsafe_modi fier is defined in §23.2 .
+It is a compile-time error for the same modifier to appear multiple times in a delegate
+declaration.
+A delegate declaration that supplies a variant_type_p aramet er_list  is a generic delegate
+declaration. Additionally, any delegate nested inside a generic class declaration or a
+generic struct declaration is itself a generic delegate declaration, since type arguments
+for the containing type shall be supplied to create a constructed type ( §8.4).
+The new modifier is only permitted on delegates declared within another type, in which
+case it specifies that such a delegate hides an inherited member by the same name, as
+described in §15.3.5 .
+The public, protected, internal, and private modifiers control the accessibility of the
+delegate type. Depending on the context in which the delegate declaration occurs,
+some of these modifiers might not be permitted ( §7.5.2 ).
+The delegate’s type name is identi fier.
+As with methods ( §15.6.1 ), if ref is present, the delegate returns-by-ref; otherwise, if
+return_type  is void, the delegate returns-no-value; otherwise, the delegate returns-by-
+value.
+The optional formal_p aramet er_list  specifies the parameters of the delegate.
+The return_type  of a returns-by-value or returns-no-value delegate declaration specifies
+the type of the result, if any, returned by the delegate.
+The ref_return_type  of a returns-by-ref delegate declaration specifies the type of the
+variable referenced by the variable_r eference (§9.5) returned by the delegate.
+The optional variant_type_p aramet er_list  (§18.2.3 ) specifies the type parameters to the
+delegate itself.
+The return type of a delegate type shall be either void, or output-safe ( §18.2.3.2 ).
+All the formal parameter types of a delegate type shall be input-safe ( §18.2.3.2 ). In
+addition, any output or reference parameter types shall also be output-safe.
+Note: Output parameters are required to be input-safe due to common
+implementation restrictions. end not e
+Furthermore, each class type constraint, interface type constraint and type parameter
+constraint on any type parameters of the delegate shall be input-safe.Delegate types in C# are name equivalent, not structurally equivalent.
+Example :
+C#
+The delegate types D1 and D2 are two different types, so they are not
+interchangeable, despite their identical signatures.
+end ex ample
+Like other generic type declarations, type arguments shall be given to create a
+constructed delegate type. The parameter types and return type of a constructed
+delegate type are created by substituting, for each type parameter in the delegate
+declaration, the corresponding type argument of the constructed delegate type.
+The only way to declare a delegate type is via a delegat e_declar ation . Every delegate
+type is a reference type that is derived from System.Delegate. The members required for
+every delegate type are detailed in §20.3 . Delegate types are implicitly sealed, so it is
+not permissible to derive any type from a delegate type. It is also not permissible to
+declare a non-delegate class type deriving from System.Delegate. System.Delegate is
+not itself a delegate type; it is a class type from which all delegate types are derived.
+Every delegate type inherits members from the Delegate class as described in §15.3.4 . In
+addition, every delegate type shall provide a non-generic Invoke method whose
+parameter list matches the formal_p aramet er_list  in the delegate declaration, whose
+return type matches the return_type  or ref_return_type  in the delegate declaration, and
+for returns-by-ref delegates whose ref_kind  matches that in the delegate declaration.
+The Invoke method shall be at least as accessible as the containing delegate type.
+Calling the Invoke method on a delegate type is semantically equivalent to using the
+delegate invocation syntax ( §20.6 ) .
+Implementations may define additional members in the delegate type.
+Except for instantiation, any operation that can be applied to a class or class instance
+can also be applied to a delegate class or instance, respectively. In particular, it isdelegate  int D1(int i, double d);
+delegate  int D2(int c, double d);
+20.3 Delegate memberspossible to access members of the System.Delegate type via the usual member access
+syntax.
+A method or delegate type M is compatible  with a delegate type D if all of the following
+are true:
+D and M have the same number of parameters, and each parameter in D has the
+same in, out, or ref modifiers as the corresponding parameter in  M.
+For each value parameter, an identity conversion ( §10.2.2 ) or implicit reference
+conversion ( §10.2.8 ) exists from the parameter type in D to the corresponding
+parameter type in M.
+For each in, out, or ref parameter, the parameter type in D is the same as the
+parameter type in  M.
+One of the following is true:
+D and M are both returns-no-v alue
+D and M are returns-by-value ( §15.6.1 , §20.2 ), and an identity or implicit
+reference conversion exists from the return type of M to the return type of  D.
+D and M are both returns-by-ref, an identity conversion exists between the
+return type of M and the return type of D, and both have the same ref_kind .
+This definition of compatibility allows covariance in return type and contravariance in
+parameter types.
+Example :
+C#20.4 Delegate compatibility
+delegate  int D1(int i, double d);
+delegate  int D2(int c, double d);
+delegate  object D3(string s);
+class A
+{
+    public static int M1(int a, double b) {...}
+}
+class B
+{
+    public static int M1(int f, double g) {...}
+    public static void M2(int k, double l) {...}
+    public static int M3(int g) {...}
+    public static void M4(int g) {...}
+    public static object M5(string s) {...}The methods A.M1 and B.M1 are compatible with both the delegate types  D1
+and D2, since they have the same return type and parameter list. The methods B.M2,
+B.M3, and B.M4 are incompatible with the delegate types  D1 and D2, since they
+have different return types or parameter lists. The methods B.M5 and B.M6 are both
+compatible with delegate type D3.
+end ex ample
+Example :
+C#
+The method X.F is compatible with the delegate type Predicate<int> and the
+method X.G is compatible with the delegate type Predicate<string>.
+end ex ample
+Note: The intuitive meaning of delegate compatibility is that a method is compatible
+with a delegate type if every invocation of the delegate could be replaced with an
+invocation of the method without violating type safety, treating optional parameters
+and parameter arrays as explicit parameters. For example, in the following code:
+C#    public static int[] M6(object o) {...}
+}
+delegate  bool Predicate<T>(T value);
+class X
+{
+    static bool F(int i) {...}
+    static bool G(string s) {...}
+}
+delegate  void Action<T>(T arg);
+class Test
+{
+    static void Print(object value) => Console.WriteLine( value);
+    static void Main()
+    {
+        Action<string> log = Print;
+        log("text");The Print method is compatible with the Action<string> delegate type because
+any invocation of an Action<string> delegate would also be a valid invocation of
+the Print method.
+If the signature of the Print method above were changed to Print(object value,
+bool prependTimestamp = false) for example, the Print method would no longer
+be compatible with Action<string> by the rules of this clause.
+end not e
+An instance of a delegate is created by a delegat e_creation_expr ession  (§12.8.16.6 ), a
+conversion to a delegate type, delegate combination or delegate removal. The newly
+created delegate instance then refers to one or more of:
+The static method referenced in the delegat e_creation_expr ession , or
+The target object (which cannot be null) and instance method referenced in the
+delegat e_creation_expr ession , or
+Another delegate ( §12.8.16.6 ).
+Example :
+C#    }
+}
+20.5 Delegate instantiation
+delegate  void D(int x);
+class C
+{
+    public static void M1(int i) {...}
+    public void M2(int i) {...}
+}
+class Test
+{
+    static void Main()
+    {
+        D cd1 = new D(C.M1); // Static method
+        C t = new C();
+        D cd2 = new D(t.M2); // Instance method
+        D cd3 = new D(cd2);  // Another delegate
+    }
+}end ex ample
+The set of methods encapsulated by a delegate instance is called an invocation list .
+When a delegate instance is created from a single method, it encapsulates that method,
+and its invocation list contains only one entry. However, when two non- null delegate
+instances are combined, their invocation lists are concatenated—in the order left
+operand then right operand—to form a new invocation list, which contains two or more
+entries.
+When a new delegate is created from a single delegate the resultant invocation list has
+just one entry, which is the source delegate ( §12.8.16.6 ).
+Delegates are combined using the binary  + (§12.10.5 ) and += operators ( §12.21.4 ). A
+delegate can be removed from a combination of delegates, using the binary  -
+(§12.10.6 ) and -= operators ( §12.21.4 ). Delegates can be compared for equality
+(§12.12.9 ).
+Example : The following example shows the instantiation of a number of delegates,
+and their corresponding invocation lists:
+C#
+delegate  void D(int x);
+class C
+{
+    public static void M1(int i) {...}
+    public static void M2(int i) {...}
+}
+class Test
+{
+    static void Main() 
+    {
+        D cd1 = new D(C.M1); // M1 - one entry in invocation list
+        D cd2 = new D(C.M2); // M2 - one entry
+        D cd3 = cd1 + cd2;   // M1 + M2 - two entries
+        D cd4 = cd3 + cd1;   // M1 + M2 + M1 - three entries
+        D cd5 = cd4 + cd3;   // M1 + M2 + M1 + M1 + M2 - five entries
+        D td3 = new D(cd3);  // [M1 + M2] - ONE entry in invocation
+                             // list, which is itself a list of two  
+methods.
+        D td4 = td3 + cd1;   // [M1 + M2] + M1 - two entries
+        D cd6 = cd4 - cd2;   // M1 + M1 - two entries in invocation list
+        D td6 = td4 - cd2;   // [M1 + M2] + M1 - two entries in  
+invocation list,
+                             // but still three methods called, M2 not  
+removed.When cd1 and cd2 are instantiated, they each encapsulate one method. When cd3
+is instantiated, it has an invocation list of two methods, M1 and M2, in that order.
+cd4’s invocation list contains M1, M2, and M1, in that order. For cd5, the invocation
+list contains M1, M2, M1, M1, and M2, in that order.
+When cd1 and cd2 are instantiated, they each encapsulate one method.
+When cd3 is instantiated, it has an invocation list of two methods,  M1 and M2, in
+that order.  cd4s invocation list contains  M1, M2, and M1, in that order. For  cd5 the
+invocation list contains  M1, M2, M1, M1, and M2, in that order.
+When creating a delegate from another delegate with a delegat e_creation_expr ession
+the result has an invocation list with a different structure from the original, but
+which results in the same methods being invoked in the same order. When td3 is
+created from cd3 its invocation list has just one member, but that member is a list
+of the methods  M1 and M2 and those methods are invoked by  td3 in the same
+order as they are invoked by  cd3. Similarly when  td4 is instantiated its invocation
+list has just two entries but it invokes the three methods  M1, M2, and M1, in that
+order just as cd4 does.
+The structure of the invocation list affects delegate subtraction. Delegate  cd6,
+created by subtracting cd2 (which invokes  M2) from cd4 (which invokes  M1, M2,
+and M1) invokes  M1 and M1. However delegate  td6, created by subtracting cd2
+(which invokes  M2) from td4 (which invokes  M1, M2, and M1) still invokes M1, M2
+and M1, in that order, as M2 is not a single entry in the list but a member of a nested
+list. For more examples of combining (as well as removing) delegates, see §20.6 .
+end ex ample
+Once instantiated, a delegate instance always refers to the same invocation list.
+Note: Remember, when two delegates are combined, or one is removed from
+another, a new delegate results with its own invocation list; the invocation lists of
+the delegates combined or removed remain unchanged. end not e   }
+}
+20.6 Delegate invocationC# provides special syntax for invoking a delegate. When a non- null delegate instance
+whose invocation list contains one entry, is invoked, it invokes the one method with the
+same arguments it was given, and returns the same value as the referred to method.
+(See §12.8.9.4  for detailed information on delegate invocation.) If an exception occurs
+during the invocation of such a delegate, and that exception is not caught within the
+method that was invoked, the search for an exception catch clause continues in the
+method that called the delegate, as if that method had directly called the method to
+which that delegate referred.
+Invocation of a delegate instance whose invocation list contains multiple entries,
+proceeds by invoking each of the methods in the invocation list, synchronously, in order.
+Each method so called is passed the same set of arguments as was given to the
+delegate instance. If such a delegate invocation includes reference parameters
+(§15.6.2.4 ), each method invocation will occur with a reference to the same variable;
+changes to that variable by one method in the invocation list will be visible to methods
+further down the invocation list. If the delegate invocation includes output parameters
+or a return value, their final value will come from the invocation of the last delegate in
+the list. If an exception occurs during processing of the invocation of such a delegate,
+and that exception is not caught within the method that was invoked, the search for an
+exception catch clause continues in the method that called the delegate, and any
+methods further down the invocation list are not invoked.
+Attempting to invoke a delegate instance whose value is null results in an exception of
+type System.NullReferenceException.
+Example : The following example shows how to instantiate, combine, remove, and
+invoke delegates:
+C#
+delegate  void D(int x);
+class C
+{
+    public static void M1(int i) => Console.WriteLine( "C.M1: "  + i);
+    public static void M2(int i) => Console.WriteLine( "C.M2: "  + i);
+    public void M3(int i) => Console.WriteLine( "C.M3: "  + i);
+}
+class Test
+{
+    static void Main()
+    {
+        D cd1 = new D(C.M1);As shown in the statement cd3 += cd1;, a delegate can be present in an invocation
+list multiple times. In this case, it is simply invoked once per occurrence. In an
+invocation list such as this, when that delegate is removed, the last occurrence in the
+invocation list is the one actually removed.
+Immediately prior to the execution of the final statement, cd3 -= cd1;, the delegate
+cd3 refers to an empty invocation list. Attempting to remove a delegate from an
+empty list (or to remove a non-existent delegate from a non-empty list) is not an
+error.
+The output produced is:
+Console        cd1(-1);             // call M1
+        D cd2 = new D(C.M2);
+        cd2(-2);             // call M2
+        D cd3 = cd1 + cd2;
+        cd3(10);             // call M1 then M2
+        cd3 += cd1;
+        cd3(20);             // call M1, M2, then M1
+        C c = new C();
+        D cd4 = new D(c.M3);
+        cd3 += cd4;
+        cd3(30);             // call M1, M2, M1, then M3
+        cd3 -= cd1;          // remove last M1
+        cd3(40);             // call M1, M2, then M3
+        cd3 -= cd4;
+        cd3(50);             // call M1 then M2
+        cd3 -= cd2;
+        cd3(60);             // call M1
+        cd3 -= cd2;          // impossible removal is benign
+        cd3(60);             // call M1
+        cd3 -= cd1;          // invocation list is empty so cd3 is null
+        // cd3(70);          // System.NullReferenceException thrown
+        cd3 -= cd1;          // impossible removal is benign
+    }
+}
+C.M1: -1
+C.M2: -2
+C.M1: 10
+C.M2: 10
+C.M1: 20
+C.M2: 20
+C.M1: 20
+C.M1: 30
+C.M2: 30
+C.M1: 30
+C.M3: 30end ex ampleC.M1: 40
+C.M2: 40
+C.M3: 40
+C.M1: 50
+C.M2: 50
+C.M1: 60
+C.M1: 60
+６ Collaborat e with us on
+GitHub
+The source for this content can
+be found on GitHub, where you
+can also create and review
+issues and pull requests. For
+more information, see our
+contributor guide .C# Standar d documentation
+feedb ack
+The C# S tandard documentation is
+open source. Provide feedback here.
+ Open a documentation issue
+ Provide product feedback21 Exceptions
+Article •04/07/2023
+Exceptions in C# provide a structured, uniform, and type-safe way of handling both
+system level and application-level error conditions.
+Exceptions can be thrown in two different ways.
+A throw statement ( §13.10.6 ) throws an exception immediately and
+unconditionally. Control never reaches the statement immediately following the
+throw.
+Certain exceptional conditions that arise during the processing of C# statements
+and expressions cause an exception to be thrown in certain circumstances when
+the operation cannot be completed normally. See §21.5  for a list of the various
+exceptions that can be thrown in this way.
+Example : An integer division operation ( §12.10.3 ) throws a
+System.DivideByZeroException if the denominator is zero. end ex ample
+The System.Exception class is the base type of all exceptions. This class has a few
+notable properties that all exceptions share:
+Message is a read-only property of type string that contains a human-readable
+description of the reason for the exception.
+InnerException is a read-only property of type Exception. If its value is non- null,
+it refers to the exception that caused the current exception. (That is, the current
+exception was raised in a catch block handling the InnerException.) Otherwise, its
+value is null, indicating that this exception was not caused by another exception.
+The number of exception objects chained together in this manner can be arbitrary.
+The value of these properties can be specified in calls to the instance constructor for
+System.Exception.21.1 General
+21.2 Causes of exceptions
+21.3 The System.Exception classExceptions are handled by a try statement ( §13.11 ).
+When an exception is thrown ( §21.2 ), the system searches for the nearest catch clause
+that can handle the exception, as determined by the run-time type of the exception.
+First, the current method is searched for a lexically enclosing try statement, and the
+associated catch clauses of the try statement are considered in order. If that fails, the
+method that called the current method is searched for a lexically enclosing try
+statement that encloses the point of the call to the current method. This search
+continues until a catch clause is found that can handle the current exception, by
+naming an exception class that is of the same class, or a base class, of the run-time type
+of the exception being thrown. A catch clause that doesn’t name an exception class can
+handle any exception.
+Once a matching catch clause is found, the system prepares to transfer control to the
+first statement of the catch clause. Before execution of the catch clause begins, the
+system first executes, in order, any finally clauses that were associated with try
+statements more nested that than the one that caught the exception.
+If no matching catch clause is found:
+If the search for a matching catch clause reaches a static constructor ( §15.12 ) or
+static field initializer, then a System.TypeInitializationException is thrown at the
+point that triggered the invocation of the static constructor. The inner exception of
+the System.TypeInitializationException contains the exception that was originally
+thrown.
+Otherwise, if an exception occurs during finalizer execution, and that exception is
+not caught, then the behavior is unspecified.
+Otherwise, if the search for matching catch clauses reaches the code that initially
+started the thread, then execution of the thread is terminated. The impact of such
+termination is implementation-defined.
+The following exceptions are thrown by certain C# operations.
+Exception T ype Description
+System.ArithmeticException A base class for exceptions that occur during arithmetic
+operations, such as System.DivideByZeroException and21.4 How exceptions are handled
+21.5 Common exception classesException T ype Description
+System.OverflowException.
+System.ArrayTypeMismatchException Thrown when a store into an array fails because the type
+of the stored element is incompatible with the type of the
+array.
+System.DivideByZeroException Thrown when an attempt to divide an integral value by
+zero occurs.
+System.IndexOutOfRangeException Thrown when an attempt to index an array via an index
+that is less than zero or outside the bounds of the array.
+System.InvalidCastException Thrown when an explicit conversion from a base type or
+interface to a derived type fails at run-time.
+System.NullReferenceException Thrown when a null reference is used in a way that
+causes the referenced object to be required.
+System.OutOfMemoryException Thrown when an attempt to allocate memory (via new)
+fails.
+System.OverflowException Thrown when an arithmetic operation in a checked context
+overflows.
+System.StackOverflowException Thrown when the execution stack is exhausted by having
+too many pending calls; typically indicative of very deep or
+unbounded recursion.
+System.TypeInitializationExceptionThrown when a static constructor or static field initializer
+throws an exception, and no catch clause exists to catch
+it.
+６ Collaborat e with us on
+GitHub
+The source for this content can
+be found on GitHub, where you
+can also create and review
+issues and pull requests. For
+more information, see our
+contributor guide .C# Standar d documentation
+feedb ack
+C# Standard documentation is an
+open source project. Select a link to
+provide feedback:
+ Open a documentation issue
+ Provide product feedback22 Attributes
+Article •08/05/2023
+Much of the C# language enables the programmer to specify declarative information
+about the entities defined in the program. For example, the accessibility of a method in
+a class is specified by decorating it with the method_modi fiers public, protected,
+internal, and private.
+C# enables programmers to invent new kinds of declarative information, called
+attributes. Programmers can then attach attributes to various program entities, and
+retrieve attribute information in a run-time environment.
+Note: For instance, a framework might define a HelpAttribute attribute that can be
+placed on certain program elements (such as classes and methods) to provide a
+mapping from those program elements to their documentation. end not e
+Attributes are defined through the declaration of attribute classes ( §22.2 ), which can
+have positional and named parameters ( §22.2.3 ). Attributes are attached to entities in a
+C# program using attribute specifications ( §22.3 ), and can be retrieved at run-time as
+attribute instances ( §22.4 ).
+A class that derives from the abstract class System.Attribute, whether directly or
+indirectly, is an attribute class . The declaration of an attribute class defines a new kind
+of attribute that can be placed on program entities. By convention, attribute classes are
+named with a suffix of Attribute. Uses of an attribute may either include or omit this
+suffix.
+A generic class declaration shall not use System.Attribute as a direct or indirect base
+class.
+Example :
+C#22.1 General
+22.2 Attribute classes
+22.2.1 Generalend ex ample
+The attribute AttributeUsage (§22.5.2 ) is used to describe how an attribute class can be
+used.
+AttributeUsage has a positional parameter ( §22.2.3 ) that enables an attribute class to
+specify the kinds of program entities on which it can be used.
+Example : The following example defines an attribute class named SimpleAttribute
+that can be placed on class_declar ation s and interface_declar ation s only, and shows
+several uses of the Simple attribute.
+C#
+Although this attribute is defined with the name SimpleAttribute, when this
+attribute is used, the Attribute suffix may be omitted, resulting in the short name
+Simple. Thus, the example above is semantically equivalent to the following
+C#
+end ex ample
+AttributeUsage has a named parameter ( §22.2.3 ), called AllowMultiple, which indicates
+whether the attribute can be specified more than once for a given entity. If
+AllowMultiple for an attribute class is true, then that attribute class is a multi-us epublic class B : Attribute  {}
+public class C<T> : B {} // Error – generic cannot be an attribute
+22.2.2 Attribute usage
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface) ]
+public class SimpleAttribute  : Attribute
+{ 
+    ... 
+}
+[Simple] class Class1 {...}
+[Simple] interface  Interface1  {...}
+[SimpleAttribute ] class Class1 {...}
+[SimpleAttribute ] interface  Interface1  {...}attribute class , and can be specified more than once on an entity. If AllowMultiple for
+an attribute class is false or it is unspecified, then that attribute class is a single-us e
+attribute class , and can be specified at most once on an entity.
+Example : The following example defines a multi-use attribute class named
+AuthorAttribute and shows a class declaration with two uses of the Author
+attribute:
+C#
+end ex ample
+AttributeUsage has another named parameter ( §22.2.3 ), called Inherited, which
+indicates whether the attribute, when specified on a base class, is also inherited by
+classes that derive from that base class. If Inherited for an attribute class is true, then
+that attribute is inherited. If Inherited for an attribute class is false then that attribute is
+not inherited. If it is unspecified, its default value is true.
+An attribute class  X not having an AttributeUsage attribute attached to it, as in
+C#
+is equivalent to the following:
+C#[AttributeUsage(AttributeTargets.Class, AllowMultiple = true) ]
+public class AuthorAttribute  : Attribute
+{
+    public string Name { get; }
+    public AuthorAttribute (string name) => Name = name;
+}
+[Author("Brian Kernighan" ), Author( "Dennis Ritchie" )]
+class Class1 
+{
+    ...
+}
+class X : Attribute  { ... }
+[AttributeUsage(
+   AttributeTargets.All,
+   AllowMultiple = false,
+   Inherited = true)Attribute classes can have positional p aramet ers and named p aramet ers. Each public
+instance constructor for an attribute class defines a valid sequence of positional
+parameters for that attribute class. Each non-static public read-write field and property
+for an attribute class defines a named parameter for the attribute class. For a property to
+define a named parameter, that property shall have both a public get accessor and a
+public set accessor.
+Example : The following example defines an attribute class named HelpAttribute
+that has one positional parameter, url, and one named parameter, Topic. Although
+it is non-static and public, the property Url does not define a named parameter,
+since it is not read-write. T wo uses of this attribute are also shown:
+C#]
+class X : Attribute  { ... }
+22.2.3 Positional and named parameters
+[AttributeUsage(AttributeTargets.Class) ]
+public class HelpAttribute  : Attribute
+{
+    public HelpAttribute (string url) // url is a positional parameter
+    { 
+        ...
+    }
+    // Topic is a named parameter
+    public string Topic
+    { 
+        get;
+        set;
+    }
+    public string Url { get; }
+}
+[Help("http://www.mycompany.com/xxx/Class1.htm" )]
+class Class1
+{
+}
+[Help("http://www.mycompany.com/xxx/Misc.htm" , Topic = "Class2" )]
+class Class2
+{
+}end ex ample
+The types of positional and named parameters for an attribute class are limited to the
+attribute paramet er types , which are:
+One of the following types: bool, byte, char, double, float, int, long, sbyte,
+short, string, uint, ulong, ushort.
+The type object.
+The type System.Type.
+Enum types.
+Single-dimensional arrays of the above types.
+A constructor argument or public field that does not have one of these types, shall
+not be used as a positional or named parameter in an attribute specification.
+Attribute speci fication  is the application of a previously defined attribute to a program
+entity. An attribute is a piece of additional declarative information that is specified for a
+program entity. Attributes can be specified at global scope (to specify attributes on the
+containing assembly or module) and for type_declar ation s (§14.7 ),
+class_member_declar ation s (§15.3 ), interface_member_declar ation s (§18.4 ),
+struct_member_declar ation s (§16.3 ), enum_member_declar ation s (§19.2 ),
+accessor_declar ation s (§15.7.3 ), event_ac cessor_declar ation s (§15.8 ), elements of
+formal_p aramet er_list s (§15.6.2 ), and elements of type_p aramet er_list s (§15.2.3 ).
+Attributes are specified in attribute sections . An attribute section consists of a pair of
+square brackets, which surround a comma-separated list of one or more attributes. The
+order in which attributes are specified in such a list, and the order in which sections
+attached to the same program entity are arranged, is not significant. For instance, the
+attribute specifications [A][B], [B][A], [A, B], and [B, A] are equivalent.
+ANTLR22.2.4 Attribute parameter types
+22.3 Attribute specification
+global_attributes
+    : global_attribute_section+
+    ;
+global_attribute_section
+    : '[' global_attribute_target_specifier attribute_list ']'
+    | '[' global_attribute_target_specifier attribute_list ',' ']'
+    ;global_attribute_target_specifier
+    : global_attribute_target ':'
+    ;
+global_attribute_target
+    : identifier
+    ;
+attributes
+    : attribute_section+
+    ;
+attribute_section
+    : '[' attribute_target_specifier? attribute_list ']'
+    | '[' attribute_target_specifier? attribute_list ',' ']'
+    ;
+attribute_target_specifier
+    : attribute_target ':'
+    ;
+attribute_target
+    : identifier
+    | keyword
+    ;
+attribute_list
+    : attribute ( ',' attribute)*
+    ;
+attribute
+    : attribute_name attribute_arguments?
+    ;
+attribute_name
+    : type_name
+    ;
+attribute_arguments
+    : '(' positional_argument_list? ')'
+    | '(' positional_argument_list ',' named_argument_list ')'
+    | '(' named_argument_list ')'
+    ;
+positional_argument_list
+    : positional_argument ( ',' positional_argument)*
+    ;
+positional_argument
+    : argument_name? attribute_argument_expression
+    ;
+named_argument_list
+    : named_argument ( ','  named_argument)*For the production global_attr ibute_target, and in the text below, identi fier shall have a
+spelling equal to assembly or module, where equality is that defined in §6.4.3 . For the
+production attribute_target, and in the text below, identi fier shall have a spelling that is
+not equal to assembly or module, using the same definition of equality as above.
+An attribute consists of an attribute_name  and an optional list of positional and named
+arguments. The positional arguments (if any) precede the named arguments. A
+positional argument consists of an attribute_argument_expr ession ; a named argument
+consists of a name, followed by an equal sign, followed by an
+attribute_argument_expr ession , which, together, are constrained by the same rules as
+simple assignment. The order of named arguments is not significant.
+Note: For convenience, a trailing comma is allowed in a global_attr ibute_section  and
+an attribute_section , just as one is allowed in an array_initializer  (§17.7 ). end not e
+The attribute_name  identifies an attribute class.
+When an attribute is placed at the global level, a global_attr ibute_target_speci fier is
+required. When the global_attr ibute_target is equal to:
+assembly — the target is the containing assembly
+module — the target is the containing module
+No other values for global_attr ibute_target are allowed.
+The standardized attribute_target names are event, field, method, param, property,
+return, type, and typevar. These target names shall only be used in the following
+contexts:
+event — an event.
+field — a field. A field-like event (i.e., one without accessors) ( §15.8.2 ) and an
+automatically implemented property ( §15.7.4 ) can also have an attribute with this
+target.    ;
+named_argument
+    : identifier '=' attribute_argument_expression
+    ;
+attribute_argument_expression
+    : expression
+    ;method — a constructor, finalizer, method, operator, property get and set
+accessors, indexer get and set accessors, and event add and remove accessors. A
+field-like event (i.e., one without accessors) can also have an attribute with this
+target.
+param — a property set accessor, an indexer set accessor, event add and remove
+accessors, and a parameter in a constructor, method, and operator.
+property — a property and an indexer.
+return — a delegate, method, operator, property get accessor, and indexer get
+accessor.
+type — a delegate, class, struct, enum, and interface.
+typevar — a type parameter.
+Certain contexts permit the specification of an attribute on more than one target. A
+program can explicitly specify the target by including an attribute_target_speci fier.
+Without an attribute_target_speci fier a default is applied, but an attribute_target_speci fier
+can be used to affirm or override the default. The contexts are resolved as follows:
+For an attribute on a delegate declaration the default target is the delegate.
+Otherwise when the attribute_target is equal to:
+type — the target is the delegate
+return — the target is the return value
+For an attribute on a method declaration the default target is the method.
+Otherwise when the attribute_target is equal to:
+method — the target is the method
+return — the target is the return value
+For an attribute on an operator declaration the default target is the operator.
+Otherwise when the attribute_target is equal to:
+method — the target is the operator
+return — the target is the return value
+For an attribute on a get accessor declaration for a property or indexer declaration
+the default target is the associated method. Otherwise when the attribute_target is
+equal to:
+method — the target is the associated method
+return — the target is the return value
+For an attribute specified on a set accessor for a property or indexer declaration
+the default target is the associated method. Otherwise when the attribute_target is
+equal to:
+method — the target is the associated method
+param — the target is the lone implicit parameterFor an attribute on an automatically implemented property declaration the default
+target is the property. Otherwise when the attribute_target is equal to:
+field — the target is the compiler-generated backing field for the property
+For an attribute specified on an event declaration that omits
+event_ac cessor_declar ations  the default target is the event declaration. Otherwise
+when the attribute_target is equal to:
+event — the target is the event declaration
+field — the target is the field
+method — the targets are the methods
+In the case of an event declaration that does not omit event_ac cessor_declar ations
+the default target is the method.
+method — the target is the associated method
+param — the target is the lone parameter
+In all other contexts, inclusion of an attribute_target_speci fier is permitted but
+unnecessary.
+Example : a class declaration may either include or omit the specifier type:
+C#
+end ex ample .
+An implementation can accept other attribute_targets, the purposes of which are
+implementation defined. An implementation that does not recognize such an
+attribute_target shall issue a warning and ignore the containing attribute_section .
+By convention, attribute classes are named with a suffix of Attribute. An attribute_name
+can either include or omit this suffix. Specifically, an attribute_name  is resolved as
+follows:
+If the right-most identifier of the attribute_name  is a verbatim identifier ( §6.4.3 ),
+then the attribute_name  is resolved as a type_name  (§7.8). If the result is not a type
+derived from System.Attribute, a compile-time error occurs.
+Otherwise,[type: Author( "Brian Kernighan" )]
+class Class1 {}
+[Author("Dennis Ritchie" )]
+class Class2 {}The attribute_name  is resolved as a type_name  (§7.8) except any errors are
+suppressed. If this resolution is successful and results in a type derived from
+System.Attribute then the type is the result of this step.
+The characters Attribute are appended to the right-most identifier in the
+attribute_name  and the resulting string of tokens is resolved as a type_name
+(§7.8) except any errors are suppressed. If this resolution is successful and
+results in a type derived from System.Attribute then the type is the result of
+this step.
+If exactly one of the two steps above results in a type derived from System.Attribute,
+then that type is the result of the attribute_name . Otherwise a compile-time error occurs.
+Example : If an attribute class is found both with and without this suffix, an ambiguity
+is present, and a compile-time error results. If the attribute_name  is spelled such that
+its right-most identi fier is a verbatim identifier ( §6.4.3 ), then only an attribute
+without a suffix is matched, thus enabling such an ambiguity to be resolved. The
+example
+C#
+shows two attribute classes named Example and ExampleAttribute. The attribute
+[Example] is ambiguous, since it could refer to either Example or ExampleAttribute.
+Using a verbatim identifier allows the exact intent to be specified in such rare cases.
+The attribute [ExampleAttribute] is not ambiguous (although it would be if there
+was an attribute class named ExampleAttributeAttribute!). If the declaration for[AttributeUsage(AttributeTargets.All) ]
+public class Example : Attribute
+{}
+[AttributeUsage(AttributeTargets.All) ]
+public class ExampleAttribute  : Attribute
+{}
+[Example]               // Error: ambiguity
+class Class1 {}
+[ExampleAttribute ]      // Refers to ExampleAttribute
+class Class2 {}
+[@Example ]              // Refers to Example
+class Class3 {}
+[@ExampleAttribute ]     // Refers to ExampleAttribute
+class Class4 {}class Example is removed, then both attributes refer to the attribute class named
+ExampleAttribute, as follows:
+C#
+end ex ample
+It is a compile-time error to use a single-use attribute class more than once on the same
+entity.
+Example : The example
+C#
+results in a compile-time error because it attempts to use HelpString, which is a
+single-use attribute class, more than once on the declaration of Class1.
+end ex ample[AttributeUsage(AttributeTargets.All) ]
+public class ExampleAttribute  : Attribute
+{}
+[Example]            // Refers to ExampleAttribute
+class Class1 {}
+[ExampleAttribute ]   // Refers to ExampleAttribute
+class Class2 {}
+[@Example ]           // Error: no attribute named “Example”
+class Class3 {}
+[AttributeUsage(AttributeTargets.Class) ]
+public class HelpStringAttribute  : Attribute
+{
+    public HelpStringAttribute (string value)
+    {
+        Value = value;
+    }
+    public string Value { get; }
+}
+[HelpString( "Description of Class1" )]
+[HelpString( "Another description of Class1" )]   // multiple uses not  
+allowed
+public class Class1 {}An expression E is an attribute_argument_expr ession  if all of the following statements
+are true:
+The type of E is an attribute parameter type ( §22.2.4 ).
+At compile-time, the value of E can be resolved to one of the following:
+A constant value.
+A System.Type object obtained using a typeo f_expr ession  (§12.8.17 ) specifying a
+non-generic type, a closed constructed type ( §8.4.3 ), or an unbound generic
+type ( §8.4.4 ), but not an open type ( §8.4.3 ).
+A single-dimensional array of attribute_argument_expr ession s.
+Example :
+C#
+end ex ample
+The attributes of a type declared in multiple parts are determined by combining, in an
+unspecified order, the attributes of each of its parts. If the same attribute is placed on
+multiple parts, it is equivalent to specifying that attribute multiple times on the type.[AttributeUsage(AttributeTargets.Class | AttributeTargets.Field) ]
+public class TestAttribute  : Attribute
+{
+    public int P1 { get; set; }
+    public Type P2 { get; set; }
+    public object P3 { get; set; }
+}
+[Test(P1 = 1234, P3 = new int[ ]{1, 3, 5}, P2 = typeof(float))]
+class MyClass {}
+class C<T> {
+    [Test(P2 = typeof(T)) ] // Error – T not a closed type.
+    int x1;
+    [Test(P2 = typeof(C<T>)) ] // Error – C<;T>; not a closed type.
+    int x2;
+    [Test(P2 = typeof(C<int>)) ] // Ok
+    int x3;
+    [Test(P2 = typeof(C<>)) ] // Ok
+    int x4;
+}Example : The two parts:
+C#
+are equivalent to the following single declaration:
+C#
+end ex ample
+Attributes on type parameters combine in the same way.
+An attribute inst ance is an instance that represents an attribute at run-time. An attribute
+is defined with an attribute class, positional arguments, and named arguments. An
+attribute instance is an instance of the attribute class that is initialized with the
+positional and named arguments.
+Retrieval of an attribute instance involves both compile-time and run-time processing,
+as described in the following subclauses.
+The compilation of an attribute with attribute class  T, positional_ar gument_list  P,
+named_ar gument_list  N, and specified on a program entity  E is compiled into an
+assembly  A via the following steps:
+Follow the compile-time processing steps for compiling an
+object_cr eation_expr ession  of the form new  T(P). These steps either result in a[Attr1, Attr2( "hello")]
+partial class A {}
+[Attr3, Attr2( "goodbye" )]
+partial class A {}
+[Attr1, Attr2( "hello"), Attr3, Attr2( "goodbye" )]
+class A {}
+22.4 Attribute instances
+22.4.1 General
+22.4.2 Compilation of an attributecompile-time error, or determine an instance constructor  C on T that can be
+invoked at run-time.
+If C does not have public accessibility, then a compile-time error occurs.
+For each named_ar gument  Arg in N:
+Let Name be the identi fier of the named_ar gument  Arg.
+Name shall identify a non-static read-write public field or property on  T. If T has
+no such field or property, then a compile-time error occurs.
+If any of the values within positional_ar gument_list  P or one of the values within
+named_ar gument_list  N is of type System.String and the value is not well-formed
+as defined by the Unicode S tandard, it is implementation-defined whether the
+value compiled is equal to the run-time value retrieved ( §22.4.3 ).
+Note: As an example, a string which contains a high surrogate UTF-16 code
+unit which isn’t immediately followed by a low surrogate code unit is not well-
+formed. end not e
+Store the following information (for run-time instantiation of the attribute) in the
+assembly output by the compiler as a result of compiling the program containing
+the attribute: the attribute class  T, the instance constructor  C on T, the
+positional_ar gument_list  P, the named_ar gument_list  N, and the associated
+program entity  E, with the values resolved completely at compile-time.
+The attribute instance represented by  T, C, P, and N, and associated with  E can be
+retrieved at run-time from the assembly  A using the following steps:
+Follow the run-time processing steps for executing an object_cr eation_expr ession  of
+the form new T(P), using the instance constructor  C and values as determined at
+compile-time. These steps either result in an exception, or produce an instance  O
+of T.
+For each named_ar gument  Arg in N, in order:
+Let Name be the identi fier of the named_ar gument  Arg. If Name does not identify
+a non-static public read-write field or property on  O, then an exception is
+thrown.
+Let Value be the result of evaluating the attribute_argument_expr ession  of Arg.
+If Name identifies a field on  O, then set this field to Value.
+Otherwise, Name identifies a property on  O. Set this property to V alue.22.4.3 Run-time retrieval of an attribute instanceThe result is  O, an instance of the attribute class  T that has been initialized with
+the positional_ar gument_list  P and the named_ar gument_list  N.
+Note: The format for storing  T, C, P, N (and associating it with  E) in A and the
+mechanism to specify  E and retrieve  T, C, P, N from A (and hence how an
+attribute instance is obtained at runtime) is beyond the scope of this specification.
+end not e
+Example : In an implementation of the CLI, the Help attribute instances in the
+assembly created by compiling the example program in §22.2.3  can be retrieved
+with the following program:
+C#
+end ex ample
+A small number of attributes affect the language in some way. These attributes include:
+System.AttributeUsageAttribute (§22.5.2 ), which is used to describe the ways in
+which an attribute class can be used.public sealed class InterrogateHelpUrls
+{
+    public static void Main(string[] args)
+    {
+        Type helpType = typeof(HelpAttribute);
+        string assemblyName = args[ 0];
+        foreach (Type t in Assembly.Load(assemblyName).GetTypes()) 
+        {
+            Console.WriteLine( $"Type : {t}");
+            var attributes = t.GetCustomAttributes(helpType, false);
+            var helpers = (HelpAttribute[]) attributes;
+            foreach (var helper in helpers)
+            {
+                Console.WriteLine( $"\tUrl : {helper.Url} ");
+            }
+        }
+    }
+}
+22.5 Reserved attributes
+22.5.1 GeneralSystem.Diagnostics.ConditionalAttribute (§22.5.3 ), is a multi-use attribute class
+which is used to define conditional methods and conditional attribute classes. This
+attribute indicates a condition by testing a conditional compilation symbol.
+System.ObsoleteAttribute (§22.5.4 ), which is used to mark a member as obsolete.
+System.Runtime.CompilerServices.CallerLineNumberAttribute (§22.5.5.2 ),
+System.Runtime.CompilerServices.CallerFilePathAttribute (§22.5.5.3 ), and
+System.Runtime.CompilerServices.CallerMemberNameAttribute (§22.5.5.4 ), which are
+used to supply information about the calling context to optional parameters.
+An execution environment may provide additional implementation-specific attributes
+that affect the execution of a C# program.
+The attribute AttributeUsage is used to describe the manner in which the attribute class
+can be used.
+A class that is decorated with the AttributeUsage attribute shall derive from
+System.Attribute, either directly or indirectly. Otherwise, a compile-time error occurs.
+Note: For an example of using this attribute, see §22.2.2 . end not e
+The attribute Conditional enables the definition of conditional methods  and
+conditional attr ibute class es.
+A method decorated with the Conditional attribute is a conditional method. Each
+conditional method is thus associated with the conditional compilation symbols
+declared in its Conditional attributes.
+Example :
+C#22.5.2 The AttributeUsage attribute
+22.5.3 The Conditional attribute
+22.5.3.1 General
+22.5.3.2 Conditional methods
+class Eg
+{declares Eg.M as a conditional method associated with the two conditional
+compilation symbols ALPHA and BETA.
+end ex ample
+A call to a conditional method is included if one or more of its associated conditional
+compilation symbols is defined at the point of call, otherwise the call is omitted.
+A conditional method is subject to the following restrictions:
+The conditional method shall be a method in a class_declar ation  or
+struct_declar ation . A compile-time error occurs if the Conditional attribute is
+specified on a method in an interface declaration.
+The conditional method shall have a return type of void.
+The conditional method shall not be marked with the override modifier. A
+conditional method can be marked with the virtual modifier, however. Overrides
+of such a method are implicitly conditional, and shall not be explicitly marked with
+a Conditional attribute.
+The conditional method shall not be an implementation of an interface method.
+Otherwise, a compile-time error occurs.
+The parameters of the conditional method shall not have the out modifier.
+In addition, a compile-time error occurs if a delegate is created from a conditional
+method.
+Example : The example
+C#    [Conditional( "ALPHA")]
+    [Conditional( "BETA")]
+    public static void M()
+    {
+        // ...
+    }
+}
+#define DEBUG
+using System;
+using System.Diagnostics;
+class Class1
+{
+    [Conditional( "DEBUG")]
+    public static void M()
+    {declares Class1.M as a conditional method. Class2’s Test method calls this
+method. Since the conditional compilation symbol DEBUG is defined, if Class2.Test
+is called, it will call  M. If the symbol DEBUG had not been defined, then Class2.Test
+would not call Class1.M.
+end ex ample
+It is important to understand that the inclusion or exclusion of a call to a conditional
+method is controlled by the conditional compilation symbols at the point of the call.
+Example : In the following code
+C#        Console.WriteLine( "Executed Class1.M" );
+    }
+}
+class Class2
+{
+    public static void Test()
+    {
+        Class1.M();
+    }
+}
+// File Class1.cs:
+using System.Diagnostics;
+class Class1
+{
+    [Conditional( "DEBUG")]
+    public static void F()
+    {
+        Console.WriteLine( "Executed Class1.F" );
+    }
+}
+// File Class2.cs:
+#define DEBUG
+class Class2
+{
+    public static void G()
+    {
+        Class1.F(); // F is called
+    }
+}
+// File Class3.cs:
+#undef DEBUG
+class Class3the classes Class2 and Class3 each contain calls to the conditional method
+Class1.F, which is conditional based on whether or not DEBUG is defined. Since this
+symbol is defined in the context of Class2 but not Class3, the call to F in Class2 is
+included, while the call to F in Class3 is omitted.
+end ex ample
+The use of conditional methods in an inheritance chain can be confusing. Calls made to
+a conditional method through base, of the form base.M, are subject to the normal
+conditional method call rules.
+Example : In the following code
+C#{
+    public static void H()
+    {
+        Class1.F(); // F is not called
+    }
+}
+// File Class1.cs
+using System.Diagnostics;
+class Class1
+{
+    [Conditional( "DEBUG")]
+    public virtual void M() => Console.WriteLine( "Class1.M executed" );
+}
+// File Class2.cs
+class Class2 : Class1
+{
+    public override  void M()
+    {
+        Console.WriteLine( "Class2.M executed" );
+        base.M(); // base.M is not called!
+    }
+}
+// File Class3.cs
+#define DEBUG
+class Class3
+{
+    public static void Main()
+    {
+        Class2 c = new Class2();
+        c.M(); // M is calledClass2 includes a call to the M defined in its base class. This call is omitted because
+the base method is conditional based on the presence of the symbol DEBUG, which is
+undefined. Thus, the method writes to the console “ Class2.M executed” only.
+Judicious use of pp_declar ation s can eliminate such problems.
+end ex ample
+An attribute class ( §22.2 ) decorated with one or more Conditional attributes is a
+conditional attribute class. A conditional attribute class is thus associated with the
+conditional compilation symbols declared in its Conditional attributes.
+Example :
+C#
+declares TestAttribute as a conditional attribute class associated with the
+conditional compilations symbols ALPHA and BETA.
+end ex ample
+Attribute specifications ( §22.3 ) of a conditional attribute are included if one or more of
+its associated conditional compilation symbols is defined at the point of specification,
+otherwise the attribute specification is omitted.
+It is important to note that the inclusion or exclusion of an attribute specification of a
+conditional attribute class is controlled by the conditional compilation symbols at the
+point of the specification.
+Example : In the example
+C#    }
+}
+22.5.3.3 Conditional attribute classes
+[Conditional( "ALPHA")]
+[Conditional( "BETA")]
+public class TestAttribute  : Attribute  {}
+// File Test.cs:
+using System.Diagnostics;
+[Conditional( "DEBUG")]the classes Class1 and Class2 are each decorated with attribute Test, which is
+conditional based on whether or not DEBUG is defined. Since this symbol is defined
+in the context of Class1 but not Class2, the specification of the T est attribute on
+Class1 is included, while the specification of the Test attribute on Class2 is
+omitted.
+end ex ample
+The attribute Obsolete is used to mark types and members of types that should no
+longer be used.
+If a program uses a type or member that is decorated with the Obsolete attribute, the
+compiler shall issue a warning or an error. Specifically, the compiler shall issue a warning
+if no error parameter is provided, or if the error parameter is provided and has the value
+false. The compiler shall issue an error if the error parameter is specified and has the
+value true.
+Example : In the following code
+C#public class TestAttribute  : Attribute  {}
+// File Class1.cs:
+#define DEBUG
+[Test] // TestAttribute is specified
+class Class1 {}
+// File Class2.cs:
+#undef DEBUG
+[Test] // TestAttribute is not specified
+class Class2 {}
+22.5.4 The Obsolete attribute
+[Obsolete( "This class is obsolete; use class B instead" )]
+class A
+{
+    public void F() {}
+}
+class B
+{
+    public void F() {}
+}
+class Testthe class  A is decorated with the Obsolete attribute. Each use of A in Main results in
+a warning that includes the specified message, “This class is obsolete; use class  B
+instead”.
+end ex ample
+For purposes such as logging and reporting, it is sometimes useful for a function
+member to obtain certain compile-time information about the calling code. The caller-
+info attributes provide a way to pass such information transparently.
+When an optional parameter is annotated with one of the caller-info attributes, omitting
+the corresponding argument in a call does not necessarily cause the default parameter
+value to be substituted. Instead, if the specified information about the calling context is
+available, that information will be passed as the argument value.
+Example :
+C#
+A call to Log() with no arguments would print the line number and file path of the
+call, as well as the name of the member within which the call occurred.{
+    static void Main()
+    {
+        A a = new A(); // Warning
+        a.F();
+    }
+}
+22.5.5 Caller-info attributes
+22.5.5.1 General
+public void Log(
+    [CallerLineNumber] int line = -1,
+    [CallerFilePath] string path = null,
+    [CallerMemberName] string name = null
+)
+{
+    Console.WriteLine((line < 0) ? "No line"  : "Line "+ line);
+    Console.WriteLine((path == null) ? "No file path"  : path);
+    Console.WriteLine((name == null) ? "No member name"  : name);
+}end ex ample
+Caller-info attributes can occur on optional parameters anywhere, including in delegate
+declarations. However, the specific caller-info attributes have restrictions on the types of
+the parameters they can attribute, so that there will always be an implicit conversion
+from a substituted value to the parameter type.
+It is an error to have the same caller-info attribute on a parameter of both the defining
+and implementing part of a partial method declaration. Only caller-info attributes in the
+defining part are applied, whereas caller-info attributes occurring only in the
+implementing part are ignored.
+Caller information does not affect overload resolution. As the attributed optional
+parameters are still omitted from the source code of the caller, overload resolution
+ignores those parameters in the same way it ignores other omitted optional parameters
+(§12.6.4 ).
+Caller information is only substituted when a function is explicitly invoked in source
+code. Implicit invocations such as implicit parent constructor calls do not have a source
+location and will not substitute caller information. Also, calls that are dynamically bound
+will not substitute caller information. When a caller-info attributed parameter is omitted
+in such cases, the specified default value of the parameter is used instead.
+One exception is query expressions. These are considered syntactic expansions, and if
+the calls they expand to omit optional parameters with caller-info attributes, caller
+information will be substituted. The location used is the location of the query clause
+which the call was generated from.
+If more than one caller-info attribute is specified on a given parameter, they are
+recognized in the following order: CallerLineNumber, CallerFilePath, CallerMemberName.
+Consider the following parameter declaration:
+C#
+CallerLineNumber takes precedence, and the other two attributes are ignored. If
+CallerLineNumber were omitted, CallerFilePath would take precedence, and
+CallerMemberName would be ignored. The lexical ordering of these attributes is irrelevant.[CallerMemberName, CallerFilePath, CallerLineNumber ] object p = ...
+22.5.5.2 The CallerLineNumber attributeThe attribute System.Runtime.CompilerServices.CallerLineNumberAttribute is allowed on
+optional parameters when there is a standard implicit conversion ( §10.4.2 ) from the
+constant value int.MaxValue to the parameter’s type. This ensures that any non-
+negative line number up to that value can be passed without error.
+If a function invocation from a location in source code omits an optional parameter with
+the CallerLineNumberAttribute, then a numeric literal representing that location’s line
+number is used as an argument to the invocation instead of the default parameter value.
+If the invocation spans multiple lines, the line chosen is implementation-dependent.
+The line number may be affected by #line directives ( §6.5.8 ).
+The attribute System.Runtime.CompilerServices.CallerFilePathAttribute is allowed on
+optional parameters when there is a standard implicit conversion ( §10.4.2 ) from string
+to the parameter’s type.
+If a function invocation from a location in source code omits an optional parameter with
+the CallerFilePathAttribute, then a string literal representing that location’s file path is
+used as an argument to the invocation instead of the default parameter value.
+The format of the file path is implementation-dependent.
+The file path may be affected by #line directives ( §6.5.8 ).
+The attribute System.Runtime.CompilerServices.CallerMemberNameAttribute is allowed on
+optional parameters when there is a standard implicit conversion ( §10.4.2 ) from string
+to the parameter’s type.
+If a function invocation from a location within the body of a function member or within
+an attribute applied to the function member itself or its return type, parameters or type
+parameters in source code omits an optional parameter with the
+CallerMemberNameAttribute, then a string literal representing the name of that member
+is used as an argument to the invocation instead of the default parameter value.
+For invocations that occur within generic methods, only the method name itself is used,
+without the type parameter list.22.5.5.3 The CallerFilePath attribute
+22.5.5.4 The CallerMemberName attributeFor invocations that occur within explicit interface member implementations, only the
+method name itself is used, without the preceding interface qualification.
+For invocations that occur within property or event accessors, the member name used is
+that of the property or event itself.
+For invocations that occur within indexer accessors, the member name used is that
+supplied by an IndexerNameAttribute (§22.6 ) on the indexer member, if present, or the
+default name Item otherwise.
+For invocations that occur within field or event initializers, the member name used is the
+name of the field or event being initialized.
+For invocations that occur within declarations of instance constructors, static
+constructors, finalizers and operators the member name used is implementation-
+dependent.
+For interoperation with other languages, an indexer may be implemented using indexed
+properties. If no IndexerName attribute is present for an indexer, then the name Item is
+used by default. The IndexerName attribute enables a developer to override this default
+and specify a different name.
+Example : By default, an indexer’s name is Item. This can be overridden, as follows:
+C#
+Now, the indexer’s name is TheItem.
+end ex ample22.6 Attributes for interoperation
+[System.Runtime.CompilerServices.IndexerName( "TheItem" )]
+public int this[int index]
+{
+    get { ... }
+    set { ... }
+}
+６ Collaborat e with us on
+GitHubC# Standar d documentation
+feedb ackThe source for this content can
+be found on GitHub, where you
+can also create and review
+issues and pull requests. For
+more information, see our
+contributor guide .C# Standard documentation is an
+open source project. Select a link to
+provide feedback:
+ Open a documentation issue
+ Provide product feedback23 Unsafe code
+Article •04/07/2023
+An implementation that does not support unsafe code is required to diagnose any
+usage of the syntactic rules defined in this clause.
+The r emainder o f this clause, including all o f its subclauses, is conditionally normativ e.
+Note: The core C# language, as defined in the preceding clauses, differs notably
+from C and C++ in its omission of pointers as a data type. Instead, C# provides
+references and the ability to create objects that are managed by a garbage collector.
+This design, coupled with other features, makes C# a much safer language than C or
+C++. In the core C# language, it is simply not possible to have an uninitialized
+variable, a “dangling” pointer, or an expression that indexes an array beyond its
+bounds. Whole categories of bugs that routinely plague C and C++ programs are
+thus eliminated.
+While practically every pointer type construct in C or C++ has a reference type
+counterpart in C#, nonetheless, there are situations where access to pointer types
+becomes a necessity. For example, interfacing with the underlying operating system,
+accessing a memory-mapped device, or implementing a time-critical algorithm
+might not be possible or practical without access to pointers. T o address this need,
+C# provides the ability to write unsafe c ode.
+In unsafe code, it is possible to declare and operate on pointers, to perform
+conversions between pointers and integral types, to take the address of variables,
+and so forth. In a sense, writing unsafe code is much like writing C code within a C#
+program.
+Unsafe code is in fact a “safe” feature from the perspective of both developers and
+users. Unsafe code shall be clearly marked with the modifier unsafe, so developers
+can’t possibly use unsafe features accidentally, and the execution engine works to
+ensure that unsafe code cannot be executed in an untrusted environment.
+end not e23.1 General
+23.2 Unsafe contextsThe unsafe features of C# are available only in unsafe contexts. An unsafe context is
+introduced by including an unsafe modifier in the declaration of a type, member, or
+local function, or by employing an unsafe_st atement :
+A declaration of a class, struct, interface, or delegate may include an unsafe
+modifier, in which case, the entire textual extent of that type declaration (including
+the body of the class, struct, or interface) is considered an unsafe context.
+Note: If the type_declar ation  is partial, only that part is an unsafe context. end
+note
+A declaration of a field, method, property, event, indexer, operator, instance
+constructor, finalizer, static constructor, or local function may include an unsafe
+modifier, in which case, the entire textual extent of that member declaration is
+considered an unsafe context.
+An unsafe_st atement  enables the use of an unsafe context within a block . The entire
+textual extent of the associated block  is considered an unsafe context. A local
+function declared within an unsafe context is itself unsafe.
+The associated grammar extensions are shown below and in subsequent subclauses.
+ANTLR
+Example : In the following code
+C#
+the unsafe modifier specified in the struct declaration causes the entire textual
+extent of the struct declaration to become an unsafe context. Thus, it is possible tounsafe_modifier
+    : 'unsafe'
+    ;
+unsafe_statement
+    : 'unsafe'  block
+    ;
+public unsafe struct Node
+{
+    public int Value;
+    public Node* Left;
+    public Node* Right;
+}declare the Left and Right fields to be of a pointer type. The example above could
+also be written
+C#
+Here, the unsafe modifiers in the field declarations cause those declarations to be
+considered unsafe contexts.
+end ex ample
+Other than establishing an unsafe context, thus permitting the use of pointer types, the
+unsafe modifier has no effect on a type or a member.
+Example : In the following code
+C#
+the unsafe modifier on the F method in A simply causes the textual extent of F to
+become an unsafe context in which the unsafe features of the language can be
+used. In the override of F in B, there is no need to re-specify the unsafe modifier—
+unless, of course, the F method in B itself needs access to unsafe features.public struct Node
+{
+    public int Value;
+    public unsafe Node* Left;
+    public unsafe Node* Right;
+}
+public class A
+{
+    public unsafe virtual void F() 
+    {
+        char* p;
+        ...
+    }
+}
+public class B : A
+{
+    public override  void F() 
+    {
+        base.F();
+        ...
+    }
+}The situation is slightly different when a pointer type is part of the method’s
+signature
+C#
+Here, because F’s signature includes a pointer type, it can only be written in an
+unsafe context. However, the unsafe context can be introduced by either making the
+entire class unsafe, as is the case in A, or by including an unsafe modifier in the
+method declaration, as is the case in B.
+end ex ample
+When the unsafe modifier is used on a partial type declaration ( §15.2.7 ), only that
+particular part is considered an unsafe context.
+In an unsafe context, a type (§8.1) can be a point er_type  as well as a value_type , a
+reference_type , or a type_p aramet er. In an unsafe context a point er_type  may also be the
+element type of an array ( §17). A point er_type  may also be used in a typeof expression
+(§12.8.17 ) outside of an unsafe context (as such usage is not unsafe).
+A point er_type  is written as an unmanaged_type  (§8.8) or the keyword void, followed by
+a * token:
+ANTLR
+The type specified before the * in a pointer type is called the referent type  of the
+pointer type. It represents the type of the variable to which a value of the pointer typepublic unsafe class A
+{
+    public virtual void F(char* p) {...}
+}
+public class B: A
+{
+    public unsafe override  void F(char* p) {...}
+}
+23.3 Pointer types
+pointer_type
+    : value_type ( '*')+
+    | 'void' ('*')+
+    ;points.
+A point er_type  may only be used in an array_type  in an unsafe context ( §23.2 ). A
+non_arr ay_type  is any type that is not itself an array_type .
+Unlike references (values of reference types), pointers are not tracked by the garbage
+collector—the garbage collector has no knowledge of pointers and the data to which
+they point. For this reason a pointer is not permitted to point to a reference or to a
+struct that contains references, and the referent type of a pointer shall be an
+unmanaged_type . Pointer types themselves are unmanaged types, so a pointer type may
+be used as the referent type for another pointer type.
+The intuitive rule for mixing of pointers and references is that referents of references
+(objects) are permitted to contain pointers, but referents of pointers are not permitted
+to contain references.
+Example : Some examples of pointer types are given in the table below:
+Example Description
+byte* Pointer to byte
+char* Pointer to char
+int** Pointer to pointer to int
+int*[] Single-dimensional array of pointers to int
+void* Pointer to unknown type
+end ex ample
+For a given implementation, all pointer types shall have the same size and
+representation.
+Note: Unlike C and C++, when multiple pointers are declared in the same
+declaration, in C# the * is written along with the underlying type only, not as a
+prefix punctuator on each pointer name. For example:
+C#
+end not eint* pi, pj; // NOT as int *pi, *pj;  The value of a pointer having type T* represents the address of a variable of type T.
+The pointer indirection operator * (§23.6.2 ) can be used to access this variable.
+Example : Given a variable P of type int*, the expression *P denotes the int
+variable found at the address contained in P. end ex ample
+Like an object reference, a pointer may be null. Applying the indirection operator to a
+null-valued pointer results in implementation-defined behavior ( §23.6.2 ). A pointer with
+value null is represented by all-bits-zero.
+The void* type represents a pointer to an unknown type. Because the referent type is
+unknown, the indirection operator cannot be applied to a pointer of type void*, nor can
+any arithmetic be performed on such a pointer. However, a pointer of type void* can be
+cast to any other pointer type (and vice versa) and compared to values of other pointer
+types ( §23.6.8 ).
+Pointer types are a separate category of types. Unlike reference types and value types,
+pointer types do not inherit from object and no conversions exist between pointer
+types and object. In particular, boxing and unboxing ( §8.3.13 ) are not supported for
+pointers. However, conversions are permitted between different pointer types and
+between pointer types and the integral types. This is described in §23.5 .
+A point er_type  cannot be used as a type argument ( §8.4), and type inference ( §12.6.3 )
+fails on generic method calls that would have inferred a type argument to be a pointer
+type.
+A point er_type  cannot be used as a type of a subexpression of a dynamically bound
+operation ( §12.3.3 ).
+A point er_type  cannot be used as the type of the first parameter in an extension method
+(§15.6.10 ).
+A point er_type  may be used as the type of a volatile field ( §15.5.4 ).
+The dynamic er asure of a type E* is the pointer type with referent type of the dynamic
+erasure of E.
+An expression with a pointer type cannot be used to provide the value in a
+member_declar ator within an anon ymous_object_cr eation_expr ession  (§12.8.16.7 ).
+The default value ( §9.3) for any pointer type is null.Note: Although pointers can be passed as in, ref or out parameters, doing so can
+cause undefined behavior, since the pointer might well be set to point to a local
+variable that no longer exists when the called method returns, or the fixed object to
+which it used to point, is no longer fixed. For example:
+C#
+end not e
+A method can return a value of some type, and that type can be a pointer.
+Example : When given a pointer to a contiguous sequence of ints, that sequence’s
+element count, and some other int value, the following method returns the
+address of that value in that sequence, if a match occurs; otherwise it returns null:
+C#class Test
+{
+    static int value = 20;
+    unsafe static void F(out int* pi1, ref int* pi2) 
+    {
+        int i = 10;
+        pi1 = &i;       // return address of local variable
+        fixed (int* pj = & value)
+        {
+            // ...
+            pi2 = pj;   // return address that will soon not be fixed
+        }
+    }
+    static void Main()
+    {
+        int i = 15;
+        unsafe 
+        {
+            int* px1;
+            int* px2 = &i;
+            F(out px1, ref px2);
+            int v1 = *px1; // undefined
+            int v2 = *px2; // undefined
+        }
+    }
+}
+unsafe static int* Find(int* pi, int size, int value)
+{
+    for (int i = 0; i < size; ++i)end ex ample
+In an unsafe context, several constructs are available for operating on pointers:
+The unary * operator may be used to perform pointer indirection ( §23.6.2 ).
+The -> operator may be used to access a member of a struct through a pointer
+(§23.6.3 ).
+The [] operator may be used to index a pointer ( §23.6.4 ).
+The unary & operator may be used to obtain the address of a variable ( §23.6.5 ).
+The ++ and -- operators may be used to increment and decrement pointers
+(§23.6.6 ).
+The binary + and - operators may be used to perform pointer arithmetic ( §23.6.7 ).
+The ==, !=, <, >, <=, and >= operators may be used to compare pointers
+(§23.6.8 ).
+The stackalloc operator may be used to allocate memory from the call stack
+(§23.9 ).
+The fixed statement may be used to temporarily fix a variable so its address can
+be obtained ( §23.7 ).
+The address-of operator ( §23.6.5 ) and the fixed statement ( §23.7 ) divide variables into
+two categories: Fixed variables  and moveable v ariables .
+Fixed variables reside in storage locations that are unaffected by operation of the
+garbage collector. (Examples of fixed variables include local variables, value parameters,
+and variables created by dereferencing pointers.) On the other hand, moveable variables
+reside in storage locations that are subject to relocation or disposal by the garbage
+collector. (Examples of moveable variables include fields in objects and elements of
+arrays.)    {
+        if (*pi == value)
+        {
+            return pi;
+        }
+        ++pi;
+    }
+    return null;
+}
+23.4 Fixed and moveable variablesThe & operator ( §23.6.5 ) permits the address of a fixed variable to be obtained without
+restrictions. However, because a moveable variable is subject to relocation or disposal
+by the garbage collector, the address of a moveable variable can only be obtained using
+a fixed statement (§23.7 ), and that address remains valid only for the duration of that
+fixed statement.
+In precise terms, a fixed variable is one of the following:
+A variable resulting from a simple_name  (§12.8.4 ) that refers to a local variable,
+value parameter, or parameter array, unless the variable is captured by an
+anonymous function ( §12.19.6.2 ).
+A variable resulting from a member_ac cess (§12.8.7 ) of the form V.I, where V is a
+fixed variable of a struct_type .
+A variable resulting from a point er_indir ection_expr ession  (§23.6.2 ) of the form *P, a
+point er_member_ac cess (§23.6.3 ) of the form P->I, or a point er_element_ac cess
+(§23.6.4 ) of the form P[E].
+All other variables are classified as moveable variables.
+A static field is classified as a moveable variable. Also, an in, out, or ref parameter is
+classified as a moveable variable, even if the argument given for the parameter is a fixed
+variable. Finally, a variable produced by dereferencing a pointer is always classified as a
+fixed variable.
+In an unsafe context, the set of available implicit conversions ( §10.2 ) is extended to
+include the following implicit pointer conversions:
+From any point er_type  to the type void*.
+From the null literal ( §6.4.5.7 ) to any point er_type .
+Additionally, in an unsafe context, the set of available explicit conversions ( §10.3 ) is
+extended to include the following explicit pointer conversions:
+From any point er_type  to any other point er_type .
+From sbyte, byte, short, ushort, int, uint, long, or ulong to any point er_type .
+From any point er_type  to sbyte, byte, short, ushort, int, uint, long, or ulong.23.5 Pointer conversions
+23.5.1 GeneralFinally, in an unsafe context, the set of standard implicit conversions ( §10.4.2 ) includes
+the following pointer conversions:
+From any point er_type  to the type void*.
+From the null literal to any point er_type .
+Conversions between two pointer types never change the actual pointer value. In other
+words, a conversion from one pointer type to another has no effect on the underlying
+address given by the pointer.
+When one pointer type is converted to another, if the resulting pointer is not correctly
+aligned for the pointed-to type, the behavior is undefined if the result is dereferenced.
+In general, the concept “correctly aligned” is transitive: if a pointer to type A is correctly
+aligned for a pointer to type B, which, in turn, is correctly aligned for a pointer to type
+C, then a pointer to type A is correctly aligned for a pointer to type C.
+Example : Consider the following case in which a variable having one type is accessed
+via a pointer to a different type:
+C#
+end ex ample
+When a pointer type is converted to a pointer to byte, the result points to the lowest
+addressed byte of the variable. Successive increments of the result, up to the size of the
+variable, yield pointers to the remaining bytes of that variable.
+Example : The following method displays each of the eight bytes in a double as a
+hexadecimal value:
+C#unsafe static void M()
+{
+    char c = 'A';
+    char* pc = &c;
+    void* pv = pc;
+    int* pi = ( int*)pv; // pretend a 16-bit char is a 32-bit int
+    int i = *pi;        // read 32-bit int; undefined
+    *pi = 123456;       // write 32-bit int; undefined
+}
+class Test
+{
+    static void Main()Of course, the output produced depends on endianness. One possibility is " BA FF
+51 A2 90 6C 24 45".
+end ex ample
+Mappings between pointers and integers are implementation-defined.
+Note: However, on 32- and 64-bit CPU architectures with a linear address space,
+conversions of pointers to or from integral types typically behave exactly like
+conversions of uint or ulong values, respectively, to or from those integral types.
+end not e
+Arrays of pointers can be constructed using array_cr eation_expr ession  (§12.8.16.5 ) in an
+usafe context. Only some of the conversions that apply to other array types are allowed
+on pointer arrays:
+The implicit reference conversion ( §10.2.8 ) from any array_type  to System.Array
+and the interfaces it implements also applies to pointer arrays. However, any
+attempt to access the array elements through System.Array or the interfaces it
+implements may result in an exception at run-time, as pointer types are not
+convertible to object.
+The implicit and explicit reference conversions ( §10.2.8 , §10.3.5 ) from a single-
+dimensional array type S[] to System.Collections.Generic.IList<T> and its
+generic base interfaces never apply to pointer arrays.
+The explicit reference conversion ( §10.3.5 ) from System.Array and the interfaces it
+implements to any array_type  applies to pointer arrays.    {
+        double d = 123.456e23 ;
+        unsafe
+        {
+            byte* pb = ( byte*)&d;
+            for (int i = 0; i < sizeof(double); ++i)
+            {
+                Console.Write( $" {*pb++:X2} ");
+            }
+            Console.WriteLine();
+        }
+    }
+}
+23.5.2 Pointer arraysThe explicit reference conversions ( §10.3.5 ) from
+System.Collections.Generic.IList<S> and its base interfaces to a single-
+dimensional array type T[] never applies to pointer arrays, since pointer types
+cannot be used as type arguments, and there are no conversions from pointer
+types to non-pointer types.
+These restrictions mean that the expansion for the foreach statement over arrays
+described in §9.4.4.17  cannot be applied to pointer arrays. Instead, a foreach statement
+of the form
+foreach (V v in x) embedded_st atement
+where the type of x is an array type of the form T[,,...,], n is the number of
+dimensions minus 1 and T or V is a pointer type, is expanded using nested for-loops as
+follows:
+C#
+The variables a, i0, i1, … in are not visible to or accessible to x or the
+embedded_st atement  or any other source code of the program. The variable v is read-
+only in the embedded statement. If there is not an explicit conversion ( §23.5 ) from T
+(the element type) to V, an error is produced and no further steps are taken. If x has
+the value null, a System.NullReferenceException is thrown at run-time.
+Note: Although pointer types are not permitted as type arguments, pointer arrays
+may be used as type arguments. end not e{
+    T[,,...,] a = x;
+    for (int i0 = a.GetLowerBound( 0); i0 <= a.GetUpperBound( 0); i0++)
+    {
+        for (int i1 = a.GetLowerBound( 1); i1 <= a.GetUpperBound( 1); i1++)
+        {
+            ...
+            for (int in = a.GetLowerBound(n); in <= a.GetUpperBound(n); 
+in++) 
+            {
+                V v = (V)a[i0,i1,..., in];
+                *embedded_statement*
+            }
+        }
+    }
+}In an unsafe context, an expression may yield a result of a pointer type, but outside an
+unsafe context, it is a compile-time error for an expression to be of a pointer type. In
+precise terms, outside an unsafe context a compile-time error occurs if any simple_name
+(§12.8.4 ), member_ac cess (§12.8.7 ), invocation_expr ession  (§12.8.9 ), or element_ac cess
+(§12.8.11 ) is of a pointer type.
+In an unsafe context, the primary_no_arr ay_cr eation_expr ession  (§12.8 ) and
+unary_expr ession  (§12.9 ) productions permit additional constructs, which are described
+in the following subclauses.
+Note: The precedence and associativity of the unsafe operators is implied by the
+grammar. end not e
+A point er_indir ection_expr ession  consists of an asterisk ( *) followed by a
+unary_expr ession .
+ANTLR
+The unary * operator denotes pointer indirection and is used to obtain the variable to
+which a pointer points. The result of evaluating *P, where P is an expression of a
+pointer type T*, is a variable of type T. It is a compile-time error to apply the unary *
+operator to an expression of type void* or to an expression that isn’t of a pointer type.
+The effect of applying the unary * operator to a null-valued pointer is
+implementation-defined. In particular, there is no guarantee that this operation throws a
+System.NullReferenceException.
+If an invalid value has been assigned to the pointer, the behavior of the unary *
+operator is undefined.
+Note: Among the invalid values for dereferencing a pointer by the unary * operator
+are an address inappropriately aligned for the type pointed to (see example in23.6 Pointers in expressions
+23.6.1 General
+23.6.2 Pointer indirection
+pointer_indirection_expression
+    : '*' unary_expression
+    ;§23.5 ), and the address of a variable after the end of its lifetime.
+For purposes of definite assignment analysis, a variable produced by evaluating an
+expression of the form *P is considered initially assigned ( §9.4.2 ).
+A point er_member_ac cess consists of a primary_expr ession , followed by a “ ->” token,
+followed by an identi fier and an optional type_ar gument_list .
+ANTLR
+In a pointer member access of the form P->I, P shall be an expression of a pointer type,
+and I shall denote an accessible member of the type to which P points.
+A pointer member access of the form P->I is evaluated exactly as (*P).I. For a
+description of the pointer indirection operator ( *), see §23.6.2 . For a description of the
+member access operator ( .), see §12.8.7 .
+Example : In the following code
+C#23.6.3 Pointer member access
+pointer_member_access
+    : primary_expression '->' identifier type_argument_list?
+    ;
+struct Point
+{
+    public int x;
+    public int y;
+    public override  string ToString () => $"({x},{y})";
+}
+class Test
+{
+    static void Main()
+    {
+        Point point;
+        unsafe
+        {
+            Point* p = &point;
+            p->x = 10;
+            p->y = 20;
+            Console.WriteLine(p->ToString());
+        }the -> operator is used to access fields and invoke a method of a struct through a
+pointer. Because the operation P->I is precisely equivalent to (*P).I, the Main
+method could equally well have been written:
+C#
+end ex ample
+A point er_element_ac cess consists of a primary_no_arr ay_cr eation_expr ession  followed by
+an expression enclosed in “ [” and “]”.
+ANTLR
+In a pointer element access of the form P[E], P shall be an expression of a pointer type
+other than void*, and E shall be an expression that can be implicitly converted to int,
+uint, long, or ulong.
+A pointer element access of the form P[E] is evaluated exactly as *(P + E). For a
+description of the pointer indirection operator ( *), see §23.6.2 . For a description of the
+pointer addition operator ( +), see §23.6.7 .    }
+}
+class Test
+{
+    static void Main()
+    {
+        Point point;
+        unsafe
+        {
+            Point* p = &point;
+            (*p).x = 10;
+            (*p).y = 20;
+            Console.WriteLine((*p).ToString());
+        }
+    }
+}
+23.6.4 Pointer element access
+pointer_element_access
+    : primary_no_array_creation_expression '[' expression ']'
+    ;Example : In the following code
+C#
+a pointer element access is used to initialize the character buffer in a for loop.
+Because the operation P[E] is precisely equivalent to *(P + E), the example could
+equally well have been written:
+C#
+end ex ample
+The pointer element access operator does not check for out-of-bounds errors and the
+behavior when accessing an out-of-bounds element is undefined.
+Note: This is the same as C and C++. end not eclass Test
+{
+    static void Main()
+    {
+        unsafe
+        {
+            char* p = stackalloc  char[256];
+            for (int i = 0; i < 256; i++)
+            {
+                p[i] = ( char)i;
+            }
+        }
+    }
+}
+class Test
+{
+    static void Main()
+    {
+        unsafe
+        {
+            char* p = stackalloc  char[256];
+            for (int i = 0; i < 256; i++)
+            {
+                *(p + i) = ( char)i;
+            }
+        }
+    }
+}An addressof_expr ession  consists of an ampersand ( &) followed by a unary_expr ession .
+ANTLR
+Given an expression E which is of a type T and is classified as a fixed variable ( §23.4 ),
+the construct &E computes the address of the variable given by E. The type of the result
+is T* and is classified as a value. A compile-time error occurs if E is not classified as a
+variable, if E is classified as a read-only local variable, or if E denotes a moveable
+variable. In the last case, a fixed statement ( §23.7 ) can be used to temporarily “fix” the
+variable before obtaining its address.
+Note: As stated in §12.8.7 , outside an instance constructor or static constructor for a
+struct or class that defines a readonly field, that field is considered a value, not a
+variable. As such, its address cannot be taken. Similarly, the address of a constant
+cannot be taken.
+The & operator does not require its argument to be definitely assigned, but following an
+& operation, the variable to which the operator is applied is considered definitely
+assigned in the execution path in which the operation occurs. It is the responsibility of
+the programmer to ensure that correct initialization of the variable actually does take
+place in this situation.
+Example : In the following code
+C#23.6.5 The address-of operator
+addressof_expression
+    : '&' unary_expression
+    ;
+class Test
+{
+    static void Main()
+    {
+        int i;
+        unsafe
+        {
+            int* p = &i;
+            *p = 123;
+        }
+        Console.WriteLine(i);i is considered definitely assigned following the &i operation used to initialize p.
+The assignment to *p in effect initializes i, but the inclusion of this initialization is
+the responsibility of the programmer, and no compile-time error would occur if the
+assignment was removed.
+end ex ample
+Note: The rules of definite assignment for the & operator exist such that redundant
+initialization of local variables can be avoided. For example, many external APIs take
+a pointer to a structure which is filled in by the API. Calls to such APIs typically pass
+the address of a local struct variable, and without the rule, redundant initialization of
+the struct variable would be required. end not e
+Note: When a local variable, value parameter, or parameter array is captured by an
+anonymous function ( §12.8.23 ), that local variable, parameter, or parameter array is
+no longer considered to be a fixed variable ( §23.7 ), but is instead considered to be a
+moveable variable. Thus it is an error for any unsafe code to take the address of a
+local variable, value parameter, or parameter array that has been captured by an
+anonymous function. end not e
+In an unsafe context, the ++ and -- operators ( §12.8.15  and §12.9.6 ) can be applied to
+pointer variables of all types except void*. Thus, for every pointer type T*, the following
+operators are implicitly defined:
+C#
+The operators produce the same results as x+1 and x-1, respectively ( §23.6.7 ). In other
+words, for a pointer variable of type T*, the ++ operator adds sizeof(T) to the address
+contained in the variable, and the -- operator subtracts sizeof(T) from the address
+contained in the variable.
+If a pointer increment or decrement operation overflows the domain of the pointer type,
+the result is implementation-defined, but no exceptions are produced.    }
+}
+23.6.6 Pointer increment and decrement
+T* operator  ++(T* x);
+T* operator  --(T* x);In an unsafe context, the + operator ( §12.10.5 ) and – operator ( §12.10.6 ) can be applied
+to values of all pointer types except void*. Thus, for every pointer type T*, the
+following operators are implicitly defined:
+C#
+Given an expression P of a pointer type T* and an expression N of type int, uint,
+long, or ulong, the expressions P + N and N + P compute the pointer value of type T*
+that results from adding N * sizeof(T) to the address given by P. Likewise, the
+expression P – N computes the pointer value of type T* that results from subtracting N
+* sizeof(T) from the address given by P.
+Given two expressions, P and Q, of a pointer type T*, the expression P – Q computes
+the difference between the addresses given by P and Q and then divides that difference
+by sizeof(T). The type of the result is always long. In effect, P - Q is computed as
+((long)(P) - (long)(Q)) / sizeof(T).
+Example :
+C#23.6.7 Pointer arithmetic
+T* operator  +(T* x, int y);
+T* operator  +(T* x, uint y);
+T* operator  +(T* x, long y);
+T* operator  +(T* x, ulong y);
+T* operator  +(int x, T* y);
+T* operator  +(uint x, T* y);
+T* operator  +(long x, T* y);
+T* operator  +(ulong x, T* y);
+T* operator  –(T* x, int y);
+T* operator  –(T* x, uint y);
+T* operator  –(T* x, long y);
+T* operator  –(T* x, ulong y);
+long operator  –(T* x, T* y);
+class Test
+{
+    static void Main()
+    {
+        unsafe
+        {
+            int* values = stackalloc  int[20];
+            int* p = &values[ 1];
+            int* q = &values[ 15];
+            Console.WriteLine( $"p - q = {p - q}");which produces the output:
+Console
+end ex ample
+If a pointer arithmetic operation overflows the domain of the pointer type, the result is
+truncated in an implementation-defined fashion, but no exceptions are produced.
+In an unsafe context, the ==, !=, <, >, <=, and >= operators ( §12.12 ) can be applied to
+values of all pointer types. The pointer comparison operators are:
+C#
+Because an implicit conversion exists from any pointer type to the void* type, operands
+of any pointer type can be compared using these operators. The comparison operators
+compare the addresses given by the two operands as if they were unsigned integers.
+For certain predefined types ( §12.8.18 ), the sizeof operator yields a constant int value.
+For all other types, the result of the sizeof operator is implementation-defined and is
+classified as a value, not a constant.
+The order in which members are packed into a struct is unspecified.            Console.WriteLine( $"q - p = {q - p}");
+        }
+    }
+}
+p - q = -14
+q - p = 14
+23.6.8 Pointer comparison
+bool operator  ==(void* x, void* y);
+bool operator  !=(void* x, void* y);
+bool operator  <(void* x, void* y);
+bool operator  >(void* x, void* y);
+bool operator  <=(void* x, void* y);
+bool operator  >=(void* x, void* y);
+23.6.9 The sizeof operatorFor alignment purposes, there may be unnamed padding at the beginning of a struct,
+within a struct, and at the end of the struct. The contents of the bits used as padding are
+indeterminate.
+When applied to an operand that has struct type, the result is the total number of bytes
+in a variable of that type, including any padding.
+In an unsafe context, the embedded_st atement  (§13.1 ) production permits an additional
+construct, the fixed statement, which is used to “fix” a moveable variable such that its
+address remains constant for the duration of the statement.
+ANTLR
+Each fixed_point er_declar ator declares a local variable of the given point er_type  and
+initializes that local variable with the address computed by the corresponding
+fixed_point er_initializer . A local variable declared in a fixed statement is accessible in any
+fixed_point er_initializer s occurring to the right of that variable’s declaration, and in the
+embedded_st atement  of the fixed statement. A local variable declared by a fixed
+statement is considered read-only. A compile-time error occurs if the embedded
+statement attempts to modify this local variable (via assignment or the ++ and --
+operators) or pass it as a ref or out parameter.
+It is an error to use a captured local variable ( §12.19.6.2 ), value parameter, or parameter
+array in a fixed_point er_initializer . A fixed_point er_initializer  can be one of the following:23.7 The fixed statement
+fixed_statement
+    : 'fixed' '(' pointer_type fixed_pointer_declarators ')' 
+embedded_statement
+    ;
+fixed_pointer_declarators
+    : fixed_pointer_declarator ( ','  fixed_pointer_declarator)*
+    ;
+fixed_pointer_declarator
+    : identifier '=' fixed_pointer_initializer
+    ;
+fixed_pointer_initializer
+    : '&' variable_reference
+    | expression
+    ;The token “ &” followed by a variable_r eference (§9.5) to a moveable variable ( §23.4 )
+of an unmanaged type T, provided the type T* is implicitly convertible to the
+pointer type given in the fixed statement. In this case, the initializer computes the
+address of the given variable, and the variable is guaranteed to remain at a fixed
+address for the duration of the fixed statement.
+An expression of an array_type  with elements of an unmanaged type T, provided
+the type T* is implicitly convertible to the pointer type given in the fixed
+statement. In this case, the initializer computes the address of the first element in
+the array, and the entire array is guaranteed to remain at a fixed address for the
+duration of the fixed statement. If the array expression is null or if the array has
+zero elements, the initializer computes an address equal to zero.
+An expression of type string, provided the type char* is implicitly convertible to
+the pointer type given in the fixed statement. In this case, the initializer computes
+the address of the first character in the string, and the entire string is guaranteed
+to remain at a fixed address for the duration of the fixed statement. The behavior
+of the fixed statement is implementation-defined if the string expression is null.
+An expression of type other than array_type  or string, provided there exists an
+accessible method or accessible extension method matching the signature ref
+[readonly] T GetPinnableReference(), where T is an unmanaged_type , and T* is
+implicitly convertible to the pointer type given in the fixed statement. In this case,
+the initializer computes the address of the returned variable, and that variable is
+guaranteed to remain at a fixed address for the duration of the fixed statement. A
+GetPinnableReference() method can be used by the fixed statement when
+overload resolution ( §12.6.4 ) produces exactly one function member and that
+function member satisfies the preceding conditions. The GetPinnableReference
+method should return a reference to an address equal to zero, such as that
+returned from System.Runtime.CompilerServices.Unsafe.NullRef<T>() when there
+is no data to pin.
+A simple_name  or member_ac cess that references a fixed-size buffer member of a
+moveable variable, provided the type of the fixed-size buffer member is implicitly
+convertible to the pointer type given in the fixed statement. In this case, the
+initializer computes a pointer to the first element of the fixed-size buffer ( §23.8.3 ),
+and the fixed-size buffer is guaranteed to remain at a fixed address for the
+duration of the fixed statement.
+For each address computed by a fixed_point er_initializer  the fixed statement ensures
+that the variable referenced by the address is not subject to relocation or disposal by
+the garbage collector for the duration of the fixed statement.Example : If the address computed by a fixed_point er_initializer  references a field of
+an object or an element of an array instance, the fixed statement guarantees that
+the containing object instance is not relocated or disposed of during the lifetime of
+the statement. end ex ample
+It is the programmer’s responsibility to ensure that pointers created by fixed statements
+do not survive beyond execution of those statements.
+Example : When pointers created by fixed statements are passed to external APIs, it
+is the programmer’s responsibility to ensure that the APIs retain no memory of
+these pointers. end ex ample
+Fixed objects can cause fragmentation of the heap (because they can’t be moved). For
+that reason, objects should be fixed only when absolutely necessary and then only for
+the shortest amount of time possible.
+Example : The example
+C#
+demonstrates several uses of the fixed statement. The first statement fixes and
+obtains the address of a static field, the second statement fixes and obtains theclass Test
+{
+    static int x;
+    int y;
+    unsafe static void F(int* p)
+    {
+        *p = 1;
+    }
+    static void Main()
+    {
+        Test t = new Test();
+        int[] a = new int[10];
+        unsafe
+        {
+            fixed (int* p = &x) F(p);
+            fixed (int* p = &t.y) F(p);
+            fixed (int* p = &a[ 0]) F(p);
+            fixed (int* p = a) F(p);
+        }
+    }
+}address of an instance field, and the third statement fixes and obtains the address of
+an array element. In each case, it would have been an error to use the regular &
+operator since the variables are all classified as moveable variables.
+The third and fourth fixed statements in the example above produce identical
+results. In general, for an array instance a, specifying a[0] in a fixed statement is
+the same as simply specifying a.
+end ex ample
+In an unsafe context, array elements of single-dimensional arrays are stored in
+increasing index order, starting with index 0 and ending with index Length – 1. For
+multi-dimensional arrays, array elements are stored such that the indices of the
+rightmost dimension are increased first, then the next left dimension, and so on to the
+left.
+Within a fixed statement that obtains a pointer p to an array instance a, the pointer
+values ranging from p to p + a.Length - 1 represent addresses of the elements in the
+array. Likewise, the variables ranging from p[0] to p[a.Length - 1] represent the actual
+array elements. Given the way in which arrays are stored, an array of any dimension can
+be treated as though it were linear.
+Example :
+C#
+class Test
+{
+    static void Main()
+    {
+        int[,,] a = new int[2,3,4];
+        unsafe
+        {
+            fixed (int* p = a)
+            {
+                for (int i = 0; i < a.Length; ++i) // treat as linear
+                {
+                    p[i] = i;
+                }
+            }
+        }
+        for (int i = 0; i < 2; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                for (int k = 0; k < 4; ++k)
+                {which produces the output:
+Console
+end ex ample
+Example : In the following code
+C#
+a fixed statement is used to fix an array so its address can be passed to a method
+that takes a pointer.
+end ex ample                    Console.Write( $"[{i},{j},{k}] = {a[i,j,k], 2} ");
+                }
+                Console.WriteLine();
+            }
+        }
+    }
+}
+[0,0,0] =  0 [0,0,1] =  1 [0,0,2] =  2 [0,0,3] =  3
+[0,1,0] =  4 [0,1,1] =  5 [0,1,2] =  6 [0,1,3] =  7
+[0,2,0] =  8 [0,2,1] =  9 [0,2,2] = 10 [0,2,3] = 11
+[1,0,0] = 12 [1,0,1] = 13 [1,0,2] = 14 [1,0,3] = 15
+[1,1,0] = 16 [1,1,1] = 17 [1,1,2] = 18 [1,1,3] = 19
+[1,2,0] = 20 [1,2,1] = 21 [1,2,2] = 22 [1,2,3] = 23
+class Test
+{
+    unsafe static void Fill(int* p, int count, int value)
+    {
+        for (; count != 0; count--)
+        {
+            *p++ = value;
+        }
+    }
+    static void Main()
+    {
+        int[] a = new int[100];
+        unsafe
+        {
+            fixed (int* p = a) Fill(p, 100, -1);
+        }
+    }
+}A char* value produced by fixing a string instance always points to a null-terminated
+string. Within a fixed statement that obtains a pointer p to a string instance s, the
+pointer values ranging from p to p + s.Length - 1 represent addresses of the
+characters in the string, and the pointer value p + s.Length always points to a null
+character (the character with value ‘\0’).
+Example :
+C#
+end ex ample
+Example : The following code shows a fixed_point er_initializer  with an expression of
+type other than array_type  or string:
+C#class Test
+{
+    static string name = "xx";
+    unsafe static void F(char* p)
+    {
+        for (int i = 0; p[i] != '\0'; ++i)
+        {
+            System.Console.WriteLine(p[i]);
+        }
+    }
+    static void Main()
+    {
+        unsafe
+        {
+            fixed (char* p = name) F(p);
+            fixed (char* p = "xx") F(p);
+        }
+    }
+}
+public class C
+{
+    private int _value;
+    public C(int value) => _value = value;
+    public ref int GetPinnableReference () => ref _value;
+}
+public class Test
+{
+    unsafe private static void Main()Type C has an accessible GetPinnableReference method with the correct signature.
+In the fixed statement, the ref int returned from that method when it is called on
+c is used to initialize the int* pointer p. end ex ample
+Modifying objects of managed type through fixed pointers can result in undefined
+behavior.
+Note: For example, because strings are immutable, it is the programmer’s
+responsibility to ensure that the characters referenced by a pointer to a fixed string
+are not modified. end not e
+Note: The automatic null-termination of strings is particularly convenient when
+calling external APIs that expect “C-style” strings. Note, however, that a string
+instance is permitted to contain null characters. If such null characters are present,
+the string will appear truncated when treated as a null-terminated char*. end not e
+Fixed-size buffers are used to declare “C-style” in-line arrays as members of structs, and
+are primarily useful for interfacing with unmanaged APIs.
+A fixed-size buf fer is a member that represents storage for a fixed-length buffer of
+variables of a given type. A fixed-size buffer declaration introduces one or more fixed-
+size buffers of a given element type.
+Note: Like an array, a fixed-size buffer can be thought of as containing elements. As
+such, the term element type  as defined for an array is also used with a fixed-size
+buffer. end not e    {
+        C c = new C(10);
+        fixed (int* p = c)
+        {
+            // ...
+        }
+    }
+}
+23.8 Fixed-size buffers
+23.8.1 General
+23.8.2 Fixed-size buffer declarationsFixed-size buffers are only permitted in struct declarations and may only occur in unsafe
+contexts ( §23.2 ).
+ANTLR
+A fixed-size buffer declaration may include a set of attributes ( §22), a new modifier
+(§15.3.5 ), accessibility modifiers corresponding to any of the declared accessibilities
+permitted for struct members ( §16.4.3 ) and an unsafe modifier ( §23.2 ). The attributes
+and modifiers apply to all of the members declared by the fixed-size buffer declaration.
+It is an error for the same modifier to appear multiple times in a fixed-size buffer
+declaration.
+A fixed-size buffer declaration is not permitted to include the static modifier.
+The buffer element type of a fixed-size buffer declaration specifies the element type of
+the buffer(s) introduced by the declaration. The buffer element type shall be one of the
+predefined types sbyte, byte, short, ushort, int, uint, long, ulong, char, float,
+double, or bool.
+The buffer element type is followed by a list of fixed-size buffer declarators, each of
+which introduces a new member. A fixed-size buffer declarator consists of an identifier
+that names the member, followed by a constant expression enclosed in [ and ] tokens.fixed_size_buffer_declaration
+    : attributes? fixed_size_buffer_modifier* 'fixed' buffer_element_type
+      fixed_size_buffer_declarators ';'
+    ;
+fixed_size_buffer_modifier
+    : 'new'
+    | 'public'
+    | 'internal'
+    | 'private'
+    | 'unsafe'
+    ;
+buffer_element_type
+    : type
+    ;
+fixed_size_buffer_declarators
+    : fixed_size_buffer_declarator ( ',' fixed_size_buffer_declarator)*
+    ;
+fixed_size_buffer_declarator
+    : identifier '[' constant_expression ']'
+    ;The constant expression denotes the number of elements in the member introduced by
+that fixed-size buffer declarator. The type of the constant expression shall be implicitly
+convertible to type int, and the value shall be a non-zero positive integer.
+The elements of a fixed-size buffer shall be laid out sequentially in memory.
+A fixed-size buffer declaration that declares multiple fixed-size buffers is equivalent to

@@ -1,0 +1,11725 @@
+multiple declarations of a single fixed-size buffer declaration with the same attributes,
+and element types.
+Example :
+C#
+is equivalent to
+C#
+end ex ample
+Member lookup ( §12.5 ) of a fixed-size buffer member proceeds exactly like member
+lookup of a field.
+A fixed-size buffer can be referenced in an expression using a simple_name  (§12.8.4 ), a
+member_ac cess (§12.8.7 ), or an element_ac cess (§12.8.11 ).
+When a fixed-size buffer member is referenced as a simple name, the effect is the same
+as a member access of the form this.I, where I is the fixed-size buffer member.
+In a member access of the form E.I where E. may be the implicit this., if E is of a
+struct type and a member lookup of I in that struct type identifies a fixed-size member,unsafe struct A
+{
+    public fixed int x[5], y[10], z[100];
+}
+unsafe struct A
+{
+    public fixed int x[5];
+    public fixed int y[10];
+    public fixed int z[100];
+}
+23.8.3 Fixed-size buffers in expressionsthen E.I is evaluated and classified as follows:
+If the expression E.I does not occur in an unsafe context, a compile-time error
+occurs.
+If E is classified as a value, a compile-time error occurs.
+Otherwise, if E is a moveable variable ( §23.4 ) then:
+If the expression E.I is a fixed_point er_initializer  (§23.7 ), then the result of the
+expression is a pointer to the first element of the fixed size buffer member I in
+E.
+Otherwise if the expression E.I is a primary_no_arr ay_cr eation_expr ession
+(§12.8.11.1 ) within an element_ac cess (§12.8.11 ) of the form E.I[J], then the
+result of E.I is a pointer, P, to the first element of the fixed size buffer member
+I in E, and the enclosing element_ac cess is then evaluated as the
+point er_element_ac cess (§23.6.4 ) P[J].
+Otherwise a compile-time error occurs.
+Otherwise, E references a fixed variable and the result of the expression is a
+pointer to the first element of the fixed-size buffer member I in E. The result is of
+type S*, where S is the element type of I, and is classified as a value.
+The subsequent elements of the fixed-size buffer can be accessed using pointer
+operations from the first element. Unlike access to arrays, access to the elements of a
+fixed-size buffer is an unsafe operation and is not range checked.
+Example : The following declares and uses a struct with a fixed-size buffer member.
+C#
+unsafe struct Font
+{
+    public int size;
+    public fixed char name[32];
+}
+class Test
+{
+    unsafe static void PutString (string s, char* buffer, int bufSize )
+    {
+        int len = s.Length;
+        if (len > bufSize)
+        {
+            len = bufSize;
+        }
+        for (int i = 0; i < len; i++)
+        {
+            buffer[i] = s[i];
+        }end ex ample
+Fixed-size buffers are not subject to definite assignment-checking ( §9.4), and fixed-size
+buffer members are ignored for purposes of definite-assignment checking of struct type
+variables.
+When the outermost containing struct variable of a fixed-size buffer member is a static
+variable, an instance variable of a class instance, or an array element, the elements of the
+fixed-size buffer are automatically initialized to their default values ( §9.3). In all other
+cases, the initial content of a fixed-size buffer is undefined.
+See §12.8.21  for general information about the operator stackalloc. Here, the ability of
+that operator to result in a pointer is discussed.
+In an unsafe context if a stackalloc_expr ession  (§12.8.21 ) occurs as the initializing
+expression of a local_v ariable_declar ation  (§13.6.2 ), where the local_v ariable_type  is
+either a pointer type ( §23.3 ) or inferred ( var), then the result of the stackalloc_expr ession
+is a pointer of type T * to be beginning of the allocated block, where T is the
+unmanaged_type  of the stackalloc_expr ession .
+In all other respects the semantics of local_v ariable_declar ation s (§13.6.2 ) and
+stackalloc_expr ession s (§12.8.21 ) in unsafe contexts follow those defined for safe
+contexts.
+Example :        for (int i = len; i < bufSize; i++)
+        {
+            buffer[i] = ( char)0;
+        }
+    }
+    unsafe static void Main()
+    {
+        Font f;
+        f.size = 10;
+        PutString( "Times New Roman" , f.name, 32);
+    }
+}
+23.8.4 Definite assignment checking
+23.9 Stack allocationC#
+end ex ample
+Unlike access to arrays or stackalloc’ed blocks of Span<T> type, access to the elements
+of a stackalloc’ed block of pointer type is an unsafe operation and is not range
+checked.
+Example : In the following code
+C#unsafe 
+{
+    // Memory uninitialized
+    int* p1 = stackalloc  int[3];
+    // Memory initialized
+    int* p2 = stackalloc  int[3] { -10, -15, -30 };
+    // Type int is inferred
+    int* p3 = stackalloc [] { 11, 12, 13 };
+    // Can't infer context, so pointer result assumed
+    var p4 = stackalloc [] { 11, 12, 13 };
+    // Error; no conversion exists
+    long* p5 = stackalloc [] { 11, 12, 13 };
+    // Converts 11 and 13, and returns long*
+    long* p6 = stackalloc [] { 11, 12L, 13 };
+    // Converts all and returns long*
+    long* p7 = stackalloc  long[] { 11, 12, 13 };
+}
+class Test
+{
+    static string IntToString (int value)
+    {
+        if (value == int.MinValue)
+        {
+            return "-2147483648" ;
+        }
+        int n = value >= 0 ? value : -value;
+        unsafe
+        {
+            char* buffer = stackalloc  char[16];
+            char* p = buffer + 16;
+            do
+            {
+                *--p = ( char)(n % 10 + '0');
+                n /= 10;
+            } while (n != 0);
+            if (value < 0)
+            {a stackalloc expression is used in the IntToString method to allocate a buffer of
+16 characters on the stack. The buffer is automatically discarded when the method
+returns.
+Note, however, that IntToString can be rewritten in safe mode; that is, without
+using pointers, as follows:
+C#
+end ex ample
+End o f conditionally normativ e text.                *--p = '-';
+            }
+            return new string(p, 0, (int)(buffer + 16 - p));
+        }
+    }
+    static void Main()
+    {
+        Console.WriteLine(IntToString( 12345));
+        Console.WriteLine(IntToString( -999));
+    }
+}
+class Test
+{
+    static string IntToString (int value)
+    {
+        if (value == int.MinValue)
+        {
+            return "-2147483648" ;
+        }
+        int n = value >= 0 ? value : -value;
+        Span<char> buffer = stackalloc  char[16];
+        int idx = 16;
+        do
+        {
+            buffer[--idx] = ( char)(n % 10 + '0');
+            n /= 10;
+        } while (n != 0);
+        if (value < 0)
+        {
+            buffer[--idx] = '-';
+        }
+        return buffer.Slice(idx).ToString();
+    }
+}Annex A Gr amma r
+Article •04/07/2023
+This clause is informativ e.
+This annex contains the grammar productions found in the specification, including the
+optional ones for unsafe code. Productions appear here in the same order in which they
+appear in the specification.
+ANTLRA.1 General
+A.2 Lexical grammar
+// Source: §6.3.1 General
+DEFAULT  : 'default'  ;
+NULL     : 'null' ;
+TRUE     : 'true' ;
+FALSE    : 'false' ;
+ASTERISK  : '*' ;
+SLASH    : '/' ;
+// Source: §6.3.1 General
+input
+    : input_section?
+    ;
+input_section
+    : input_section_part+
+    ;
+input_section_part
+    : input_element* New_Line
+    | PP_Directive
+    ;
+input_element
+    : Whitespace
+    | Comment
+    | token
+    ;
+// Source: §6.3.2 Line terminators
+New_Line
+    : New_Line_Character    | '\u000D\u000A'     // carriage return, line feed 
+    ;
+// Source: §6.3.3 Comments
+Comment
+    : Single_Line_Comment
+    | Delimited_Comment
+    ;
+fragment  Single_Line_Comment
+    : '//' Input_Character*
+    ;
+fragment  Input_Character
+    // anything but New_Line_Character
+    : ~('\u000D'  | '\u000A'    | '\u0085'  | '\u2028'  | '\u2029' )
+    ;
+    
+fragment  New_Line_Character
+    : '\u000D'   // carriage return
+    | '\u000A'   // line feed
+    | '\u0085'   // next line
+    | '\u2028'   // line separator
+    | '\u2029'   // paragraph separator
+    ;
+    
+fragment  Delimited_Comment
+    : '/*' Delimited_Comment_Section* ASTERISK+ '/'
+    ;
+    
+fragment  Delimited_Comment_Section
+    : SLASH
+    | ASTERISK* Not_Slash_Or_Asterisk
+    ;
+fragment  Not_Slash_Or_Asterisk
+    : ~('/' | '*')    // Any except SLASH or ASTERISK
+    ;
+// Source: §6.3.4 White space
+Whitespace
+    : [\p{Zs}]  // any character with Unicode class Zs
+    | '\u0009'   // horizontal tab
+    | '\u000B'   // vertical tab
+    | '\u000C'   // form feed
+    ;
+// Source: §6.4.1 General
+token
+    : identifier
+    | keyword
+    | Integer_Literal
+    | Real_Literal
+    | Character_Literal
+    | String_Literal    | operator_or_punctuator
+    ;
+// Source: §6.4.2 Unicode character escape sequences
+fragment  Unicode_Escape_Sequence
+    : '\\u' Hex_Digit Hex_Digit Hex_Digit Hex_Digit
+    | '\\U' Hex_Digit Hex_Digit Hex_Digit Hex_Digit
+            Hex_Digit Hex_Digit Hex_Digit Hex_Digit
+    ;
+// Source: §6.4.3 Identifiers
+identifier
+    : Simple_Identifier
+    | contextual_keyword
+    ;
+Simple_Identifier
+    : Available_Identifier
+    | Escaped_Identifier
+    ;
+fragment  Available_Identifier
+    // excluding keywords or contextual keywords, see note below
+    : Basic_Identifier
+    ;
+fragment  Escaped_Identifier
+    // Includes keywords and contextual keywords prefixed by '@'.
+    // See note below.
+    : '@' Basic_Identifier 
+    ;
+fragment  Basic_Identifier
+    : Identifier_Start_Character Identifier_Part_Character*
+    ;
+fragment  Identifier_Start_Character
+    : Letter_Character
+    | Underscore_Character
+    ;
+fragment  Underscore_Character
+    : '_'           // underscore
+    | '\\u005'  [fF] // Unicode_Escape_Sequence for underscore
+    ;
+fragment  Identifier_Part_Character
+    : Letter_Character
+    | Decimal_Digit_Character
+    | Connecting_Character
+    | Combining_Character
+    | Formatting_Character
+    ;
+fragment  Letter_Character    // Category Letter, all subcategories; category Number, subcategory  
+letter.
+    : [\p{L}\p{Nl}]
+    // Only escapes for categories L & Nl allowed. See note below.
+    | Unicode_Escape_Sequence
+    ;
+fragment  Combining_Character
+    // Category Mark, subcategories non-spacing and spacing combining.
+    : [\p{Mn}\p{Mc}]
+    // Only escapes for categories Mn & Mc allowed. See note below.
+    | Unicode_Escape_Sequence
+    ;
+fragment  Decimal_Digit_Character
+    // Category Number, subcategory decimal digit.
+    : [\p{Nd}]
+    // Only escapes for category Nd allowed. See note below.
+    | Unicode_Escape_Sequence
+    ;
+fragment  Connecting_Character
+    // Category Punctuation, subcategory connector.
+    : [\p{Pc}]
+    // Only escapes for category Pc allowed. See note below.
+    | Unicode_Escape_Sequence
+    ;
+fragment  Formatting_Character
+    // Category Other, subcategory format.
+    : [\p{Cf}]
+    // Only escapes for category Cf allowed, see note below.
+    | Unicode_Escape_Sequence
+    ;
+// Source: §6.4.4 Keywords
+keyword
+    : 'abstract'  | 'as'       | 'base'       | 'bool'      | 'break'
+    | 'byte'     | 'case'     | 'catch'      | 'char'      | 'checked'
+    | 'class'    | 'const'    | 'continue'    | 'decimal'    | DEFAULT
+    | 'delegate'  | 'do'       | 'double'      | 'else'      | 'enum'
+    | 'event'    | 'explicit'  | 'extern'      | FALSE       | 'finally'
+    | 'fixed'    | 'float'    | 'for'        | 'foreach'    | 'goto'
+    | 'if'       | 'implicit'  | 'in'         | 'int'       | 'interface'
+    | 'internal'  | 'is'       | 'lock'       | 'long'      | 'namespace'
+    | 'new'      | NULL       | 'object'      | 'operator'   | 'out'
+    | 'override'  | 'params'    | 'private'     | 'protected'  | 'public'
+    | 'readonly'  | 'ref'      | 'return'      | 'sbyte'     | 'sealed'
+    | 'short'    | 'sizeof'    | 'stackalloc'  | 'static'     | 'string'
+    | 'struct'    | 'switch'    | 'this'       | 'throw'     | TRUE
+    | 'try'      | 'typeof'    | 'uint'       | 'ulong'     | 'unchecked'
+    | 'unsafe'    | 'ushort'    | 'using'      | 'virtual'    | 'void'
+    | 'volatile'  | 'while'
+    ;// Source: §6.4.4 Keywords
+contextual_keyword
+    : 'add'    | 'alias'      | 'ascending'  | 'async'     | 'await'
+    | 'by'     | 'descending'  | 'dynamic'    | 'equals'     | 'from'
+    | 'get'    | 'global'      | 'group'     | 'into'      | 'join'
+    | 'let'    | 'nameof'      | 'on'        | 'orderby'    | 'partial'
+    | 'remove'  | 'select'      | 'set'       | 'unmanaged'  | 'value'
+    | 'var'    | 'when'       | 'where'     | 'yield'
+    ;
+// Source: §6.4.5.1 General
+literal
+    : boolean_literal
+    | Integer_Literal
+    | Real_Literal
+    | Character_Literal
+    | String_Literal
+    | null_literal
+    ;
+// Source: §6.4.5.2 Boolean literals
+boolean_literal
+    : TRUE
+    | FALSE
+    ;
+// Source: §6.4.5.3 Integer literals
+Integer_Literal
+    : Decimal_Integer_Literal
+    | Hexadecimal_Integer_Literal
+    | Binary_Integer_Literal
+    ;
+fragment  Decimal_Integer_Literal
+    : Decimal_Digit Decorated_Decimal_Digit* Integer_Type_Suffix?
+    ;
+fragment  Decorated_Decimal_Digit
+    : '_'* Decimal_Digit
+    ;
+       
+fragment  Decimal_Digit
+    : '0'..'9'
+    ;
+    
+fragment  Integer_Type_Suffix
+    : 'U' | 'u' | 'L' | 'l' |
+      'UL' | 'Ul' | 'uL' | 'ul' | 'LU' | 'Lu' | 'lU' | 'lu'
+    ;
+    
+fragment  Hexadecimal_Integer_Literal
+    : ('0x' | '0X') Decorated_Hex_Digit+ Integer_Type_Suffix?
+    ;
+fragment  Decorated_Hex_Digit    : '_'* Hex_Digit
+    ;
+       
+fragment  Hex_Digit
+    : '0'..'9' | 'A'..'F' | 'a'..'f'
+    ;
+   
+fragment  Binary_Integer_Literal
+    : ('0b' | '0B') Decorated_Binary_Digit+ Integer_Type_Suffix?
+    ;
+fragment  Decorated_Binary_Digit
+    : '_'* Binary_Digit
+    ;
+       
+fragment  Binary_Digit
+    : '0' | '1'
+    ;
+// Source: §6.4.5.4 Real literals
+Real_Literal
+    : Decimal_Digit Decorated_Decimal_Digit* '.'
+      Decimal_Digit Decorated_Decimal_Digit* Exponent_Part?  
+Real_Type_Suffix?
+    | '.' Decimal_Digit Decorated_Decimal_Digit* Exponent_Part?  
+Real_Type_Suffix?
+    | Decimal_Digit Decorated_Decimal_Digit* Exponent_Part Real_Type_Suffix?
+    | Decimal_Digit Decorated_Decimal_Digit* Real_Type_Suffix
+    ;
+fragment  Exponent_Part
+    : ('e' | 'E') Sign? Decimal_Digit Decorated_Decimal_Digit*
+    ;
+fragment  Sign
+    : '+' | '-'
+    ;
+fragment  Real_Type_Suffix
+    : 'F' | 'f' | 'D' | 'd' | 'M' | 'm'
+    ;
+// Source: §6.4.5.5 Character literals
+Character_Literal
+    : '\'' Character '\''
+    ;
+    
+fragment  Character
+    : Single_Character
+    | Simple_Escape_Sequence
+    | Hexadecimal_Escape_Sequence
+    | Unicode_Escape_Sequence
+    ;
+    
+fragment  Single_Character    // anything but ', \, and New_Line_Character
+    : ~['\\\u000D\u000A\u0085\u2028\u2029]
+    ;
+    
+fragment Simple_Escape_Sequence
+    : '\\\'' | '\\"' | '\\\\' | '\\0' | '\\a' | '\\b' |
+      '\\f' | '\\n' | '\\r' | '\\t' | '\\v'
+    ;
+    
+fragment  Hexadecimal_Escape_Sequence
+    : '\\x' Hex_Digit Hex_Digit? Hex_Digit? Hex_Digit?
+    ;
+// Source: §6.4.5.6 String literals
+String_Literal
+    : Regular_String_Literal
+    | Verbatim_String_Literal
+    ;
+    
+fragment  Regular_String_Literal
+    : '"' Regular_String_Literal_Character* '"'
+    ;
+    
+fragment  Regular_String_Literal_Character
+    : Single_Regular_String_Literal_Character
+    | Simple_Escape_Sequence
+    | Hexadecimal_Escape_Sequence
+    | Unicode_Escape_Sequence
+    ;
+fragment  Single_Regular_String_Literal_Character
+    // anything but ", \, and New_Line_Character
+    : ~["\\\u000D\u000A\u0085\u2028\u2029]
+    ;
+fragment  Verbatim_String_Literal
+    : '@"' Verbatim_String_Literal_Character* '"'
+    ;
+    
+fragment  Verbatim_String_Literal_Character
+    : Single_Verbatim_String_Literal_Character
+    | Quote_Escape_Sequence
+    ;
+    
+fragment  Single_Verbatim_String_Literal_Character
+    : ~["]     // anything but quotation mark (U+0022)
+    ;
+    
+fragment  Quote_Escape_Sequence
+    : '""'
+    ;
+// Source: §6.4.5.7 The null literal
+null_literal
+    : NULL    ;
+// Source: §6.4.6 Operators and punctuators
+operator_or_punctuator
+    : '{'  | '}'  | '['  | ']'  | '('   | ')'  | '.'  | ','  | ':'  | ';'
+    | '+'  | '-'  | ASTERISK    | SLASH | '%'  | '&'  | '|'  | '^'  | '!' | 
+'~'
+    | '='  | '<'  | '>'  | '?'  | '??'  | '::' | '++' | '--' | '&&' | '||'
+    | '->' | '==' | '!=' | '<=' | '>='  | '+=' | '-=' | '*=' | '/=' | '%='
+    | '&=' | '|=' | '^=' | '<<' | '<<=' | '=>'
+    ;
+right_shift
+    : '>'  '>'
+    ;
+right_shift_assignment
+    : '>' '>='
+    ;
+// Source: §6.5.1 General
+PP_Directive
+    : PP_Start PP_Kind PP_New_Line
+    ;
+fragment  PP_Kind
+    : PP_Declaration
+    | PP_Conditional
+    | PP_Line
+    | PP_Diagnostic
+    | PP_Region
+    | PP_Pragma
+    ;
+// Only recognised at the beginning of a line
+fragment  PP_Start
+    // See note below.
+    : { getCharPositionInLine() == 0 }? PP_Whitespace? '#' PP_Whitespace?
+    ;
+fragment  PP_Whitespace
+    : ( [\p{Zs}]  // any character with Unicode class Zs
+      | '\u0009'   // horizontal tab
+      | '\u000B'   // vertical tab
+      | '\u000C'   // form feed
+      )+
+    ;
+fragment  PP_New_Line
+    : PP_Whitespace? Single_Line_Comment? New_Line
+    ;
+// Source: §6.5.2 Conditional compilation symbols
+fragment  PP_Conditional_Symbol
+    // Must not be equal to tokens TRUE or FALSE. See note below.    : Basic_Identifier
+    ;
+// Source: §6.5.3 Pre-processing expressions
+fragment  PP_Expression
+    : PP_Whitespace? PP_Or_Expression PP_Whitespace?
+    ;
+    
+fragment  PP_Or_Expression
+    : PP_And_Expression (PP_Whitespace? '||' PP_Whitespace?  
+PP_And_Expression)*
+    ;
+    
+fragment  PP_And_Expression
+    : PP_Equality_Expression (PP_Whitespace? '&&' PP_Whitespace?
+      PP_Equality_Expression)*
+    ;
+fragment  PP_Equality_Expression
+    : PP_Unary_Expression (PP_Whitespace? ( '==' | '!=') PP_Whitespace?
+      PP_Unary_Expression)*
+    ;
+    
+fragment  PP_Unary_Expression
+    : PP_Primary_Expression
+    | '!' PP_Whitespace? PP_Unary_Expression
+    ;
+    
+fragment  PP_Primary_Expression
+    : TRUE
+    | FALSE
+    | PP_Conditional_Symbol
+    | '(' PP_Whitespace? PP_Expression PP_Whitespace? ')'
+    ;
+// Source: §6.5.4 Definition directives
+fragment  PP_Declaration
+    : 'define'  PP_Whitespace PP_Conditional_Symbol
+    | 'undef' PP_Whitespace PP_Conditional_Symbol
+    ;
+// Source: §6.5.5 Conditional compilation directives
+fragment  PP_Conditional
+    : PP_If_Section
+    | PP_Elif_Section
+    | PP_Else_Section
+    | PP_Endif
+    ;
+fragment  PP_If_Section
+    : 'if' PP_Whitespace PP_Expression
+    ;
+    
+fragment  PP_Elif_Section
+    : 'elif' PP_Whitespace PP_Expression    ;
+    
+fragment  PP_Else_Section
+    : 'else'
+    ;
+    
+fragment  PP_Endif
+    : 'endif'
+    ;
+// Source: §6.5.6 Diagnostic directives
+fragment  PP_Diagnostic
+    : 'error' PP_Message?
+    | 'warning'  PP_Message?
+    ;
+fragment  PP_Message
+    : PP_Whitespace Input_Character*
+    ;
+// Source: §6.5.7 Region directives
+fragment  PP_Region
+    : PP_Start_Region
+    | PP_End_Region
+    ;
+fragment  PP_Start_Region
+    : 'region'  PP_Message?
+    ;
+fragment  PP_End_Region
+    : 'endregion'  PP_Message?
+    ;
+// Source: §6.5.8 Line directives
+fragment  PP_Line
+    : 'line' PP_Whitespace PP_Line_Indicator
+    ;
+fragment  PP_Line_Indicator
+    : Decimal_Digit+ PP_Whitespace PP_Compilation_Unit_Name
+    | Decimal_Digit+
+    | DEFAULT
+    | 'hidden'
+    ;
+    
+fragment  PP_Compilation_Unit_Name
+    : '"' PP_Compilation_Unit_Name_Character+ '"'
+    ;
+    
+fragment  PP_Compilation_Unit_Name_Character
+    // Any Input_Character except "
+    : ~('\u000D'  | '\u000A'    | '\u0085'  | '\u2028'  | '\u2029'  | '#')
+    ;ANTLR// Source: §6.5.9 Pragma directives
+fragment  PP_Pragma
+    : 'pragma'  PP_Pragma_Text?
+    ;
+fragment  PP_Pragma_Text
+    : PP_Whitespace Input_Character*
+    ;
+A.3 Syntactic grammar
+// Source: §7.8.1 General
+namespace_name
+    : namespace_or_type_name
+    ;
+type_name
+    : namespace_or_type_name
+    ;
+    
+namespace_or_type_name
+    : identifier type_argument_list?
+    | namespace_or_type_name '.' identifier type_argument_list?
+    | qualified_alias_member
+    ;
+// Source: §8.1 General
+type
+    : reference_type
+    | value_type
+    | type_parameter
+    | pointer_type     // unsafe code support
+    ;
+// Source: §8.2.1 General
+reference_type
+    : class_type
+    | interface_type
+    | array_type
+    | delegate_type
+    | 'dynamic'
+    ;
+class_type
+    : type_name
+    | 'object'
+    | 'string'
+    ;interface_type
+    : type_name
+    ;
+array_type
+    : non_array_type rank_specifier+
+    ;
+non_array_type
+    : value_type
+    | class_type
+    | interface_type
+    | delegate_type
+    | 'dynamic'
+    | type_parameter
+    | pointer_type      // unsafe code support
+    ;
+rank_specifier
+    : '[' ','* ']'
+    ;
+delegate_type
+    : type_name
+    ;
+// Source: §8.3.1 General
+value_type
+    : non_nullable_value_type
+    | nullable_value_type
+    ;
+non_nullable_value_type
+    : struct_type
+    | enum_type
+    ;
+struct_type
+    : type_name
+    | simple_type
+    | tuple_type
+    ;
+simple_type
+    : numeric_type
+    | 'bool'
+    ;
+numeric_type
+    : integral_type
+    | floating_point_type
+    | 'decimal'
+    ;
+integral_type    : 'sbyte'
+    | 'byte'
+    | 'short'
+    | 'ushort'
+    | 'int'
+    | 'uint'
+    | 'long'
+    | 'ulong'
+    | 'char'
+    ;
+floating_point_type
+    : 'float'
+    | 'double'
+    ;
+tuple_type
+    : '(' tuple_type_element ( ',' tuple_type_element)+ ')'
+    ;
+    
+tuple_type_element
+    : type identifier?
+    ;
+    
+enum_type
+    : type_name
+    ;
+nullable_value_type
+    : non_nullable_value_type '?'
+    ;
+// Source: §8.4.2 Type arguments
+type_argument_list
+    : '<' type_arguments '>'
+    ;
+type_arguments
+    : type_argument ( ',' type_argument)*
+    ;   
+type_argument
+    : type
+    ;
+// Source: §8.5 Type parameters
+type_parameter
+    : identifier
+    ;
+// Source: §8.8 Unmanaged types
+unmanaged_type
+    : value_type
+    | pointer_type     // unsafe code support
+    ;// Source: §9.5 Variable references
+variable_reference
+    : expression
+    ;
+// Source: §11.2.1 General
+pattern
+    : declaration_pattern
+    | constant_pattern
+    | var_pattern
+    ;
+// Source: §11.2.2 Declaration pattern
+declaration_pattern
+    : type simple_designation
+    ;
+simple_designation
+    : single_variable_designation
+    ;
+single_variable_designation
+    : identifier
+    ;
+// Source: §11.2.3 Constant pattern
+constant_pattern
+    : constant_expression
+    ;
+// Source: §11.2.4 Var pattern
+var_pattern
+    : 'var' designation
+    ;
+designation
+    : simple_designation
+    ;
+// Source: §12.6.2.1 General
+argument_list
+    : argument ( ',' argument)*
+    ;
+argument
+    : argument_name? argument_value
+    ;
+argument_name
+    : identifier ':'
+    ;
+argument_value
+    : expression
+    | 'in' variable_reference
+    | 'ref' variable_reference
+    | 'out' variable_reference    ;
+// Source: §12.8.1 General
+primary_expression
+    : primary_no_array_creation_expression
+    | array_creation_expression
+    ;
+primary_no_array_creation_expression
+    : literal
+    | interpolated_string_expression
+    | simple_name
+    | parenthesized_expression
+    | tuple_expression
+    | member_access
+    | null_conditional_member_access
+    | invocation_expression
+    | element_access
+    | null_conditional_element_access
+    | this_access
+    | base_access
+    | post_increment_expression
+    | post_decrement_expression
+    | object_creation_expression
+    | delegate_creation_expression
+    | anonymous_object_creation_expression
+    | typeof_expression
+    | sizeof_expression
+    | checked_expression
+    | unchecked_expression
+    | default_value_expression
+    | nameof_expression    
+    | anonymous_method_expression
+    | pointer_member_access     // unsafe code support
+    | pointer_element_access    // unsafe code support
+    | stackalloc_expression
+    ;
+// Source: §12.8.3 Interpolated string expressions
+interpolated_string_expression
+    : interpolated_regular_string_expression
+    | interpolated_verbatim_string_expression
+    ;
+// interpolated regular string expressions
+interpolated_regular_string_expression
+    : Interpolated_Regular_String_Start Interpolated_Regular_String_Mid?
+      ('{' regular_interpolation '}' Interpolated_Regular_String_Mid?)*
+      Interpolated_Regular_String_End
+    ;
+regular_interpolation
+    : expression ( ',' interpolation_minimum_width)?
+      Regular_Interpolation_Format?    ;
+interpolation_minimum_width
+    : constant_expression
+    ;
+Interpolated_Regular_String_Start
+    : '$"'
+    ;
+// the following three lexical rules are context sensitive, see details  
+below
+Interpolated_Regular_String_Mid
+    : Interpolated_Regular_String_Element+
+    ;
+Regular_Interpolation_Format
+    : ':' Interpolated_Regular_String_Element+
+    ;
+Interpolated_Regular_String_End
+    : '"'
+    ;
+fragment  Interpolated_Regular_String_Element
+    : Interpolated_Regular_String_Character
+    | Simple_Escape_Sequence
+    | Hexadecimal_Escape_Sequence
+    | Unicode_Escape_Sequence
+    | Open_Brace_Escape_Sequence
+    | Close_Brace_Escape_Sequence
+    ;
+fragment  Interpolated_Regular_String_Character
+    // Any character except " (U+0022), \\ (U+005C),
+    // { (U+007B), } (U+007D), and New_Line_Character.
+    : ~["\\{}\u000D\u000A\u0085\u2028\u2029]
+    ;
+// interpolated verbatim string expressions
+interpolated_verbatim_string_expression
+    : Interpolated_Verbatim_String_Start Interpolated_Verbatim_String_Mid?
+      ('{' verbatim_interpolation '}' Interpolated_Verbatim_String_Mid?)*
+      Interpolated_Verbatim_String_End
+    ;
+verbatim_interpolation
+    : expression ( ',' interpolation_minimum_width)?
+      Verbatim_Interpolation_Format?
+    ;
+Interpolated_Verbatim_String_Start
+    : '$@"'    | '@$"'
+    ;
+// the following three lexical rules are context sensitive, see details  
+below
+Interpolated_Verbatim_String_Mid
+    : Interpolated_Verbatim_String_Element+
+    ;
+Verbatim_Interpolation_Format
+    : ':' Interpolated_Verbatim_String_Element+
+    ;
+Interpolated_Verbatim_String_End
+    : '"'
+    ;
+fragment  Interpolated_Verbatim_String_Element
+    : Interpolated_Verbatim_String_Character
+    | Quote_Escape_Sequence
+    | Open_Brace_Escape_Sequence
+    | Close_Brace_Escape_Sequence
+    ;
+fragment  Interpolated_Verbatim_String_Character
+    : ~["{}]    // Any character except " (U+0022), { (U+007B) and }  
+(U+007D)
+    ;
+// lexical fragments used by both regular and verbatim interpolated strings
+fragment  Open_Brace_Escape_Sequence
+    : '{{'
+    ;
+fragment  Close_Brace_Escape_Sequence
+    : '}}'
+    ;
+// Source: §12.8.4 Simple names
+simple_name
+    : identifier type_argument_list?
+    ;
+// Source: §12.8.5 Parenthesized expressions
+parenthesized_expression
+    : '(' expression ')'
+    ;
+// Source: §12.8.6 Tuple expressions
+tuple_expression
+    : '(' tuple_element ( ',' tuple_element)+ ')'
+    | deconstruction_expression
+    ;    
+tuple_element
+    : (identifier ':')? expression
+    ;
+    
+deconstruction_expression
+    : 'var' deconstruction_tuple
+    ;
+    
+deconstruction_tuple
+    : '(' deconstruction_element ( ',' deconstruction_element)+ ')'
+    ;
+deconstruction_element
+    : deconstruction_tuple
+    | identifier
+    ;
+// Source: §12.8.7.1 General
+member_access
+    : primary_expression '.' identifier type_argument_list?
+    | predefined_type '.' identifier type_argument_list?
+    | qualified_alias_member '.' identifier type_argument_list?
+    ;
+predefined_type
+    : 'bool' | 'byte' | 'char' | 'decimal'  | 'double'  | 'float' | 'int'
+    | 'long' | 'object'  | 'sbyte' | 'short' | 'string'  | 'uint' | 'ulong'
+    | 'ushort'
+    ;
+// Source: §12.8.8 Null Conditional Member Access
+null_conditional_member_access
+    : primary_expression '?' '.' identifier type_argument_list?
+      dependent_access*
+    ;
+    
+dependent_access
+    : '.' identifier type_argument_list?    // member access
+    | '[' argument_list ']'                 // element access
+    | '(' argument_list? ')'                // invocation
+    ;
+null_conditional_projection_initializer
+    : primary_expression '?' '.' identifier type_argument_list?
+    ;
+// Source: §12.8.9.1 General
+invocation_expression
+    : primary_expression '(' argument_list? ')'
+    ;
+// Source: §12.8.10 Null Conditional Invocation Expression
+null_conditional_invocation_expression
+    : null_conditional_member_access '(' argument_list? ')'    | null_conditional_element_access '(' argument_list? ')'
+    ;
+// Source: §12.8.11.1 General
+element_access
+    : primary_no_array_creation_expression '[' argument_list ']'
+    ;
+// Source: §12.8.12 Null Conditional Element Access
+null_conditional_element_access
+    : primary_no_array_creation_expression '?' '[' argument_list ']'
+      dependent_access*
+    ;
+// Source: §12.8.13 This access
+this_access
+    : 'this'
+    ;
+// Source: §12.8.14 Base access
+base_access
+    : 'base' '.' identifier type_argument_list?
+    | 'base' '[' argument_list ']'
+    ;
+// Source: §12.8.15 Postfix increment and decrement operators
+post_increment_expression
+    : primary_expression '++'
+    ;
+post_decrement_expression
+    : primary_expression '--'
+    ;
+// Source: §12.8.16.2 Object creation expressions
+object_creation_expression
+    : 'new' type '(' argument_list? ')' object_or_collection_initializer?
+    | 'new' type object_or_collection_initializer
+    ;
+object_or_collection_initializer
+    : object_initializer
+    | collection_initializer
+    ;
+// Source: §12.8.16.3 Object initializers
+object_initializer
+    : '{' member_initializer_list? '}'
+    | '{' member_initializer_list ',' '}'
+    ;
+member_initializer_list
+    : member_initializer ( ',' member_initializer)*
+    ;member_initializer
+    : initializer_target '=' initializer_value
+    ;
+initializer_target
+    : identifier
+    | '[' argument_list ']'
+    ;
+initializer_value
+    : expression
+    | object_or_collection_initializer
+    ;
+// Source: §12.8.16.4 Collection initializers
+collection_initializer
+    : '{' element_initializer_list '}'
+    | '{' element_initializer_list ',' '}'
+    ;
+element_initializer_list
+    : element_initializer ( ',' element_initializer)*
+    ;
+element_initializer
+    : non_assignment_expression
+    | '{' expression_list '}'
+    ;
+expression_list
+    : expression
+    | expression_list ',' expression
+    ;
+// Source: §12.8.16.5 Array creation expressions
+array_creation_expression
+    : 'new' non_array_type '[' expression_list ']' rank_specifier*
+      array_initializer?
+    | 'new' array_type array_initializer
+    | 'new' rank_specifier array_initializer
+    ;
+// Source: §12.8.16.6 Delegate creation expressions
+delegate_creation_expression
+    : 'new' delegate_type '(' expression ')'
+    ;
+// Source: §12.8.16.7 Anonymous object creation expressions
+anonymous_object_creation_expression
+    : 'new' anonymous_object_initializer
+    ;
+anonymous_object_initializer
+    : '{' member_declarator_list? '}'
+    | '{' member_declarator_list ',' '}'    ;
+member_declarator_list
+    : member_declarator ( ',' member_declarator)*
+    ;
+member_declarator
+    : simple_name
+    | member_access
+    | null_conditional_projection_initializer
+    | base_access
+    | identifier '=' expression
+    ;
+// Source: §12.8.17 The typeof operator
+typeof_expression
+    : 'typeof'  '(' type ')'
+    | 'typeof'  '(' unbound_type_name ')'
+    | 'typeof'  '(' 'void' ')'
+    ;
+unbound_type_name
+    : identifier generic_dimension_specifier?
+    | identifier '::' identifier generic_dimension_specifier?
+    | unbound_type_name '.' identifier generic_dimension_specifier?
+    ;
+generic_dimension_specifier
+    : '<' comma* '>'
+    ;
+comma
+    : ','
+    ;
+// Source: §12.8.18 The sizeof operator
+sizeof_expression
+    : 'sizeof'  '(' unmanaged_type ')'
+    ;
+// Source: §12.8.19 The checked and unchecked operators
+checked_expression
+    : 'checked'  '(' expression ')'
+    ;
+unchecked_expression
+    : 'unchecked'  '(' expression ')'
+    ;
+// Source: §12.8.20 Default value expressions
+default_value_expression
+    : explictly_typed_default
+    | default_literal
+    ;explictly_typed_default
+    : 'default'  '(' type ')'
+    ;
+default_literal
+    : 'default'
+    ;
+// Source: §12.8.21 Stack allocation
+stackalloc_expression
+    : 'stackalloc'  unmanaged_type '[' expression ']'
+    | 'stackalloc'  unmanaged_type? '[' constant_expression? ']'
+      stackalloc_initializer
+    ;
+stackalloc_initializer
+     : '{' stackalloc_initializer_element_list '}'
+     ;
+stackalloc_initializer_element_list
+     : stackalloc_element_initializer ( ',' stackalloc_element_initializer)* 
+','?
+     ;
+    
+stackalloc_element_initializer
+    : expression
+    ;
+// Source: §12.8.22 Nameof expressions
+nameof_expression
+    : 'nameof'  '(' named_entity ')'
+    ;
+    
+named_entity
+    : named_entity_target ( '.' identifier type_argument_list?)*
+    ;
+    
+named_entity_target
+    : simple_name
+    | 'this'
+    | 'base'
+    | predefined_type 
+    | qualified_alias_member
+    ;
+// Source: §12.9.1 General
+unary_expression
+    : primary_expression
+    | '+' unary_expression
+    | '-' unary_expression
+    | '!' unary_expression
+    | '~' unary_expression
+    | pre_increment_expression
+    | pre_decrement_expression    | cast_expression
+    | await_expression
+    | pointer_indirection_expression    // unsafe code support
+    | addressof_expression              // unsafe code support
+    ;
+// Source: §12.9.6 Prefix increment and decrement operators
+pre_increment_expression
+    : '++' unary_expression
+    ;
+pre_decrement_expression
+    : '--' unary_expression
+    ;
+// Source: §12.9.7 Cast expressions
+cast_expression
+    : '(' type ')' unary_expression
+    ;
+// Source: §12.9.8.1 General
+await_expression
+    : 'await' unary_expression
+    ;
+// Source: §12.10.1 General
+multiplicative_expression
+    : unary_expression
+    | multiplicative_expression '*' unary_expression
+    | multiplicative_expression '/' unary_expression
+    | multiplicative_expression '%' unary_expression
+    ;
+additive_expression
+    : multiplicative_expression
+    | additive_expression '+' multiplicative_expression
+    | additive_expression '-' multiplicative_expression
+    ;
+// Source: §12.11 Shift operators
+shift_expression
+    : additive_expression
+    | shift_expression '<<' additive_expression
+    | shift_expression right_shift additive_expression
+    ;
+// Source: §12.12.1 General
+relational_expression
+    : shift_expression
+    | relational_expression '<' shift_expression
+    | relational_expression '>' shift_expression
+    | relational_expression '<=' shift_expression
+    | relational_expression '>=' shift_expression
+    | relational_expression 'is' type
+    | relational_expression 'is' pattern    | relational_expression 'as' type
+    ;
+equality_expression
+    : relational_expression
+    | equality_expression '==' relational_expression
+    | equality_expression '!=' relational_expression
+    ;
+// Source: §12.13.1 General
+and_expression
+    : equality_expression
+    | and_expression '&' equality_expression
+    ;
+exclusive_or_expression
+    : and_expression
+    | exclusive_or_expression '^' and_expression
+    ;
+inclusive_or_expression
+    : exclusive_or_expression
+    | inclusive_or_expression '|' exclusive_or_expression
+    ;
+// Source: §12.14.1 General
+conditional_and_expression
+    : inclusive_or_expression
+    | conditional_and_expression '&&' inclusive_or_expression
+    ;
+conditional_or_expression
+    : conditional_and_expression
+    | conditional_or_expression '||' conditional_and_expression
+    ;
+// Source: §12.15 The null coalescing operator
+null_coalescing_expression
+    : conditional_or_expression
+    | conditional_or_expression '??' null_coalescing_expression
+    | throw_expression
+    ;
+// Source: §12.16 The throw expression operator
+throw_expression
+    : 'throw' null_coalescing_expression
+    ;
+// Source: §12.17 Declaration expressions
+declaration_expression
+    : local_variable_type identifier
+    ;
+local_variable_type
+    : type    | 'var'
+    ;
+// Source: §12.18 Conditional operator
+conditional_expression
+    : null_coalescing_expression
+    | null_coalescing_expression '?' expression ':' expression
+    | null_coalescing_expression '?' 'ref' variable_reference ':'
+      'ref' variable_reference
+    ;
+// Source: §12.19.1 General
+lambda_expression
+    : 'async'? anonymous_function_signature '=>' anonymous_function_body
+    ;
+anonymous_method_expression
+    : 'async'? 'delegate'  explicit_anonymous_function_signature? block
+    ;
+anonymous_function_signature
+    : explicit_anonymous_function_signature
+    | implicit_anonymous_function_signature
+    ;
+explicit_anonymous_function_signature
+    : '(' explicit_anonymous_function_parameter_list? ')'
+    ;
+explicit_anonymous_function_parameter_list
+    : explicit_anonymous_function_parameter
+      (',' explicit_anonymous_function_parameter)*
+    ;
+explicit_anonymous_function_parameter
+    : anonymous_function_parameter_modifier? type identifier
+    ;
+anonymous_function_parameter_modifier
+    : 'ref'
+    | 'out'
+    | 'in'
+    ;
+implicit_anonymous_function_signature
+    : '(' implicit_anonymous_function_parameter_list? ')'
+    | implicit_anonymous_function_parameter
+    ;
+implicit_anonymous_function_parameter_list
+    : implicit_anonymous_function_parameter
+      (',' implicit_anonymous_function_parameter)*
+    ;
+implicit_anonymous_function_parameter    : identifier
+    ;
+anonymous_function_body
+    : null_conditional_invocation_expression
+    | expression
+    | 'ref' variable_reference
+    | block
+    ;
+// Source: §12.20.1 General
+query_expression
+    : from_clause query_body
+    ;
+from_clause
+    : 'from' type? identifier 'in' expression
+    ;
+query_body
+    : query_body_clauses? select_or_group_clause query_continuation?
+    ;
+query_body_clauses
+    : query_body_clause
+    | query_body_clauses query_body_clause
+    ;
+query_body_clause
+    : from_clause
+    | let_clause
+    | where_clause
+    | join_clause
+    | join_into_clause
+    | orderby_clause
+    ;
+let_clause
+    : 'let' identifier '=' expression
+    ;
+where_clause
+    : 'where' boolean_expression
+    ;
+join_clause
+    : 'join' type? identifier 'in' expression 'on' expression
+      'equals'  expression
+    ;
+join_into_clause
+    : 'join' type? identifier 'in' expression 'on' expression
+      'equals'  expression 'into' identifier
+    ;orderby_clause
+    : 'orderby'  orderings
+    ;
+orderings
+    : ordering ( ',' ordering)*
+    ;
+ordering
+    : expression ordering_direction?
+    ;
+ordering_direction
+    : 'ascending'
+    | 'descending'
+    ;
+select_or_group_clause
+    : select_clause
+    | group_clause
+    ;
+select_clause
+    : 'select'  expression
+    ;
+group_clause
+    : 'group' expression 'by' expression
+    ;
+query_continuation
+    : 'into' identifier query_body
+    ;
+// Source: §12.21.1 General
+assignment
+    : unary_expression assignment_operator expression
+    ;
+assignment_operator
+    : '=' 'ref'? | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^=' | 
+'<<='
+    | right_shift_assignment
+    ;
+// Source: §12.22 Expression
+expression
+    : non_assignment_expression
+    | assignment
+    ;
+non_assignment_expression
+    : declaration_expression
+    | conditional_expression
+    | lambda_expression    | query_expression
+    ;
+// Source: §12.23 Constant expressions
+constant_expression
+    : expression
+    ;
+// Source: §12.24 Boolean expressions
+boolean_expression
+    : expression
+    ;
+// Source: §13.1 General
+statement
+    : labeled_statement
+    | declaration_statement
+    | embedded_statement
+    ;
+embedded_statement
+    : block
+    | empty_statement
+    | expression_statement
+    | selection_statement
+    | iteration_statement
+    | jump_statement
+    | try_statement
+    | checked_statement
+    | unchecked_statement
+    | lock_statement
+    | using_statement
+    | yield_statement
+    | unsafe_statement   // unsafe code support
+    | fixed_statement    // unsafe code support
+    ;
+// Source: §13.3.1 General
+block
+    : '{' statement_list? '}'
+    ;
+// Source: §13.3.2 Statement lists
+statement_list
+    : statement+
+    ;
+// Source: §13.4 The empty statement
+empty_statement
+    : ';'
+    ;
+// Source: §13.5 Labeled statements
+labeled_statement
+    : identifier ':' statement    ;
+// Source: §13.6.1 General
+declaration_statement
+    : local_variable_declaration ';'
+    | local_constant_declaration ';'
+    | local_function_declaration
+    ;
+// Source: §13.6.2.1 General
+local_variable_declaration
+    : implicitly_typed_local_variable_declaration
+    | explicitly_typed_local_variable_declaration
+    | ref_local_variable_declaration
+    ;
+// Source: §13.6.2.2 Implicitly typed local variable declarations
+implicitly_typed_local_variable_declaration
+    : 'var' implicitly_typed_local_variable_declarator
+    | ref_kind 'var' ref_local_variable_declarator
+    ;
+implicitly_typed_local_variable_declarator
+    : identifier '=' expression
+    ;
+// Source: §13.6.2.3 Explicitly typed local variable declarations
+explicitly_typed_local_variable_declaration
+    : type explicitly_typed_local_variable_declarators
+    ;
+explicitly_typed_local_variable_declarators
+    : explicitly_typed_local_variable_declarator
+      (',' explicitly_typed_local_variable_declarator)*
+    ;
+explicitly_typed_local_variable_declarator
+    : identifier ( '=' local_variable_initializer)?
+    ;
+local_variable_initializer
+    : expression
+    | array_initializer
+    ;
+// Source: §13.6.2.4 Ref local variable declarations
+ref_local_variable_declaration
+    : ref_kind type ref_local_variable_declarators
+    ;
+ref_local_variable_declarators
+    : ref_local_variable_declarator ( ',' ref_local_variable_declarator)*
+    ;
+ref_local_variable_declarator    : identifier '=' 'ref' variable_reference
+    ;
+// Source: §13.6.3 Local constant declarations
+local_constant_declaration
+    : 'const' type constant_declarators
+    ;
+constant_declarators
+    : constant_declarator ( ',' constant_declarator)*
+    ;
+constant_declarator
+    : identifier '=' constant_expression
+    ;
+// Source: §13.6.4 Local function declarations
+local_function_declaration
+    : local_function_modifier* return_type local_function_header
+      local_function_body
+    | ref_local_function_modifier* ref_kind ref_return_type
+      local_function_header ref_local_function_body
+    ;
+local_function_header
+    : identifier '(' formal_parameter_list? ')'
+    | identifier type_parameter_list '(' formal_parameter_list? ')'
+      type_parameter_constraints_clause*
+    ;
+local_function_modifier
+    : ref_local_function_modifier
+    | 'async'
+    ;
+ref_local_function_modifier
+    : unsafe_modifier   // unsafe code support
+    ;
+local_function_body
+    : block
+    | '=>' null_conditional_invocation_expression ';'
+    | '=>' expression ';'
+    ;
+ref_local_function_body
+    : block
+    | '=>' 'ref' variable_reference ';'
+    ;
+// Source: §13.7 Expression statements
+expression_statement
+    : statement_expression ';'
+    ;statement_expression
+    : null_conditional_invocation_expression
+    | invocation_expression
+    | object_creation_expression
+    | assignment
+    | post_increment_expression
+    | post_decrement_expression
+    | pre_increment_expression
+    | pre_decrement_expression
+    | await_expression
+    ;
+// Source: §13.8.1 General
+selection_statement
+    : if_statement
+    | switch_statement
+    ;
+// Source: §13.8.2 The if statement
+if_statement
+    : 'if' '(' boolean_expression ')' embedded_statement
+    | 'if' '(' boolean_expression ')' embedded_statement
+      'else' embedded_statement
+    ;
+// Source: §13.8.3 The switch statement
+switch_statement
+    : 'switch'  '(' expression ')' switch_block
+    ;
+switch_block
+    : '{' switch_section* '}'
+    ;
+switch_section
+    : switch_label+ statement_list
+    ;
+switch_label
+    : 'case' pattern case_guard?  ':'
+    | 'default'  ':'
+    ;
+case_guard
+    : 'when' expression
+    ;
+// Source: §13.9.1 General
+iteration_statement
+    : while_statement
+    | do_statement
+    | for_statement
+    | foreach_statement
+    ;// Source: §13.9.2 The while statement
+while_statement
+    : 'while' '(' boolean_expression ')' embedded_statement
+    ;
+// Source: §13.9.3 The do statement
+do_statement
+    : 'do' embedded_statement 'while' '(' boolean_expression ')' ';'
+    ;
+// Source: §13.9.4 The for statement
+for_statement
+    : 'for' '(' for_initializer? ';' for_condition? ';' for_iterator? ')'
+      embedded_statement
+    ;
+for_initializer
+    : local_variable_declaration
+    | statement_expression_list
+    ;
+for_condition
+    : boolean_expression
+    ;
+for_iterator
+    : statement_expression_list
+    ;
+statement_expression_list
+    : statement_expression ( ',' statement_expression)*
+    ;
+// Source: §13.9.5 The foreach statement
+foreach_statement
+    : 'foreach'  '(' ref_kind? local_variable_type identifier 'in' 
+      expression ')' embedded_statement
+    ;
+// Source: §13.10.1 General
+jump_statement
+    : break_statement
+    | continue_statement
+    | goto_statement
+    | return_statement
+    | throw_statement
+    ;
+// Source: §13.10.2 The break statement
+break_statement
+    : 'break' ';'
+    ;
+// Source: §13.10.3 The continue statement
+continue_statement    : 'continue'  ';'
+    ;
+// Source: §13.10.4 The goto statement
+goto_statement
+    : 'goto' identifier ';'
+    | 'goto' 'case' constant_expression ';'
+    | 'goto' 'default'  ';'
+    ;
+// Source: §13.10.5 The return statement
+return_statement
+    : 'return'  ';'
+    | 'return'  expression ';'
+    | 'return'  'ref' variable_reference ';'
+    ;
+// Source: §13.10.6 The throw statement
+throw_statement
+    : 'throw' expression? ';'
+    ;
+// Source: §13.11 The try statement
+try_statement
+    : 'try' block catch_clauses
+    | 'try' block catch_clauses? finally_clause
+    ;
+catch_clauses
+    : specific_catch_clause+
+    | specific_catch_clause* general_catch_clause
+    ;
+specific_catch_clause
+    : 'catch' exception_specifier exception_filter? block
+    | 'catch' exception_filter block
+    ;
+exception_specifier
+    : '(' type identifier? ')'
+    ;
+exception_filter
+    : 'when' '(' boolean_expression ')'
+    ;
+general_catch_clause
+    : 'catch' block
+    ;
+finally_clause
+    : 'finally'  block
+    ;
+// Source: §13.12 The checked and unchecked statementschecked_statement
+    : 'checked'  block
+    ;
+unchecked_statement
+    : 'unchecked'  block
+    ;
+// Source: §13.13 The lock statement
+lock_statement
+    : 'lock' '(' expression ')' embedded_statement
+    ;
+// Source: §13.14 The using statement
+using_statement
+    : 'using' '(' resource_acquisition ')' embedded_statement
+    ;
+resource_acquisition
+    : local_variable_declaration
+    | expression
+    ;
+// Source: §13.15 The yield statement
+yield_statement
+    : 'yield' 'return'  expression ';'
+    | 'yield' 'break' ';'
+    ;
+// Source: §14.2 Compilation units
+compilation_unit
+    : extern_alias_directive* using_directive* global_attributes?
+      namespace_member_declaration*
+    ;
+// Source: §14.3 Namespace declarations
+namespace_declaration
+    : 'namespace'  qualified_identifier namespace_body ';'?
+    ;
+qualified_identifier
+    : identifier ( '.' identifier)*
+    ;
+namespace_body
+    : '{' extern_alias_directive* using_directive*
+      namespace_member_declaration* '}'
+    ;
+// Source: §14.4 Extern alias directives
+extern_alias_directive
+    : 'extern'  'alias' identifier ';'
+    ;
+// Source: §14.5.1 Generalusing_directive
+    : using_alias_directive
+    | using_namespace_directive
+    | using_static_directive    
+    ;
+// Source: §14.5.2 Using alias directives
+using_alias_directive
+    : 'using' identifier '=' namespace_or_type_name ';'
+    ;
+// Source: §14.5.3 Using namespace directives
+using_namespace_directive
+    : 'using' namespace_name ';'
+    ;
+// Source: §14.5.4 Using static directives
+using_static_directive
+    : 'using' 'static'  type_name ';'
+    ;
+// Source: §14.6 Namespace member declarations
+namespace_member_declaration
+    : namespace_declaration
+    | type_declaration
+    ;
+// Source: §14.7 Type declarations
+type_declaration
+    : class_declaration
+    | struct_declaration
+    | interface_declaration
+    | enum_declaration
+    | delegate_declaration
+    ;
+// Source: §14.8.1 General
+qualified_alias_member
+    : identifier '::' identifier type_argument_list?
+    ;
+// Source: §15.2.1 General
+class_declaration
+    : attributes? class_modifier* 'partial' ? 'class' identifier
+        type_parameter_list? class_base? type_parameter_constraints_clause*
+        class_body ';'?
+    ;
+// Source: §15.2.2.1 General
+class_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'    | 'abstract'
+    | 'sealed'
+    | 'static'
+    | unsafe_modifier   // unsafe code support
+    ;
+// Source: §15.2.3 Type parameters
+type_parameter_list
+    : '<' type_parameters '>'
+  ;
+type_parameters
+    : attributes? type_parameter
+    | type_parameters ',' attributes? type_parameter
+    ;
+// Source: §15.2.4.1 General
+class_base
+    : ':' class_type
+    | ':' interface_type_list
+    | ':' class_type ',' interface_type_list
+    ;
+interface_type_list
+    : interface_type ( ',' interface_type)*
+    ;
+// Source: §15.2.5 Type parameter constraints
+type_parameter_constraints_clauses
+    : type_parameter_constraints_clause
+    | type_parameter_constraints_clauses type_parameter_constraints_clause
+    ;
+    
+type_parameter_constraints_clause
+    : 'where' type_parameter ':' type_parameter_constraints
+    ;
+type_parameter_constraints
+    : primary_constraint
+    | secondary_constraints
+    | constructor_constraint
+    | primary_constraint ',' secondary_constraints
+    | primary_constraint ',' constructor_constraint
+    | secondary_constraints ',' constructor_constraint
+    | primary_constraint ',' secondary_constraints ',' 
+constructor_constraint
+    ;
+primary_constraint
+    : class_type
+    | 'class'
+    | 'struct'
+    | 'unmanaged'
+    ;secondary_constraints
+    : interface_type
+    | type_parameter
+    | secondary_constraints ',' interface_type
+    | secondary_constraints ',' type_parameter
+    ;
+constructor_constraint
+    : 'new' '(' ')'
+    ;
+// Source: §15.2.6 Class body
+class_body
+    : '{' class_member_declaration* '}'
+    ;
+// Source: §15.3.1 General
+class_member_declaration
+    : constant_declaration
+    | field_declaration
+    | method_declaration
+    | property_declaration
+    | event_declaration
+    | indexer_declaration
+    | operator_declaration
+    | constructor_declaration
+    | finalizer_declaration
+    | static_constructor_declaration
+    | type_declaration
+    ;
+// Source: §15.4 Constants
+constant_declaration
+    : attributes? constant_modifier* 'const' type constant_declarators ';'
+    ;
+constant_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    ;
+// Source: §15.5.1 General
+field_declaration
+    : attributes? field_modifier* type variable_declarators ';'
+    ;
+field_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'    | 'static'
+    | 'readonly'
+    | 'volatile'
+    | unsafe_modifier   // unsafe code support
+    ;
+variable_declarators
+    : variable_declarator ( ',' variable_declarator)*
+    ;
+variable_declarator
+    : identifier ( '=' variable_initializer)?
+    ;
+// Source: §15.6.1 General
+method_declaration
+    : attributes? method_modifiers return_type method_header method_body
+    | attributes? ref_method_modifiers ref_kind ref_return_type  
+method_header
+      ref_method_body
+    ;
+method_modifiers
+    : method_modifier* 'partial' ?
+    ;
+ref_kind
+    : 'ref'
+    | 'ref' 'readonly'
+    ;
+ref_method_modifiers
+    : ref_method_modifier*
+    ;
+method_header
+    : member_name '(' formal_parameter_list? ')'
+    | member_name type_parameter_list '(' formal_parameter_list? ')'
+      type_parameter_constraints_clause*
+    ;
+method_modifier
+    : ref_method_modifier
+    | 'async'
+    ;
+ref_method_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | 'static'
+    | 'virtual'
+    | 'sealed'    | 'override'
+    | 'abstract'
+    | 'extern'
+    | unsafe_modifier   // unsafe code support
+    ;
+return_type
+    : ref_return_type
+    | 'void'
+    ;
+ref_return_type
+    : type
+    ;
+member_name
+    : identifier
+    | interface_type '.' identifier
+    ;
+method_body
+    : block
+    | '=>' null_conditional_invocation_expression ';'
+    | '=>' expression ';'
+    | ';'
+    ;
+ref_method_body
+    : block
+    | '=>' 'ref' variable_reference ';'
+    | ';'
+    ;
+// Source: §15.6.2.1 General
+formal_parameter_list
+    : fixed_parameters
+    | fixed_parameters ',' parameter_array
+    | parameter_array
+    ;
+fixed_parameters
+    : fixed_parameter ( ',' fixed_parameter)*
+    ;
+fixed_parameter
+    : attributes? parameter_modifier? type identifier default_argument?
+    ;
+default_argument
+    : '=' expression
+    ;
+parameter_modifier
+    : parameter_mode_modifier
+    | 'this'    ;
+parameter_mode_modifier
+    : 'ref'
+    | 'out'
+    | 'in'
+    ;
+parameter_array
+    : attributes? 'params'  array_type identifier
+    ;
+// Source: §15.7.1 General
+property_declaration
+    : attributes? property_modifier* type member_name property_body
+    | attributes? property_modifier* ref_kind type member_name  
+ref_property_body
+    ;    
+property_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | 'static'
+    | 'virtual'
+    | 'sealed'
+    | 'override'
+    | 'abstract'
+    | 'extern'
+    | unsafe_modifier   // unsafe code support
+    ;
+    
+property_body
+    : '{' accessor_declarations '}' property_initializer?
+    | '=>' expression ';'
+    ;
+property_initializer
+    : '=' variable_initializer ';'
+    ;
+ref_property_body
+    : '{' ref_get_accessor_declaration '}'
+    | '=>' 'ref' variable_reference ';'
+    ;
+// Source: §15.7.3 Accessors
+accessor_declarations
+    : get_accessor_declaration set_accessor_declaration?
+    | set_accessor_declaration get_accessor_declaration?
+    ;
+get_accessor_declaration    : attributes? accessor_modifier? 'get' accessor_body
+    ;
+set_accessor_declaration
+    : attributes? accessor_modifier? 'set' accessor_body
+    ;
+accessor_modifier
+    : 'protected'
+    | 'internal'
+    | 'private'
+    | 'protected'  'internal'
+    | 'internal'  'protected'
+    | 'protected'  'private'
+    | 'private'  'protected'
+    ;
+accessor_body
+    : block
+    | '=>' expression ';'
+    | ';' 
+    ;
+ref_get_accessor_declaration
+    : attributes? accessor_modifier? 'get' ref_accessor_body
+    ;
+    
+ref_accessor_body
+    : block
+    | '=>' 'ref' variable_reference ';'
+    | ';'
+    ;
+// Source: §15.8.1 General
+event_declaration
+    : attributes? event_modifier* 'event' type variable_declarators ';'
+    | attributes? event_modifier* 'event' type member_name
+        '{' event_accessor_declarations '}'
+    ;
+event_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | 'static'
+    | 'virtual'
+    | 'sealed'
+    | 'override'
+    | 'abstract'
+    | 'extern'
+    | unsafe_modifier   // unsafe code support
+    ;event_accessor_declarations
+    : add_accessor_declaration remove_accessor_declaration
+    | remove_accessor_declaration add_accessor_declaration
+    ;
+add_accessor_declaration
+    : attributes? 'add' block
+    ;
+remove_accessor_declaration
+    : attributes? 'remove'  block
+    ;
+// Source: §15.9.1 General
+indexer_declaration
+    : attributes? indexer_modifier* indexer_declarator indexer_body
+    | attributes? indexer_modifier* ref_kind indexer_declarator  
+ref_indexer_body
+    ;
+indexer_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | 'virtual'
+    | 'sealed'
+    | 'override'
+    | 'abstract'
+    | 'extern'
+    | unsafe_modifier   // unsafe code support
+    ;
+indexer_declarator
+    : type 'this' '[' formal_parameter_list ']'
+    | type interface_type '.' 'this' '[' formal_parameter_list ']'
+    ;
+indexer_body
+    : '{' accessor_declarations '}' 
+    | '=>' expression ';'
+    ;  
+ref_indexer_body
+    : '{' ref_get_accessor_declaration '}'
+    | '=>' 'ref' variable_reference ';'
+    ;
+// Source: §15.10.1 General
+operator_declaration
+    : attributes? operator_modifier+ operator_declarator operator_body
+    ;
+operator_modifier    : 'public'
+    | 'static'
+    | 'extern'
+    | unsafe_modifier   // unsafe code support
+    ;
+operator_declarator
+    : unary_operator_declarator
+    | binary_operator_declarator
+    | conversion_operator_declarator
+    ;
+unary_operator_declarator
+    : type 'operator'  overloadable_unary_operator '(' fixed_parameter ')'
+    ;
+overloadable_unary_operator
+    : '+' | '-' | '!' | '~' | '++' | '--' | 'true' | 'false'
+    ;
+binary_operator_declarator
+    : type 'operator'  overloadable_binary_operator
+        '(' fixed_parameter ',' fixed_parameter ')'
+    ;
+overloadable_binary_operator
+    : '+'  | '-'  | '*'  | '/'  | '%'  | '&' | '|' | '^'  | '<<' 
+    | right_shift | '==' | '!=' | '>' | '<' | '>=' | '<='
+    ;
+conversion_operator_declarator
+    : 'implicit'  'operator'  type '(' fixed_parameter ')'
+    | 'explicit'  'operator'  type '(' fixed_parameter ')'
+    ;
+operator_body
+    : block
+    | '=>' expression ';'
+    | ';'
+    ;
+// Source: §15.11.1 General
+constructor_declaration
+    : attributes? constructor_modifier* constructor_declarator  
+constructor_body
+    ;
+constructor_modifier
+    : 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | 'extern'
+    | unsafe_modifier   // unsafe code support
+    ;constructor_declarator
+    : identifier '(' formal_parameter_list? ')' constructor_initializer?
+    ;
+constructor_initializer
+    : ':' 'base' '(' argument_list? ')'
+    | ':' 'this' '(' argument_list? ')'
+    ;
+constructor_body
+    : block
+    | '=>' expression ';'
+    | ';'
+    ;
+// Source: §15.12 Static constructors
+static_constructor_declaration
+    : attributes? static_constructor_modifiers identifier '(' ')'
+        static_constructor_body
+    ;
+static_constructor_modifiers
+    : 'static'
+    | 'static'  'extern'  unsafe_modifier?
+    | 'static'  unsafe_modifier 'extern' ?
+    | 'extern'  'static'  unsafe_modifier?
+    | 'extern'  unsafe_modifier 'static'
+    | unsafe_modifier 'static'  'extern' ?
+    | unsafe_modifier 'extern'  'static'
+    ;
+static_constructor_body
+    : block
+    | '=>' expression ';'
+    | ';'
+    ;
+// Source: §15.13 Finalizers
+finalizer_declaration
+    : attributes? '~' identifier '(' ')' finalizer_body
+    | attributes? 'extern'  unsafe_modifier? '~' identifier '(' ')'
+      finalizer_body
+    | attributes? unsafe_modifier 'extern' ? '~' identifier '(' ')'
+      finalizer_body
+    ;
+finalizer_body
+    : block
+    | '=>' expression ';'
+    | ';'
+    ;
+// Source: §16.2.1 General
+struct_declaration    : attributes? struct_modifier* 'ref'? 'partial' ? 'struct'
+      identifier type_parameter_list? struct_interfaces?
+      type_parameter_constraints_clause* struct_body ';'?
+    ;
+// Source: §16.2.2 Struct modifiers
+struct_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | 'readonly'
+    | unsafe_modifier   // unsafe code support
+    ;
+// Source: §16.2.5 Struct interfaces
+struct_interfaces
+    : ':' interface_type_list
+    ;
+// Source: §16.2.6 Struct body
+struct_body
+    : '{' struct_member_declaration* '}'
+    ;
+// Source: §16.3 Struct members
+struct_member_declaration
+    : constant_declaration
+    | field_declaration
+    | method_declaration
+    | property_declaration
+    | event_declaration
+    | indexer_declaration
+    | operator_declaration
+    | constructor_declaration
+    | static_constructor_declaration
+    | type_declaration
+    | fixed_size_buffer_declaration   // unsafe code support
+    ;
+// Source: §17.7 Array initializers
+array_initializer
+    : '{' variable_initializer_list? '}'
+    | '{' variable_initializer_list ',' '}'
+    ;
+variable_initializer_list
+    : variable_initializer ( ',' variable_initializer)*
+    ;
+    
+variable_initializer
+    : expression
+    | array_initializer
+    ;// Source: §18.2.1 General
+interface_declaration
+    : attributes? interface_modifier* 'partial' ? 'interface'
+      identifier variant_type_parameter_list? interface_base?
+      type_parameter_constraints_clause* interface_body ';'?
+    ;
+// Source: §18.2.2 Interface modifiers
+interface_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | unsafe_modifier   // unsafe code support
+    ;
+// Source: §18.2.3.1 General
+variant_type_parameter_list
+    : '<' variant_type_parameters '>'
+    ;
+// Source: §18.2.3.1 General
+variant_type_parameters
+    : attributes? variance_annotation? type_parameter
+    | variant_type_parameters ',' attributes? variance_annotation?
+      type_parameter
+    ;
+// Source: §18.2.3.1 General
+variance_annotation
+    : 'in'
+    | 'out'
+    ;
+// Source: §18.2.4 Base interfaces
+interface_base
+    : ':' interface_type_list
+    ;
+// Source: §18.3 Interface body
+interface_body
+    : '{' interface_member_declaration* '}'
+    ;
+// Source: §18.4.1 General
+interface_member_declaration
+    : interface_method_declaration
+    | interface_property_declaration
+    | interface_event_declaration
+    | interface_indexer_declaration
+    ;
+// Source: §18.4.2 Interface methodsinterface_method_declaration
+    : attributes? 'new'? return_type interface_method_header
+    | attributes? 'new'? ref_kind ref_return_type interface_method_header
+    ;
+interface_method_header
+    : identifier '(' formal_parameter_list? ')' ';'
+    | identifier type_parameter_list '(' formal_parameter_list? ')'
+      type_parameter_constraints_clause* ';'
+    ;
+// Source: §18.4.3 Interface properties
+interface_property_declaration
+    : attributes? 'new'? type identifier '{' interface_accessors '}'
+    | attributes? 'new'? ref_kind type identifier '{' ref_interface_accessor  
+'}'
+    ;
+interface_accessors
+    : attributes? 'get' ';'
+    | attributes? 'set' ';'
+    | attributes? 'get' ';' attributes? 'set' ';'
+    | attributes? 'set' ';' attributes? 'get' ';'
+    ;
+ref_interface_accessor
+    : attributes? 'get' ';'
+    ;
+// Source: §18.4.4 Interface events
+interface_event_declaration
+    : attributes? 'new'? 'event' type identifier ';'
+    ;
+// Source: §18.4.5 Interface indexers
+interface_indexer_declaration
+    : attributes? 'new'? type 'this' '[' formal_parameter_list ']'
+      '{' interface_accessors '}'
+    | attributes? 'new'? ref_kind type 'this' '[' formal_parameter_list ']'
+      '{' ref_interface_accessor '}'
+    ;
+// Source: §19.2 Enum declarations
+enum_declaration
+    : attributes? enum_modifier* 'enum' identifier enum_base? enum_body ';'?
+    ;
+enum_base
+    : ':' integral_type
+    | ':' integral_type_name
+    ;
+integral_type_name
+    : type_name // Shall resolve to an integral type other than char
+    ;enum_body
+    : '{' enum_member_declarations? '}'
+    | '{' enum_member_declarations ',' '}'
+    ;
+// Source: §19.3 Enum modifiers
+enum_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    ;
+// Source: §19.4 Enum members
+enum_member_declarations
+    : enum_member_declaration ( ',' enum_member_declaration)*
+    ;
+// Source: §19.4 Enum members
+enum_member_declaration
+    : attributes? identifier ( '=' constant_expression)?
+    ;
+// Source: §20.2 Delegate declarations
+delegate_declaration
+    : attributes? delegate_modifier* 'delegate'  return_type delegate_header
+    | attributes? delegate_modifier* 'delegate'  ref_kind ref_return_type
+      delegate_header
+    ;
+delegate_header
+    : identifier '(' formal_parameter_list? ')' ';'
+    | identifier variant_type_parameter_list '(' formal_parameter_list? ')'
+      type_parameter_constraints_clause* ';'
+    ;
+    
+delegate_modifier
+    : 'new'
+    | 'public'
+    | 'protected'
+    | 'internal'
+    | 'private'
+    | unsafe_modifier   // unsafe code support
+    ;
+// Source: §22.3 Attribute specification
+global_attributes
+    : global_attribute_section+
+    ;
+global_attribute_section
+    : '[' global_attribute_target_specifier attribute_list ']'
+    | '[' global_attribute_target_specifier attribute_list ',' ']'    ;
+global_attribute_target_specifier
+    : global_attribute_target ':'
+    ;
+global_attribute_target
+    : identifier
+    ;
+attributes
+    : attribute_section+
+    ;
+attribute_section
+    : '[' attribute_target_specifier? attribute_list ']'
+    | '[' attribute_target_specifier? attribute_list ',' ']'
+    ;
+attribute_target_specifier
+    : attribute_target ':'
+    ;
+attribute_target
+    : identifier
+    | keyword
+    ;
+attribute_list
+    : attribute ( ',' attribute)*
+    ;
+attribute
+    : attribute_name attribute_arguments?
+    ;
+attribute_name
+    : type_name
+    ;
+attribute_arguments
+    : '(' positional_argument_list? ')'
+    | '(' positional_argument_list ',' named_argument_list ')'
+    | '(' named_argument_list ')'
+    ;
+positional_argument_list
+    : positional_argument ( ',' positional_argument)*
+    ;
+positional_argument
+    : argument_name? attribute_argument_expression
+    ;
+named_argument_listANTLR    : named_argument ( ','  named_argument)*
+    ;
+named_argument
+    : identifier '=' attribute_argument_expression
+    ;
+attribute_argument_expression
+    : expression
+    ;
+A.4 Grammar extensions for unsafe code
+// Source: §23.2 Unsafe contexts
+unsafe_modifier
+    : 'unsafe'
+    ;
+unsafe_statement
+    : 'unsafe'  block
+    ;
+// Source: §23.3 Pointer types
+pointer_type
+    : value_type ( '*')+
+    | 'void' ('*')+
+    ;
+// Source: §23.6.2 Pointer indirection
+pointer_indirection_expression
+    : '*' unary_expression
+    ;
+// Source: §23.6.3 Pointer member access
+pointer_member_access
+    : primary_expression '->' identifier type_argument_list?
+    ;
+// Source: §23.6.4 Pointer element access
+pointer_element_access
+    : primary_no_array_creation_expression '[' expression ']'
+    ;
+// Source: §23.6.5 The address-of operator
+addressof_expression
+    : '&' unary_expression
+    ;
+// Source: §23.7 The fixed statementEnd o f informativ e text.fixed_statement
+    : 'fixed' '(' pointer_type fixed_pointer_declarators ')' 
+embedded_statement
+    ;
+fixed_pointer_declarators
+    : fixed_pointer_declarator ( ','  fixed_pointer_declarator)*
+    ;
+fixed_pointer_declarator
+    : identifier '=' fixed_pointer_initializer
+    ;
+fixed_pointer_initializer
+    : '&' variable_reference
+    | expression
+    ;
+// Source: §23.8.2 Fixed-size buffer declarations
+fixed_size_buffer_declaration
+    : attributes? fixed_size_buffer_modifier* 'fixed' buffer_element_type
+      fixed_size_buffer_declarators ';'
+    ;
+fixed_size_buffer_modifier
+    : 'new'
+    | 'public'
+    | 'internal'
+    | 'private'
+    | 'unsafe'
+    ;
+buffer_element_type
+    : type
+    ;
+fixed_size_buffer_declarators
+    : fixed_size_buffer_declarator ( ',' fixed_size_buffer_declarator)*
+    ;
+fixed_size_buffer_declarator
+    : identifier '[' constant_expression ']'
+    ;
+６ Collaborat e with us on
+GitHubC# Standar d documentation
+feedb ackThe source for this content can
+be found on GitHub, where you
+can also create and review
+issues and pull requests. For
+more information, see our
+contributor guide .The C# S tandard documentation is
+open source. Provide feedback here.
+ Open a documentation issue
+ Provide product feedbackAnnex B Portability issues
+Article •07/14/2023
+This clause is informativ e.
+This annex collects some information about portability that appears in this specification.
+The behavior is undefined in the following circumstances:
+1. The behavior of the enclosing async function when an awaiter’s implementation of
+the interface methods INotifyCompletion.OnCompleted and
+ICriticalNotifyCompletion.UnsafeOnCompleted does not cause the resumption
+delegate to be invoked at most once ( §12.9.8.4 ).
+2. Passing pointers as ref or out parameters ( §23.3 ).
+3. When dereferencing the result of converting one pointer type to another and the
+resulting pointer is not correctly aligned for the pointed-to type. ( §23.5.1 ).
+4. When the unary  * operator is applied to a pointer containing an invalid value
+(§23.6.2 ).
+5. When a pointer is subscripted to access an out-of-bounds element ( §23.6.4 ).
+6. Modifying objects of managed type through fixed pointers ( §23.7 ).
+7. The content of memory newly allocated by stackalloc (§12.8.21 ).
+8. Attempting to allocate a negative number of items using stackalloc(§12.8.21 ).
+9. Implicit dynamic conversions ( §10.2.10 ) of in parameters with value arguments
+(§12.6.4.2 ).
+A conforming implementation is required to document its choice of behavior in each of
+the areas listed in this subclause. The following are implementation-defined:
+1. The behavior when an identifier not in Normalization Form C is encountered
+(§6.4.3 ).
+2. The maximum value allowed for Decimal_Digit+ in PP_Line_Indicator (§6.5.8 ).
+3. The interpretation of the input_char acters in the pp_pr agma-t ext of a #pragma
+directive ( §6.5.9 ).B.1 General
+B.2 Undefined behavior
+B.3 Implementation-defined behavior4. The values of any application parameters passed to Main by the host environment
+prior to application startup ( §7.1).
+5. The precise structure of the expression tree, as well as the exact process for
+creating it, when an anonymous function is converted to an expression-tree
+(§10.7.3 ).
+6. Whether a System.ArithmeticException (or a subclass thereof) is thrown or the
+overflow goes unreported with the resulting value being that of the left operand,
+when in an unchecked context and the left operand of an integer division is the
+maximum negative int or long value and the right operand is  –1 (§12.10.3 ).
+7. When a System.ArithmeticException (or a subclass thereof) is thrown when
+performing a decimal remainder operation ( §12.10.4 ).
+8. The impact of thread termination when a thread has no handler for an exception,
+and the thread is itself terminated ( §13.10.6 ).
+9. The impact of thread termination when no matching catch clause is found for an
+exception and the code that initially started that thread is reached. ( §21.4 ).
+10. The mappings between pointers and integers ( §23.5.1 ).
+11. The effect of applying the unary * operator to a null pointer ( §23.6.2 ).
+12. The behavior when pointer arithmetic overflows the domain of the pointer type
+(§23.6.6 , §23.6.7 ).
+13. The result of the sizeof operator for non-pre-defined value types ( §23.6.9 ).
+14. The behavior of the fixed statement if the array expression is null or if the array
+has zero elements ( §23.7 ).
+15. The behavior of the fixed statement if the string expression is null (§23.7 ).
+16. The value returned when a stack allocation of size zero is made ( §12.8.21 ).
+1. The time at which the finalizer (if any) for an object is run, once that object has
+become eligible for finalization ( §7.9).
+2. The representation of true (§8.3.9 ).
+3. The value of the result when converting out-of-range values from float or double
+values to an integral type in an unchecked context ( §10.3.2 ).
+4. The exact target object and target method of the delegate produced from an
+anon ymous_method_expr ession  contains ( §10.7.2 ).
+5. The layout of arrays, except in an unsafe context ( §12.8.16.5 ).
+6. Whether there is any way to execute the block  of an anonymous function other
+than through evaluation and invocation of the lambda_expr ession  or
+anon ymous_method-expr ession  (§12.19.3 ).
+7. The exact timing of static field initialization ( §15.5.6.2 ).B.4 Unspecified behavior8. The result of invoking MoveNext when an enumerator object is running ( §15.14.5.2 ).
+9. The result of accessing Current when an enumerator object is in the before,
+running, or after states ( §15.14.5.3 ).
+10. The result of invoking Dispose when an enumerator object is in the running state
+(§15.14.5.4 ).
+11. The attributes of a type declared in multiple parts are determined by combining, in
+an unspecified order, the attributes of each of its parts ( §22.3 ).
+12. The order in which members are packed into a struct ( §23.6.9 ).
+13. An exception occurs during finalizer execution, and that exception is not caught
+(§21.4 ).
+14. If more than one member matches, which member is the implementation of I.M
+(§18.6.5 ).
+1. The exact results of floating-point expression evaluation can vary from one
+implementation to another, because an implementation is permitted to evaluate
+such expressions using a greater range and/or precision than is required ( §8.3.7 ).
+2. The CLI reserves certain signatures for compatibility with other programming
+languages ( §15.3.10 ).
+End o f informativ e text.B.5 Other issuesAnnex C Standard library
+Article •04/07/2023
+A conforming C# implementation shall provide a minimum set of types having specific
+semantics. These types and their members are listed here, in alphabetical order by
+namespace and type. For a formal definition of these types and their members, refer to
+ISO/IEC 23271:2012 Common L anguage Infr astructur e (CLI), P artition IV ; Base Class
+Library (BCL), Ext ended Numer ics Libr ary, and Ext ended Arr ay Libr ary, which are included
+by reference in this specification.
+This t ext is informativ e.
+The standard library is intended to be the minimum set of types and members required
+by a conforming C# implementation. As such, it contains only those members that are
+explicitly required by the C# language specification.
+It is expected that a conforming C# implementation will supply a significantly more
+extensive library that enables useful programs to be written. For example, a conforming
+implementation might extend this library by
+Adding namespaces.
+Adding types.
+Adding members to non-interface types.
+Adding intervening base classes or interfaces.
+Having struct and class types implement additional interfaces.
+Adding attributes (other than the ConditionalAttribute) to existing types and
+members.
+End o f informativ e text.
+Note: Some struct types below have the readonly modifier. This modifier was not
+available when ISO/IEC 23271 was released, but is required for conforming
+implementations of this specification. end not eC.1 General
+C.2 Standard Library Types defined in ISO/IEC
+23271C#
+namespace  System
+{
+    public delegate  void Action();
+    public class ArgumentException  : SystemException
+    {
+        public ArgumentException ();
+        public ArgumentException (string message );
+        public ArgumentException (string message, Exception innerException );
+    }
+    public class ArithmeticException  : Exception
+    {
+        public ArithmeticException ();
+        public ArithmeticException (string message );
+        public ArithmeticException (string message, Exception  
+innerException );
+    }
+    public abstract  class Array : IList, ICollection , IEnumerable
+    {
+        public int Length { get; }
+        public int Rank { get; }
+        public int GetLength (int dimension );
+    }
+    public class ArrayTypeMismatchException  : Exception
+    {
+        public ArrayTypeMismatchException ();
+        public ArrayTypeMismatchException (string message );
+        public ArrayTypeMismatchException (string message,
+            Exception innerException );
+    }
+    [AttributeUsageAttribute(AttributeTargets.All, Inherited = true,
+        AllowMultiple = false) ]
+    public abstract  class Attribute
+    {
+        protected  Attribute ();
+    }
+    public enum AttributeTargets
+    {
+        Assembly = 0x1,
+        Module = 0x2,
+        Class = 0x4,
+        Struct = 0x8,
+        Enum = 0x10,
+        Constructor = 0x20,
+        Method = 0x40,
+        Property = 0x80,
+        Field = 0x100,        Event = 0x200,
+        Interface = 0x400,
+        Parameter = 0x800,
+        Delegate = 0x1000,
+        ReturnValue = 0x2000,
+        GenericParameter = 0x4000,
+        All = 0x7FFF
+    }
+    [AttributeUsageAttribute(AttributeTargets.Class, Inherited = true) ]
+    public sealed class AttributeUsageAttribute  : Attribute
+    {
+        public AttributeUsageAttribute (AttributeTargets validOn );
+        public bool AllowMultiple { get; set; }
+        public bool Inherited { get; set; }
+        public AttributeTargets ValidOn { get; }
+    }
+    public readonly  struct Boolean { }
+    public readonly  struct Byte { }
+    public readonly  struct Char { }
+    public readonly  struct Decimal { }
+    public abstract  class Delegate  { }
+    public class DivideByZeroException  : ArithmeticException
+    {
+        public DivideByZeroException ();
+        public DivideByZeroException (string message );
+        public DivideByZeroException (string message, Exception  
+innerException );
+    }
+    public readonly  struct Double { }
+    public abstract  class Enum : ValueType
+    {
+        protected  Enum();
+    }
+    public class Exception
+    {
+        public Exception ();
+        public Exception (string message );
+        public Exception (string message, Exception innerException );
+        public sealed Exception InnerException { get; }
+        public virtual string Message { get; }
+    }
+    public class GC { }
+    public interface  IDisposable
+    {
+        void Dispose();
+    }    public interface  IFormattable  { }
+    public sealed class IndexOutOfRangeException  : Exception
+    {
+        public IndexOutOfRangeException ();
+        public IndexOutOfRangeException (string message );
+        public IndexOutOfRangeException (string message,
+            Exception innerException );
+    }
+    public readonly  struct Int16 { }
+    public readonly  struct Int32 { }
+    public readonly  struct Int64 { }
+    public readonly  struct IntPtr { }
+    public class InvalidCastException  : Exception
+    {
+        public InvalidCastException ();
+        public InvalidCastException (string message );
+        public InvalidCastException (string message, Exception  
+innerException );
+    }
+    public class InvalidOperationException  : Exception
+    {
+        public InvalidOperationException ();
+        public InvalidOperationException (string message );
+        public InvalidOperationException (string message,
+            Exception innerException );
+    }
+    public class NotSupportedException  : Exception
+    {
+        public NotSupportedException ();
+        public NotSupportedException (string message );
+        public NotSupportedException (string message, Exception  
+innerException );
+    }
+    public struct Nullable<T>
+    {
+        public bool HasValue { get; }
+        public T Value { get; }
+    }
+    public class NullReferenceException  : Exception
+    {
+        public NullReferenceException ();
+        public NullReferenceException (string message );
+        public NullReferenceException (string message, Exception  
+innerException );
+    }
+    public class Object
+    {        public Object();
+        ~Object();
+        public virtual bool Equals(object obj);
+        public virtual int GetHashCode ();
+        public Type GetType();
+        public virtual string ToString ();
+    }
+    [AttributeUsageAttribute(AttributeTargets.Class |  
+AttributeTargets.Struct |
+        AttributeTargets.Enum | AttributeTargets.Interface |
+        AttributeTargets.Constructor | AttributeTargets.Method |
+        AttributeTargets.Property | AttributeTargets.Field |
+        AttributeTargets.Event | AttributeTargets.Delegate, Inherited =  
+false)]
+    public sealed class ObsoleteAttribute  : Attribute
+    {
+        public ObsoleteAttribute ();
+        public ObsoleteAttribute (string message );
+        public ObsoleteAttribute (string message, bool error);
+        public bool IsError { get; }
+        public string Message { get; }
+    }
+    public class OutOfMemoryException  : Exception
+    {
+        public OutOfMemoryException ();
+        public OutOfMemoryException (string message );
+        public OutOfMemoryException (string message, Exception  
+innerException );
+    }
+    public class OverflowException  : ArithmeticException
+    {
+        public OverflowException ();
+        public OverflowException (string message );
+        public OverflowException (string message, Exception innerException );
+    }
+    public readonly  struct SByte { }
+    public readonly  struct Single { }
+    public sealed class StackOverflowException  : Exception
+    {
+        public StackOverflowException ();
+        public StackOverflowException (string message );
+        public StackOverflowException (string message, Exception  
+innerException );
+    }
+    public sealed class String : IEnumerable <Char>, IEnumerable
+    {
+        public int Length { get; }
+        public char this [int index] { get; }
+        public static string Format(string format, params object[] args);    }
+    public abstract  class Type : MemberInfo  { }
+    public sealed class TypeInitializationException  : Exception
+    {
+        public TypeInitializationException (string fullTypeName,
+            Exception innerException );
+    }
+    public readonly  struct UInt16 { }
+    public readonly  struct UInt32 { }
+    public readonly  struct UInt64 { }
+    public readonly  struct UIntPtr { }
+    public struct ValueTuple<T1>
+    {
+        public T1 Item1;
+        public ValueTuple (T1 item1 );
+    }
+    public struct ValueTuple<T1, T2>
+    {
+        public T1 Item1;
+        public T2 Item2;
+        public ValueTuple (T1 item1, T2 item2 );
+    }
+    public struct ValueTuple<T1, T2, T3>
+    {
+        public T1 Item1;
+        public T2 Item2;
+        public T3 Item3;
+        public ValueTuple (T1 item1, T2 item2, T3 item3 );
+    }
+    public struct ValueTuple<T1, T2, T3, T4>
+    {
+        public T1 Item1;
+        public T2 Item2;
+        public T3 Item3;
+        public T4 Item4;
+        public ValueTuple (T1 item1, T2 item2, T3 item3, T4 item4 );
+    }
+    public struct ValueTuple<T1, T2, T3, T4, T5>
+    {
+        public T1 Item1;
+        public T2 Item2;
+        public T3 Item3;
+        public T4 Item4;
+        public T5 Item5;
+        public ValueTuple (T1 item1, T2 item2, T3 item3, T4 item4, T5 item5 );
+    }
+    public struct ValueTuple<T1, T2, T3, T4, T5, T6>
+    {
+        public T1 Item1;
+        public T2 Item2;
+        public T3 Item3;        public T4 Item4;
+        public T5 Item5;
+        public T6 Item6;
+        public ValueTuple (T1 item1, T2 item2, T3 item3, T4 item4, T5 item5,
+            T6 item6 );
+    }
+    public struct ValueTuple<T1, T2, T3, T4, T5, T6, T7>
+    {
+        public T1 Item1;
+        public T2 Item2;
+        public T3 Item3;
+        public T4 Item4;
+        public T5 Item5;
+        public T6 Item6;
+        public T7 Item7;
+        public ValueTuple (T1 item1, T2 item2, T3 item3, T4 item4, T5 item5,
+            T6 item6, T7 item7 );
+    }
+    public struct ValueTuple<T1, T2, T3, T4, T5, T6, T7, TRest>
+    {
+        public T1 Item1;
+        public T2 Item2;
+        public T3 Item3;
+        public T4 Item4;
+        public T5 Item5;
+        public T6 Item6;
+        public T7 Item7;
+        public TRest Rest;
+        public ValueTuple (T1 item1, T2 item2, T3 item3, T4 item4, T5 item5,
+            T6 item6, T7 item7, TRest rest );
+    }
+    public abstract  class ValueType
+    {
+        protected  ValueType ();
+    }
+}
+namespace  System.Collections
+{
+    public interface  ICollection  : IEnumerable
+    {
+        int Count { get; }
+        bool IsSynchronized { get; }
+        object SyncRoot { get; }
+        void CopyTo(Array array, int index);
+    }
+    public interface  IEnumerable
+    {
+        IEnumerator GetEnumerator ();
+    }
+    public interface  IEnumerator
+    {        object Current { get; }
+        bool MoveNext ();
+        void Reset();
+    }
+    public interface  IList : ICollection , IEnumerable
+    {
+        bool IsFixedSize { get; }
+        bool IsReadOnly { get; }
+        object this [int index] { get; set; }
+        int Add(object value);
+        void Clear();
+        bool Contains (object value);
+        int IndexOf(object value);
+        void Insert(int index, object value);
+        void Remove(object value);
+        void RemoveAt (int index);
+    }
+}
+namespace  System.Collections.Generic
+{
+    public interface  ICollection <T> : IEnumerable <T>
+    {
+        int Count { get; }
+        bool IsReadOnly { get; }
+        void Add(T item);
+        void Clear();
+        bool Contains (T item);
+        void CopyTo(T[] array, int arrayIndex );
+        bool Remove(T item);
+    }
+    public interface  IEnumerable <T> : IEnumerable
+    {
+        IEnumerator<T> GetEnumerator ();
+    }
+    public interface  IEnumerator <T> : IDisposable , IEnumerator
+    {
+        T Current { get; }
+    }
+    public interface  IList<T> : ICollection <T>
+    {
+        T this [int index] { get; set; }
+        int IndexOf(T item);
+        void Insert(int index, T item );
+        void RemoveAt (int index);
+    }
+    public interface  IReadOnlyCollection <out T> : IEnumerable <T>
+    {
+        int Count { get; }
+    }    public interface  IReadOnlyList <out T> : IReadOnlyCollection <T>
+    {
+        T this [int index] { get; }
+    }
+}
+namespace  System.Diagnostics
+{
+    [AttributeUsageAttribute(AttributeTargets.Method |  
+AttributeTargets.Class,
+                             AllowMultiple = true) ]
+    public sealed class ConditionalAttribute  : Attribute
+    {
+        public ConditionalAttribute (string conditionString );
+        public string ConditionString { get; }
+    }
+}
+namespace  System.Reflection
+{
+    public abstract  class MemberInfo
+    {
+        protected  MemberInfo ();
+    }
+}
+namespace  System.Runtime.CompilerServices
+{
+    public sealed class IndexerNameAttribute  : Attribute
+    {
+        public IndexerNameAttribute (String indexerName );
+    }
+    public static class Unsafe
+    {
+        public static ref T NullRef<T>();
+    }
+}
+namespace  System.Threading
+{
+    public static class Monitor
+    {
+        public static void Enter(object obj);
+        public static void Exit(object obj);
+    }
+}
+C.3 Standard Library Types not defined in
+ISO/IEC 23271The following types, including the members listed, shall be defined in a conforming
+standard library. (These types might be defined in a future edition of ISO/IEC 23271.) It
+is expected that many of these types will have more members available than are listed.
+A conforming implementation may provide Task.GetAwaiter() and
+Task<TResult>.GetAwaiter() as extension methods.
+C#
+namespace  System
+{
+    public class FormattableString  : IFormattable  { }
+}
+namespace  System.Linq.Expressions
+{
+    public sealed class Expression <TDelegate >
+    {
+        public TDelegate Compile();
+    }
+}
+namespace  System.Runtime.CompilerServices
+{
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | 
+        AttributeTargets.Interface, 
+        Inherited = false, AllowMultiple = false) ]
+    public sealed class AsyncMethodBuilderAttribute  : Attribute
+    {
+        public AsyncMethodBuilderAttribute (Type builderType ) {}
+ 
+        public Type BuilderType { get; }
+    }
+    [AttributeUsage(AttributeTargets.Parameter, Inherited = false) ]
+    public sealed class CallerFilePathAttribute  : Attribute
+    {
+        public CallerFilePathAttribute () { }
+    }
+    [AttributeUsage(AttributeTargets.Parameter, Inherited = false) ]
+    public sealed class CallerLineNumberAttribute  : Attribute
+    {
+        public CallerLineNumberAttribute () { }
+    }
+    [AttributeUsage(AttributeTargets.Parameter, Inherited = false) ]
+    public sealed class CallerMemberNameAttribute  : Attribute
+    {
+        public CallerMemberNameAttribute () { }
+    }
+    public static class FormattableStringFactory
+    {        public static FormattableString Create(string format,
+            params object[] arguments );
+    }
+    public interface  ICriticalNotifyCompletion  : INotifyCompletion
+    {
+        void UnsafeOnCompleted (Action continuation );
+    }
+    public interface  INotifyCompletion
+    {
+        void OnCompleted (Action continuation );
+    }
+    public readonly  struct TaskAwaiter : ICriticalNotifyCompletion,
+        INotifyCompletion
+    {
+        public bool IsCompleted { get; }
+        public void GetResult ();
+    }
+    public readonly  struct TaskAwaiter<TResult> : ICriticalNotifyCompletion,
+        INotifyCompletion
+    {
+        public bool IsCompleted { get; }
+        public TResult GetResult ();
+    }
+    public readonly  struct ValueTaskAwaiter : ICriticalNotifyCompletion,
+        INotifyCompletion
+    {
+        public bool IsCompleted { get; }
+        public void GetResult ();
+    }
+    public readonly  struct ValueTaskAwaiter<TResult>
+        : ICriticalNotifyCompletion, INotifyCompletion
+    {
+        public bool IsCompleted { get; }
+        public TResult GetResult ();
+    }
+}
+namespace  System.Threading.Tasks
+{
+    public class Task
+    {
+        public System.Runtime.CompilerServices. TaskAwaiter GetAwaiter ();
+    }
+    public class Task<TResult> : Task
+    {
+        public new System.Runtime.CompilerServices. TaskAwaiter<T> 
+GetAwaiter ();
+    }C#
+The meaning of the formats, as used in interpolated string expressions ( §12.8.3 ), are
+defined in ISO/IEC 23271:2012. For convenience the following text is copied from the
+description of System.IFormattable.
+This t ext is informativ e.
+A format is a string that describes the appearance of an object when it is converted to a
+string. Either standard or custom formats can be used. A standard format takes the form
+Axx, where A is a single alphabetic character called the format speci fier, and xx is an
+integer between zero and 99 inclusive, called the precision speci fier. The format specifier
+controls the type of formatting applied to the value being represented as a string. The
+precision speci fier controls the number of significant digits or decimal places in the
+string, if applicable.    public readonly  struct ValueTask : System.IEquatable<ValueTask>
+    {
+        public System.Runtime.CompilerServices. ValueTaskAwaiter 
+GetAwaiter ();
+    }
+    public readonly  struct ValueTask<TResult>
+        : System.IEquatable<ValueTask<TResult>>
+    {
+        public new System.Runtime.CompilerServices. ValueTaskAwaiter<TResult>
+            GetAwaiter ();
+    }
+}
+namespace  System
+{
+    public readonly  ref struct ReadOnlySpan<T>
+    {
+        public int Length { get; }
+        public ref readonly  T this[int index] { get; }
+    }
+    public readonly  ref struct Span<T>
+    {
+        public int Length { get; }
+        public ref T this[int index] { get; }
+        public static implicit  operator  ReadOnlySpan<T>(Span<T> span);
+    }
+}
+C.4 Format SpecificationsNote: For the list of standard format specifiers, see the table below. Note that a
+given data type, such as System.Int32, might not support one or more of the
+standard format specifiers. end not e
+Note: When a format includes symbols that vary by culture, such as the
+currencysymbol included by the ‘C’ and ‘c’ formats, a formatting object supplies the
+actual characters used in the string representation. A method might include a
+parameter to pass a System.IFormatProvider object that supplies a formatting
+object, or the method might use the default formatting object, which contains the
+symbol definitions for the current culture. The current culture typically uses the
+same set of symbols used system-wide by default. In the Base Class Library, the
+formatting object for system-supplied numeric types is a
+System.Globalization.NumberFormatInfo instance. For System.DateTime instances, a
+System.Globalization.DateTimeFormatInfo is used. end not e
+The following table describes the standard format specifiers and associated formatting
+object members that are used with numeric data types in the Base Class Library.
+Format
+SpecifierDescr iption
+C
+cCurrency Format:  Used for strings containing a monetary value. The
+System.Globalization.NumberFormatInfo.CurrencySymbol,
+System.Globalization.NumberFormatInfo.CurrencyGroupSizes,
+System.Globalization.NumberFormatInfo.CurrencyGroupSeparator, and
+System.Globalization.NumberFormatInfo.CurrencyDecimalSeparator members of a
+System.Globalization.NumberFormatInfo supply the currency symbol, size and
+separator for digit groupings, and decimal separator, respectively.
+System.Globalization.NumberFormatInfo.CurrencyNegativePattern and
+System.Globalization.NumberFormatInfo.CurrencyPositivePattern determine the
+symbols used to represent negative and positive values. For example, a negative value
+can be prefixed with a minus sign, or enclosed in parentheses.
+If the precision specifier is omitted,
+System.Globalization.NumberFormatInfo.CurrencyDecimalDigits determines the
+number of decimal places in the string. R esults are rounded to the nearest
+representable value when necessary.
+D
+dDecimal Format:  (This format is valid only when specified with integral data types.)
+Used for strings containing integer values. Negative numbers are prefixed with the
+negative number symbol specified by the
+System.Globalization.NumberFormatInfo.NegativeSign property.The precision specifier determines the minimum number of digits that appear in the
+string. If the specified precision requires more digits than the value contains, the
+string is left-padded with zeros. If the precision specifier specifies fewer digits than
+are in the value, the precision specifier is ignored.
+E
+eScientific (Engineering) Format:  Used for strings in one of the following forms:
+          [-] m.dddddd E+xxx
+          [-] m.dddddd E-xxx
+          [-] m.dddddd e+xxx
+          [-] m.dddddd e-xxx
+The negative number symbol (‘-’) appears only if the value is negative, and is supplied
+by the System.Globalization.NumberFormatInfo.NegativeSign property.
+Exactly one non-zero decimal digit ( m) precedes the decimal separator (‘.’), which is
+supplied by the System.Globalization.NumberFormatInfo.NumberDecimalSeparator
+property.
+The precision specifier determines the number of decimal places ( dddddd ) in the
+string. If the precision specifier is omitted, six decimal places are included in the
+string.
+The exponent ( +/-xxx ) consists of either a positive or negative number symbol
+followed by a minimum of three digits ( xxx). The exponent is left-padded with zeros, if
+necessary. The case of the format specifier (‘E’ or ‘e’) determines the case used for the
+exponent prefix (E or e) in the string. R esults are rounded to the nearest representable
+value when necessary. The positive number symbol is supplied by the
+System.Globalization.NumberFormatInfo.PositiveSign property.
+F
+fFixed-P oint Format:  Used for strings in the following form:
+          [-] m.dd...d
+At least one non-zero decimal digit ( m) precedes the decimal separator (‘.’), which is
+supplied by the System.Globalization.NumberFormatInfo.NumberDecimalSeparator
+property.
+A negative number symbol sign (‘-’) precedes m only if the value is negative. This
+symbol is supplied by the System.Globalization.NumberFormatInfo.NegativeSign
+property.
+The precision specifier determines the number of decimal places ( dd...d ) in the string.
+If the precision specifier is omitted,
+System.Globalization.NumberFormatInfo.NumberDecimalDigits determines the number
+of decimal places in the string. R esults are rounded to the nearest representable value
+when necessary.
+G General Format:  The string is formatted in either fixed-point format (‘F’ or ‘f’) or
+scientific format (‘E’ or ‘e’).g For integral types:
+Values are formatted using fixed-point format if exponent  < precision specifier, where
+exponent is the exponent of the value in scientific format. For all other values,
+scientific format is used.
+If the precision specifier is omitted, a default precision equal to the field width
+required to display the maximum value for the data type is used, which results in the
+value being formatted in fixed-point format. The default precisions for integral types
+are as follows:
+          System.Int16, System.UInt16 : 5
+          System.Int32, System.UInt32 : 10
+          System.Int64, System.UInt64 : 19
+For Single, Decimal and Double types:
+Values are formatted using fixed-point format if exponent  ≥ -4 and exponent  <
+precision specifier, where exponent  is the exponent of the value in scientific format.
+For all other values, scientific format is used. R esults are rounded to the nearest
+representable value when necessary.
+If the precision specifier is omitted, the following default precisions are used:
+          System.Single : 7
+          System.Double : 15
+          System.Decimal : 29
+For all types:
+The number of digits that appear in the result (not including the exponent) will
+not exceed the value of the precision specifier; values are rounded as necessary.
+The decimal point and any trailing zeros after the decimal point are removed
+whenever possible.
+The case of the format specifier (‘G’ or ‘g’) determines whether ‘E’ or ‘e’ prefixes
+the scientific format exponent.
+N
+nNumber Format:  Used for strings in the following form:
+          [-] d,ddd,ddd.dd...d
+The representation of negative values is determined by the
+System.Globalization.NumberFormatInfo.NumberNegativePattern property. If the
+pattern includes a negative number symbol (‘-’), this symbol is supplied by the
+System.Globalization.NumberFormatInfo.NegativeSign property.
+At least one non-zero decimal digit ( d) precedes the decimal separator (‘.’), which is
+supplied by the System.Globalization.NumberFormatInfo.NumberDecimalSeparatorproperty. Digits between the decimal point and the most significant digit in the value
+are grouped using the group size specified by the
+System.Globalization.NumberFormatInfo.NumberGroupSizes property. The group
+separator (‘,’) is inserted between each digit group, and is supplied by the
+System.Globalization.NumberFormatInfo.NumberGroupSeparator property.
+The precision specifier determines the number of decimal places ( dd...d ). If the
+precision specifier is omitted,
+System.Globalization.NumberFormatInfo.NumberDecimalDigits determines the number
+of decimal places in the string. R esults are rounded to the nearest representable value
+when necessary.
+P
+pPercent Format:  Used for strings containing a percentage. The
+System.Globalization.NumberFormatInfo.PercentSymbol,
+System.Globalization.NumberFormatInfo.PercentGroupSizes,
+System.Globalization.NumberFormatInfo.PercentGroupSeparator, and
+System.Globalization.NumberFormatInfo.PercentDecimalSeparator members of a
+System.Globalization.NumberFormatInfo supply the percent symbol, size and
+separator for digit groupings, and decimal separator, respectively.
+System.Globalization.NumberFormatInfo.PercentNegativePattern and
+System.Globalization.NumberFormatInfo.PercentPositivePattern determine the
+symbols used to represent negative and positive values. For example, a negative value
+can be prefixed with a minus sign, or enclosed in parentheses.
+If no precision is specified, the number of decimal places in the result is determined
+by System.Globalization.NumberFormatInfo.PercentDecimalDigits. Results are
+rounded to the nearest representable value when necessary.
+The result is scaled by 100 (.99 becomes 99%).
+R
+rRound trip Format:  (This format is valid only when specified with System.Double or
+System.Single.) Used to ensure that the precision of the string representation of a
+floating-point value is such that parsing the string does not result in a loss of
+precision when compared to the original value. If the maximum precision of the data
+type (7 for System.Single, and 15 for System.Double) would result in a loss of
+precision, the precision is increased by two decimal places. If a precision specifier is
+supplied with this format specifier, it is ignored. This format is otherwise identical to
+the fixed-point format.
+X
+xHexadecimal Format:  (This format is valid only when specified with integral data
+types.) Used for string representations of numbers in Base 16. The precision
+determines the minimum number of digits in the string. If the precision specifies more
+digits than the number contains, the number is left-padded with zeros. The case of
+the format specifier (‘X’ or ‘x’) determines whether upper case or lower case letters are
+used in the hexadecimal representation.
+If the numerical value is a System.Single or System.Double with a value of NaN,
+PositiveInfinity, or NegativeInfinity, the format specifier is ignored, and one of thefollowing is returned: System.Globalization.NumberFormatInfo.NaNSymbol,
+System.Globalization.NumberFormatInfo.PositiveInfinitySymbol, or
+System.Globalization.NumberFormatInfo.NegativeInfinitySymbol.
+A custom format is any string specified as a format that is not in the form of a standard
+format string (Axx) described above. The following table describes the characters that
+are used in constructing custom formats.
+Format
+SpecifierDescr iption
+0 (zero) Zero placeholder : If the value being formatted has a digit in the position where a
+‘0’ appears in the custom format, then that digit is copied to the output string;
+otherwise a zero is stored in that position in the output string. The position of the
+leftmost ‘0’ before the decimal separator and the rightmost ‘0’ after the decimal
+separator determine the range of digits that are always present in the output string.
+The number of Zero and/or Digit placeholders after the decimal separator
+determines the number of digits that appear after the decimal separator. V alues are
+rounded as necessary.
+# Digit placeholder : If the value being formatted has a digit in the position where a
+‘#’ appears in the custom format, then that digit is copied to the output string;
+otherwise, nothing is stored in that position in the output string. Note that this
+specifier never stores the ‘0’ character if it is not a significant digit, even if ‘0’ is the
+only digit in the string. (It does display the ‘0’ character in the output string if it is a
+significant digit.)
+The number of Zero and/or Digit placeholders after the decimal separator
+determines the number of digits that appear after the decimal separator. V alues are
+rounded as necessary.
+. (period) Decimal sep arator: The left most ‘.’ character in the format string determines the
+location of the decimal separator in the formatted value; any additional ‘.’
+characters are ignored. The
+System.Globalization.NumberFormatInfo.NumberDecimalSeparator property
+determines the symbol used as the decimal separator.
+, (comma) Group sep arator and number scaling:  The ‘,’ character serves two purposes. First, if
+the custom format contains this character between two Zero or Digit placeholders
+(0 or #) and to the left of the decimal separator if one is present, then the output
+will have group separators inserted between each group of digits to the left of the
+decimal separator. The
+System.Globalization.NumberFormatInfo.NumberGroupSeparator and
+System.Globalization.NumberFormatInfo.NumberGroupSizes properties determine the
+symbol used as the group separator and the number of digits in each group,
+respectively.If the format string contains one or more ‘,’ characters immediately to the left of the
+decimal separator, then the number will be scaled. The scale factor is determined by
+the number of group separator characters immediately to the left of the decimal
+separator. If there are x characters, then the value is divided by 1000  before it is
+formatted. For example, the format string ‘0,,’ will divide a value by one million.
+Note that the presence of the ‘,’ character to indicate scaling does not insert group
+separators in the output string. Thus, to scale a number by 1 million and insert
+group separators, use a custom format similar to ‘#,##0,,’.
+% (percent) Percentage placeholder : The presence of a ‘%’ character in a custom format causes
+a number to be multiplied by 100 before it is formatted. The percent symbol is
+inserted in the output string at the location where the ‘%’ appears in the format
+string. The System.Globalization.NumberFormatInfo.PercentSymbol property
+determines the percent symbol.
+E0
+E+0
+E-0
+e0
+e+0
+e-0Engineering format:  If any of the strings ‘E’, ‘E+’, ‘E-’, ‘e’, ‘e+’, or ‘e-’ are present in a
+custom format and is followed immediately by at least one ‘0’ character, then the
+value is formatted using scientific notation. The number of ‘0’ characters following
+the exponent prefix (E or e) determines the minimum number of digits in the
+exponent. The ‘E+’ and ‘e+’ formats indicate that a positive or negative number
+symbol always precedes the exponent. The ‘E’, ‘E-’, ‘e’, or ‘e-’ formats indicate that a
+negative number symbol precedes negative exponents; no symbol is precedes
+positive exponents. The positive number symbol is supplied by the
+System.Globalization.NumberFormatInfo.PositiveSign property. The negative
+number symbol is supplied by the
+System.Globalization.NumberFormatInfo.NegativeSign property.
+\
+(backslash)Escape charact er: In some languages, such as C#, the backslash character causes
+the next character in the custom format to be interpreted as an escape sequence. It
+is used with C language formatting sequences, such as ‘\n’ (newline). In some
+languages, the escape character itself is required to be preceded by an escape
+character when used as a literal. Otherwise, the compiler interprets the character as
+an escape sequence. This escape character is not required to be supported in all
+programming languages.
+'ABC'
+"ABC"Literal string:  Characters enclosed in single or double quotes are copied to the
+output string literally, and do not affect formatting.
+;
+(semicolon)Section sep arator: The ‘;’ character is used to separate sections for positive,
+negative, and zero numbers in the format string. (This feature is described in detail
+below.)
+Other All other charact ers: All other characters are stored in the output string as literals in
+the position in which they appear.
+Note that for fixed-point format strings (strings not containing an ‘E0’, ‘E+0’, ‘E-0’, ‘e0’,
+‘e+0’, or ‘e-0’), numbers are rounded to as many decimal places as there are Zero or
+Digit placeholders to the right of the decimal separator. If the custom format does not
+contain a decimal separator, the number is rounded to the nearest integer. If theXnumber has more digits than there are Zero or Digit placeholders to the left of the
+decimal separator, the extra digits are copied to the output string immediately before
+the first Zero or Digit placeholder.
+A custom format can contain up to three sections separated by section separator
+characters, to specify different formatting for positive, negative, and zero values. The
+sections are interpreted as follows:
+One section : The custom format applies to all values (positive, negative and zero).
+Negative values include a negative sign.
+Two sections : The first section applies to positive values and zeros, and the second
+section applies to negative values. If the value to be formatted is negative, but
+becomes zero after rounding according to the format in the second section, then
+the resulting zero is formatted according to the first section. Negative values do
+not include a negative sign to allow full control over representations of negative
+values. For example, a negative can be represented in parenthesis using a custom
+format similar to ‘####.####;(####.####)’.
+Three sections : The first section applies to positive values, the second section
+applies to negative values, and the third section applies to zeros. The second
+section can be empty (nothing appears between the semicolons), in which case the
+first section applies to all nonzero values, and negative values include a negative
+sign. If the number to be formatted is nonzero, but becomes zero after rounding
+according to the format in the first or second section, then the resulting zero is
+formatted according to the third section.
+The System.Enum and System.DateTime types also support using format specifiers to
+format string representations of values. The meaning of a specific format specifier varies
+according to the kind of data (numeric, date/time, enumeration) being formatted. See
+System.Enum and System.Globalization.DateTimeFormatInfo for a comprehensive list of
+the format specifiers supported by each type.
+The following library types are referenced in this specification. The full names of those
+types, including the global namespace qualifier are listed below. Throughout this
+specification, these types appear as either the fully qualified name; with the global
+namespace qualifier omitted; or as a simple unqualified type name, with the namespace
+omitted as well. For example, the type ICollection<T>, when used in this specification,
+always means the type global::System.Collections.Generic.ICollection<T>.C.5 Library Type Abbreviationsglobal::System.Action
+global::System.ArgumentException
+global::System.ArithmeticException
+global::System.Array
+global::System.ArrayTypeMisMatchException
+global::System.Attribute
+global::System.AttributeTargets
+global::System.AttributeUsageAttribute
+global::System.Boolean
+global::System.Byte
+global::System.Char
+global::System.Collections.Generic.ICollection<T>
+global::System.Collections.Generic.IEnumerable<T>
+global::System.Collections.Generic.IEnumerator<T>
+global::System.Collections.Generic.IList<T>
+global::System.Collections.Generic.IReadonlyCollection<out T>
+global::System.Collections.Generic.IReadOnlyList<out T>
+global::System.Collections.ICollection
+global::System.Collections.IEnumerable
+global::System.Collections.IList
+global::System.Collections.IEnumerator
+global::System.Decimal
+global::System.Delegate
+global::System.Diagnostics.ConditionalAttribute
+global::System.DivideByZeroException
+global::System.Double
+global::System.Enum
+global::System.Exception
+global::System.GC
+global::System.ICollection
+global::System.IDisposable
+global::System.IEnumerable
+global::System.IEnumerable<out T>
+global::System.IList
+global::System.IndexOutOfRangeException
+global::System.Int16
+global::System.Int32
+global::System.Int64global::System.IntPtr
+global::System.InvalidCastException
+global::System.InvalidOperationException
+global::System.Linq.Expressions.Expression<TDelegate>
+global::System.MemberInfo
+global::System.NotSupportedException
+global::System.Nullable<T>
+global::System.NullReferenceException
+global::System.Object
+global::System.ObsoleteAttribute
+global::System.OutOfMemoryException
+global::System.OverflowException
+global::System.Runtime.CompilerServices.CallerFileAttribute
+global::System.Runtime.CompilerServices.CallerLineNumberAttribute
+global::System.Runtime.CompilerServices.CallerMemberNameAttribute
+global::System.Runtime.CompilerServices.ICriticalNotifyCompletion
+global::System.Runtime.CompilerServices.IndexerNameAttribute
+global::System.Runtime.CompilerServices.INotifyCompletion
+global::System.Runtime.CompilerServices.TaskAwaiter
+global::System.Runtime.CompilerServices.TaskAwaiter<T>
+global::System.SByte
+global::System.Single
+global::System.StackOverflowException
+global::System.String
+global::System.SystemException
+global::System.Threading.Monitor
+global::System.Threading.Tasks.Task
+global::System.Threading.Tasks.Task<TResult>
+global::System.Type
+global::System.TypeInitializationException
+global::System.UInt16
+global::System.UInt32
+global::System.UInt64
+global::System.UIntPtr
+global::System.ValueType
+End o f informativ e text.６ Collaborat e with us on
+GitHub
+The source for this content can
+be found on GitHub, where you
+can also create and review
+issues and pull requests. For
+more information, see our
+contributor guide .C# Standar d documentation
+feedb ack
+The C# S tandard documentation is
+open source. Provide feedback here.
+ Open a documentation issue
+ Provide product feedbackAnnex D Documentation comments
+Article •04/12/2023
+This annex is informativ e.
+C# provides a mechanism for programmers to document their code using a comment
+syntax that contains XML text. In source code files, comments having a certain form can
+be used to direct a tool to produce XML from those comments and the source code
+elements, which they precede. Comments using such syntax are called document ation
+comments . They must immediately precede a user-defined type (such as a class,
+delegate, or interface) or a member (such as a field, event, property, or method). The
+XML generation tool is called the document ation gener ator. (This generator could be,
+but need not be, the C# compiler itself.) The output produced by the documentation
+generator is called the document ation f ile. A documentation file is used as input to a
+document ation view er; a tool intended to produce some sort of visual display of type
+information and its associated documentation.
+A conforming C# compiler is not required to check the syntax of documentation
+comments; such comments are simply ordinary comments. A conforming compiler is
+permitted to do such checking, however.
+This specification suggests a set of standard tags to be used in documentation
+comments, but use of these tags is not required, and other tags may be used if desired,
+as long as the rules of well-formed XML are followed. For C# implementations targeting
+the CLI, it also provides information about the documentation generator and the format
+of the documentation file. No information is provided about the documentation viewer.
+Comments having a certain form can be used to direct a tool to produce XML from
+those comments and the source code elements that they precede. Such comments are
+Single-Line_C omment s (§6.3.3 ) that start with three slashes ( ///), or
+Delimit ed_C omment s (§6.3.3 ) that start with a slash and two asterisks ( /**). They must
+immediately precede a user-defined type or a member that they annotate. Attribute
+sections ( §22.3 ) are considered part of declarations, so documentation comments must
+precede attributes applied to a type or member.D.1 General
+D.2 IntroductionFor expository purposes, the format of document comments is shown below as two
+grammar rules: Single_Line_Doc_C omment  and Delimit ed_Doc_C omment . However, these
+rules are not part of the C# grammar, but rather, they represent particular formats of
+Single_Line_C omment  and Delimit ed_C omment  lexer rules, respectively.
+Syntax:
+ANTLR
+In a Single_Line_Doc_C omment , if there is a Whit espace character following the ///
+characters on each of the Single_Line_Doc_C omments  adjacent to the current
+Single_Line_Doc_C omment , then that Whit espace character is not included in the XML
+output.
+In a Delimit ed_Doc_C omment , if the first non- Whit espace character on the second line is
+an ASTERISK  and the same pattern of optional Whit espace characters and an ASTERISK
+character is repeated at the beginning of each of the lines within the
+Delimit ed_Doc_C omment , then the characters of the repeated pattern are not included
+in the XML output. The pattern can include Whit espace characters after, as well as
+before, the ASTERISK  character.
+Example:
+C#
+The text within documentation comments must be well formed according to the rules of
+XML ( http://www.w3.org/TR/REC-xml ). If the XML is ill formed, a warning is generatedSingle_Line_Doc_Comment
+    : '///' Input_Character*
+    ;
+   
+Delimited_Doc_Comment
+    : '/**' Delimited_Comment_Section* ASTERISK+ '/'
+    ;
+/// <summary>
+/// Class <c>Point</c> models a point in a two-dimensional plane.
+/// </summary>
+public class Point
+{
+    /// <summary>
+    /// Method <c>Draw</c> renders the point.
+    /// </summary>
+    void Draw() {...}
+}
+and the documentation file will contain a comment saying that an error was
+encountered.
+Although developers are free to create their own set of tags, a recommended set is
+defined in  §D.3. Some of the recommended tags have special meanings:
+The <param> tag is used to describe parameters. If such a tag is used, the
+documentation generator must verify that the specified parameter exists and that
+all parameters are described in documentation comments. If such verification fails,
+the documentation generator issues a warning.
+The cref attribute can be attached to any tag to provide a reference to a code
+element. The documentation generator must verify that this code element exists. If
+the verification fails, the documentation generator issues a warning. When looking
+for a name described in a cref attribute, the documentation generator must
+respect namespace visibility according to using statements appearing within the
+source code. For code elements that are generic, the normal generic syntax (e.g.,
+“List<T>”) cannot be used because it produces invalid XML. Braces can be used
+instead of brackets (e.g.; “ List{T}”), or the XML escape syntax can be used (e.g.,
+“List&lt;T&gt;”).
+The <summary> tag is intended to be used by a documentation viewer to display
+additional information about a type or member.
+The <include> tag includes information from an external XML file.
+Note carefully that the documentation file does not provide full information about the
+type and members (for example, it does not contain any type information). T o get such
+information about a type or member, the documentation file must be used in
+conjunction with reflection on the type or member.
+The documentation generator must accept and process any tag that is valid according
+to the rules of XML. The following tags provide commonly used functionality in user
+documentation. (Of course, other tags are possible.)
+Tag Reference Purpose
+<c> §D.3.2 Set text in a code-like fontD.3 Recommended tags
+D.3.1 GeneralTag Reference Purpose
+<code> §D.3.3 Set one or more lines of source code or program output
+<example> §D.3.4 Indicate an example
+<exception> §D.3.5 Identifies the exceptions a method can throw
+<include> §D.3.6 Includes XML from an external file
+<list> §D.3.7 Create a list or table
+<para> §D.3.8 Permit structure to be added to text
+<param> §D.3.9 Describe a parameter for a method or constructor
+<paramref> §D.3.10 Identify that a word is a parameter name
+<permission> §D.3.11 Document the security accessibility of a member
+<remarks> §D.3.12 Describe additional information about a type
+<returns> §D.3.13 Describe the return value of a method
+<see> §D.3.14 Specify a link
+<seealso> §D.3.15 Generate a See Als o entry
+<summary> §D.3.16 Describe a type or a member of a type
+<typeparam> §D.3.17 Describe a type parameter for a generic type or method
+<typeparamref> §D.3.18 Identify that a word is a type parameter name
+<value> §D.3.19 Describe a property
+This tag provides a mechanism to indicate that a fragment of text within a description
+should be set in a special font such as that used for a block of code. For lines of actual
+code, use <code> (§D.3.3 ).
+Syntax:
+<c>text</c>
+Example:
+C#D.3.2 <c>This tag is used to set one or more lines of source code or program output in some
+special font. For small code fragments in narrative, use <c> (§D.3.2 ).
+Syntax:
+<code>source code or pr ogram output </code>
+Example:
+C#
+This tag allows example code within a comment, to specify how a method or other
+library member might be used. Ordinarily, this would also involve use of the tag <code>
+(§D.3.3 ) as well./// <summary>
+/// Class <c>Point</c> models a point in a two-dimensional plane.
+/// </summary>
+public class Point
+{
+}
+D.3.3 <code>
+public class Point
+{
+    /// <summary>
+    /// This method changes the point's location by the given x- and y-
+offsets.
+    /// <example>
+    /// For example:
+    /// <code>
+    /// Point p = new Point(3,5);
+    /// p.Translate(-1,3);
+    /// </code>
+    /// results in <c>p</c>'s having the value (2,8).
+    /// </example>
+    /// </summary>
+    public void Translate (int dx, int dy)
+    {
+        ...
+    }
+}
+D.3.4 <example>Syntax:
+<example>description</example>
+Example:
+See <code> (§D.3.3 ) for an example.
+This tag provides a way to document the exceptions a method can throw.
+Syntax:
+<exception cref="member ">description</exception>
+where
+cref="member " is the name of a member. The documentation generator checks
+that the given member exists and translates member  to the canonical element
+name in the documentation file.
+description  is a description of the circumstances in which the exception is thrown.
+Example:
+C#D.3.5 <exception>
+class PrimaryFileFormatCorruptException  : System.Exception  { ... }
+class PrimaryFileLockedOpenException  : System.Exception  { ... }
+public class DataBaseOperations
+{
+    /// <exception cref="PrimaryFileFormatCorruptException">
+    /// Thrown when the primary file is corrupted.
+    /// </exception>
+    /// <exception cref="PrimaryFileLockedOpenException">
+    /// Thrown when the primary file is already open.
+    /// </exception>
+    public static void ReadRecord (int flag)
+    {
+        if (flag == 1)
+        {
+            throw new PrimaryFileFormatCorruptException();
+        }
+        else if (flag == 2)
+        {
+            throw new PrimaryFileLockedOpenException();
+        }
+        ...This tag allows including information from an XML document that is external to the
+source code file. The external file must be a well-formed XML document, and an XP ath
+expression is applied to that document to specify what XML from that document to
+include. The <include> tag is then replaced with the selected XML from the external
+document.
+Syntax :
+<include file="filename " path="xpath" />
+where
+file="filename " is the file name of an external XML file. The file name is
+interpreted relative to the file that contains the include tag.
+path="xpath" is an XP ath expression that selects some of the XML in the external
+XML file.
+Example :
+If the source code contained a declaration like:
+C#
+and the external file “docs.xml” had the following contents:
+XML    }
+}
+D.3.6 <include>
+/// <include file="docs.xml" path='extradoc/class[@name="IntList"]/*' />
+public class IntList { ... }
+<?xml version="1.0"?>
+<extradoc >
+    <class name="IntList" >
+        <summary>
+            Contains a list of integers.
+        </summary>
+    </class>
+    <class name="StringList" >
+        <summary>
+            Contains a list of strings.
+        </summary>then the same documentation is output as if the source code contained:
+C#
+This tag is used to create a list or table of items. It can contain a <listheader> block to
+define the heading row of either a table or definition list. (When defining a table, only an
+entry for term in the heading need be supplied.)
+Each item in the list is specified with an <item> block. When creating a definition list,
+both term and description  must be specified. However, for a table, bulleted list, or
+numbered list, only description  need be specified.
+Syntax:
+XML
+where
+term is the term to define, whose definition is in description .
+description  is either an item in a bullet or numbered list, or the definition of a term.    </class>
+</extradoc >
+/// <summary>
+/// Contains a list of integers.
+/// </summary>
+public class IntList { ... }
+D.3.7 <list>
+<list type="bullet"  | "number" | "table">
+    <listheader >
+        <term>term</term>
+        <description >description </description >
+    </listheader >
+    <item>
+        <term>term</term>
+        <description >description </description >
+    </item>
+    ...
+    <item>
+        <term>term</term>
+        <description >description </description >
+    </item>
+</list>Example:
+C#
+This tag is for use inside other tags, such as <summary> (§D.3.16 ) or <returns> (§D.3.13 ),
+and permits structure to be added to text.
+Syntax:
+<para>content</para>
+where
+content is the text of the paragraph.
+Example:
+C#public class MyClass
+{
+    /// <summary> Here is an example of a bulleted list:
+    /// <list type="bullet">
+    /// <item>
+    /// <description> Item 1.</description>
+    /// </item>
+    /// <item>
+    /// <description> Item 2.</description>
+    /// </item>
+    /// </list>
+    /// </summary>
+    public static void Main()
+    {
+        ...
+    }
+}
+D.3.8 <para>
+public class Point
+{
+    /// <summary> This is the entry point of the Point class testing program.
+    /// <para>
+    /// This program tests each method and operator, and
+    /// is intended to be run after any non-trivial maintenance has
+    /// been performed on the Point class.
+    /// </para>
+    /// </summary>
+    public static void Main() 
+    {This tag is used to describe a parameter for a method, constructor, or indexer.
+Syntax:
+<param name="name">description</param>
+where
+name  is the name of the parameter.
+description  is a description of the parameter.
+Example:
+C#
+This tag is used to indicate that a word is a parameter. The documentation file can be
+processed to format this parameter in some distinct way.
+Syntax:
+<paramref name="name"/>
+where
+name  is the name of the parameter.        ...
+    }
+}
+D.3.9 <param>
+public class Point
+{
+    /// <summary>
+    /// This method changes the point's location to
+    /// the given coordinates.
+    /// </summary>
+    /// <param name="xPosition"> the new x-coordinate. </param>
+    /// <param name="yPosition"> the new y-coordinate. </param>
+    public void Move(int xPosition, int yPosition )
+    {
+        ...
+    }
+}
+D.3.10 <paramref>Example:
+C#
+This tag allows the security accessibility of a member to be documented.
+Syntax:
+<permission cref="member ">description</permission>
+where
+member  is the name of a member. The documentation generator checks that the
+given code element exists and translates member  to the canonical element name
+in the documentation file.
+description  is a description of the access to the member.
+Example:
+C#public class Point
+{
+    /// <summary> This constructor initializes the new Point to
+    /// (<paramref name="xPosition"/> ,<paramref name="yPosition"/> ).
+    /// </summary>
+    /// <param name="xPosition"> the new Point's x-coordinate. </param>
+    /// <param name="yPosition"> the new Point's y-coordinate. </param>
+    public Point(int xPosition, int yPosition )
+    {
+        ...
+    }
+}
+D.3.11 <permission>
+public class MyClass
+{
+    /// <permission cref="System.Security.PermissionSet">
+    /// Everyone can access this method.
+    /// </permission>
+    public static void Test()
+    {
+        ...
+    }
+}This tag is used to specify extra information about a type. Use <summary> (§D.3.16 ) to
+describe the type itself and the members of a type.
+Syntax:
+<remarks>description</remarks>
+where
+description  is the text of the remark.
+Example:
+C#
+This tag is used to describe the return value of a method.
+Syntax:
+<returns>description</returns>
+where
+description  is a description of the return value.
+Example:
+C#D.3.12 <remarks>
+/// <summary>
+/// Class <c>Point</c> models a point in a two-dimensional plane.
+/// </summary>
+/// <remarks>
+/// Uses polar coordinates
+/// </remarks>
+public class Point
+{
+    ...
+}
+D.3.13 <returns>
+public class Point
+{
+    /// <summary>
+    /// Report a point's location as a string.This tag allows a link to be specified within text. Use <seealso> (§D.3.15 ) to indicate text
+that is to appear in a See Als o subclause.
+Syntax:
+<see cref="member " href="url" langword="keyword" />
+where
+member  is the name of a member. The documentation generator checks that the
+given code element exists and changes member  to the element name in the
+generated documentation file.
+url is a reference to an external source.
+langw ord is a word to be highlighted somehow.
+Example:
+C#    /// </summary>
+    /// <returns>
+    /// A string representing a point's location, in the form (x,y),
+    /// without any leading, trailing, or embedded whitespace.
+    /// </returns>
+    public override  string ToString () => $"({X},{Y})";
+    public int X { get; set; }
+    public int Y { get; set; }
+}
+D.3.14 <see>
+public class Point
+{
+    /// <summary>
+    /// This method changes the point's location to
+    /// the given coordinates. <see cref="Translate"/>
+    /// </summary>
+    public void Move(int xPosition, int yPosition )
+    {
+        ...
+    }
+    /// <summary> This method changes the point's location by
+    /// the given x- and y-offsets. <see cref="Move"/>
+    /// </summary>
+    public void Translate (int dx, int dy)
+    {
+        ...This tag allows an entry to be generated for the See Als o subclause. Use <see> (§D.3.14 )
+to specify a link from within text.
+Syntax:
+<seealso cref="member " href="url" />
+where
+member  is the name of a member. The documentation generator checks that the
+given code element exists and changes member  to the element name in the
+generated documentation file.
+url is a reference to an external source.
+Example:
+C#
+This tag can be used to describe a type or a member of a type. Use <remarks> (§D.3.12 )
+to specify extra information about the type or member.
+Syntax:
+<summary>description</summary>
+where    }
+}
+D.3.15 <seealso>
+public class Point
+{
+    /// <summary>
+    /// This method determines whether two Points have the same location.
+    /// </summary>
+    /// <seealso cref="operator=="/>
+    /// <seealso cref="operator!="/>
+    public override  bool Equals(object o)
+    {
+        ...
+    }
+}
+D.3.16 <summary>description  is a summary of the type or member.
+Example:
+C#
+This tag is used to describe a type parameter for a generic type or method.
+Syntax:
+<typeparam name="name">description</typeparam>
+where
+name  is the name of the type parameter.
+description  is a description of the type parameter.
+Example:
+C#public class Point
+{
+    /// <summary>
+    /// This constructor initializes the new Point to
+    /// (<paramref name="xPosition"/> ,<paramref name="yPosition"/> ).
+    /// </summary>
+    public Point(int xPosition, int yPosition ) 
+    {
+        ...
+    }
+    /// <summary> This constructor initializes the new Point to (0,0).
+</summary>
+    public Point() : this(0, 0)
+    {
+    }
+}
+D.3.17 <typeparam>
+/// <summary> A generic list class. </summary>
+/// <typeparam name="T"> The type stored by the list. </typeparam>
+public class MyList<T>
+{
+   ...
+}This tag is used to indicate that a word is a type parameter. The documentation file can
+be processed to format this type parameter in some distinct way.
+Syntax:
+<typeparamref name="name"/>
+where
+name  is the name of the type parameter.
+Example:
+C#
+This tag allows a property to be described.
+Syntax:
+<value>property des cription</value>
+where
+property des cription  is a description for the property.
+Example:
+C#D.3.18 <typeparamref>
+public class MyClass
+{
+    /// <summary>
+    /// This method fetches data and returns a list of
+    /// <typeparamref name="T"/> .
+    /// </summary>
+    /// <param name="query"> query to execute </param>
+    public List<T> FetchData<T>( string query)
+    {
+        ...
+    }
+}
+D.3.19 <value>
+public class Point
+{The following information is intended for C# implementations targeting the CLI.
+The documentation generator generates an ID string for each element in the source
+code that is tagged with a documentation comment. This ID string uniquely identifies a
+source element. A documentation viewer can use an ID string to identify the
+corresponding item to which the documentation applies.
+The documentation file is not a hierarchical representation of the source code; rather, it
+is a flat list with a generated ID string for each element.
+The documentation generator observes the following rules when it generates the
+ID strings:
+No white space is placed in the string.
+The first part of the string identifies the kind of member being documented, via a
+single character followed by a colon. The following kinds of members are defined:
+Charact erDescription
+E Event
+F Field
+M Method (including constructors, finalizers, and operators)
+N Namespace
+P Property (including indexers)
+T Type (such as class, delegate, enum, interface, and struct)
+! Error string; the rest of the string provides information about the error. For
+example, the documentation generator generates error information for links    /// <value>Property <c>X</c> represents the point's x-coordinate.
+</value>
+    public int X { get; set; }
+}
+D.4 Processing the documentation file
+D.4.1 General
+D.4.2 ID string formatCharact erDescription
+that cannot be resolved.
+The second part of the string is the fully qualified name of the element, starting at
+the root of the namespace. The name of the element, its enclosing type(s), and
+namespace are separated by periods. If the name of the item itself has periods,
+they are replaced by # (U+0023) characters. (It is assumed that no element has this
+character in its name.) T ype arguments in the fully qualified name, for when a
+member explicitly implements a member of a generic interface, are encoded by
+replacing the “ <” and “>” surrounding them with the “ {” and “}” characters.
+For methods and properties with arguments, the argument list follows, enclosed in
+parentheses. For those without arguments, the parentheses are omitted. The
+arguments are separated by commas. The encoding of each argument is the same
+as a CLI signature, as follows:
+Arguments are represented by their documentation name, which is based on
+their fully qualified name, modified as follows:
+Arguments that represent generic types have an appended “ '” character
+followed by the number of type parameters
+Arguments having the in, out or ref modifier have an  @ following their
+type name. Arguments passed by value or via params have no special
+notation.
+Arguments that are arrays are represented as [ lowerbound  : size , … ,
+lowerbound  : size ] where the number of commas is the rank less one, and
+the lower bounds and size of each dimension, if known, are represented in
+decimal. If a lower bound or size is not specified, it is omitted. If the lower
+bound and size for a particular dimension are omitted, the “ :” is omitted as
+well. Jagged arrays are represented by one “ []” per level. Single dimensional
+arrays omit the lower bound when the lower bound is 0 (the default) ( §17.1 ).
+Arguments that have pointer types other than void are represented using
+a * following the type name. A void pointer is represented using a type
+name of System.Void.
+Arguments that refer to generic type parameters defined on types are
+encoded using the “ `” character followed by the zero-based index of the
+type parameter.
+Arguments that use generic type parameters defined in methods use a
+double-backtick “ ``” instead of the “ `” used for types.
+Arguments that refer to constructed generic types are encoded using the
+generic type, followed by “ {”, followed by a comma-separated list of typearguments, followed by “ }”.
+The following examples each show a fragment of C# code, along with the ID string
+produced from each source element capable of having a documentation comment:
+Types  are represented using their fully qualified name, augmented with generic
+information:
+C#
+IDs:
+ConsoleD.4.3 ID string examples
+enum Color { Red, Blue, Green }
+namespace  Acme
+{
+    interface  IProcess  { ... }
+    struct ValueType { ... }
+    class Widget : IProcess
+    {
+        public class NestedClass  { ... }
+        public interface  IMenuItem  { ... }
+        public delegate  void Del(int i);
+        public enum Direction { North, South, East, West }
+    }
+    class MyList<T>
+    {
+        class Helper<U,V> { ... }
+    }
+}
+"T:Color"
+"T:Acme.IProcess"
+"T:Acme.ValueType"
+"T:Acme.Widget"
+"T:Acme.Widget.NestedClass"
+"T:Acme.Widget.IMenuItem"
+"T:Acme.Widget.Del"
+"T:Acme.Widget.Direction"
+"T:Acme.MyList`1"
+"T:Acme.MyList`1.Helper`2"Fields  are represented by their fully qualified name.
+C#
+IDs:
+Console
+Construct ors
+C#namespace  Acme
+{
+    struct ValueType
+    {
+        private int total;
+    }
+    class Widget : IProcess
+    {
+        public class NestedClass
+        {
+            private int value;
+        }
+        private string message;
+        private static Color defaultColor;
+        private const double PI = 3.14159;
+        protected  readonly  double monthlyAverage;
+        private long[] array1;
+        private Widget[,] array2;
+        private unsafe int *pCount;
+        private unsafe float **ppValues;
+    }
+}
+"F:Acme.ValueType.total"
+"F:Acme.Widget.NestedClass.value"
+"F:Acme.Widget.message"
+"F:Acme.Widget.defaultColor"
+"F:Acme.Widget.PI"
+"F:Acme.Widget.monthlyAverage"
+"F:Acme.Widget.array1"
+"F:Acme.Widget.array2"
+"F:Acme.Widget.pCount"
+"F:Acme.Widget.ppValues"
+namespace  Acme
+{
+    class Widget : IProcessIDs:
+Console
+Finalizer s
+C#
+IDs:
+Console
+Methods
+C#    {
+        static Widget() { ... }
+        public Widget() { ... }
+        public Widget(string s) { ... }
+    }
+}
+"M:Acme.Widget.#cctor"
+"M:Acme.Widget.#ctor"
+"M:Acme.Widget.#ctor(System.String)"
+namespace  Acme
+{
+    class Widget : IProcess
+    {
+        ~Widget() { ... }
+    }
+}
+"M:Acme.Widget.Finalize"
+namespace  Acme
+{
+    struct ValueType
+    {
+        public void M(int i) { ... }
+    }
+    class Widget : IProcess
+    {
+        public class NestedClass
+        {
+            public void M(int i) { ... }IDs:
+Console
+Proper ties and index ers
+C#        }
+        public static void M0() { ... }
+        public void M1(char c, out float f, ref ValueType v, in int i) { ... 
+}
+        public void M2(short[] x1, int[,] x2, long[][] x3) { ... }
+        public void M3(long[][] x3, Widget[][,,] x4 ) { ... }
+        public unsafe void M4(char *pc, Color **pf ) { ... }
+        public unsafe void M5(void *pv, double *[][,] pd ) { ... }
+        public void M6(int i, params object[] args) { ... }
+    }
+    class MyList<T>
+    {
+        public void Test(T t) { ... }
+    }
+    class UseList
+    {
+        public void Process(MyList<int> list) { ... }
+        public MyList<T> GetValues<T>(T value) { ... } 
+    }
+}
+"M:Acme.ValueType.M(System.Int32)"
+"M:Acme.Widget.NestedClass.M(System.Int32)"
+"M:Acme.Widget.M0"
+"M:Acme.Widget.M1(System.Char,System.Single@,Acme.ValueType@,System.Int32@)"
+"M:Acme.Widget.M2(System.Int16[],System.Int32[0:,0:],System.Int64[][])"
+"M:Acme.Widget.M3(System.Int64[][],Acme.Widget[0:,0:,0:][])"
+"M:Acme.Widget.M4(System.Char*,Color**)"
+"M:Acme.Widget.M5(System.Void*,System.Double*[0:,0:][])"
+"M:Acme.Widget.M6(System.Int32,System.Object[])"
+"M:Acme.MyList`1.Test(`0)"
+"M:Acme.UseList.Process(Acme.MyList{System.Int32})"
+"M:Acme.UseList.GetValues``1(``0)"
+namespace  Acme
+{
+    class Widget : IProcess
+    {
+        public int Width { get { ... } set { ... } }
+        public int this[int i] { get { ... } set { ... } }
+        public int this[string s, int i] { get { ... } set { ... } }IDs:
+Console
+Events
+C#
+IDs:
+Console
+Unar y operat ors
+C#
+IDs:
+Console    }
+}
+"P:Acme.Widget.Width"
+"P:Acme.Widget.Item(System.Int32)"
+"P:Acme.Widget.Item(System.String,System.Int32)"
+namespace  Acme
+{
+    class Widget : IProcess
+    {
+        public event Del AnEvent;
+    }
+}
+"E:Acme.Widget.AnEvent"
+namespace  Acme
+{
+    class Widget : IProcess
+    {
+        public static Widget operator +(Widget x) { ... }
+    }
+}
+"M:Acme.Widget.op_UnaryPlus(Acme.Widget)"The complete set of unary operator function names used is as follows: op_UnaryPlus,
+op_UnaryNegation, op_LogicalNot, op_OnesComplement, op_Increment, op_Decrement,
+op_True, and op_False.
+Binar y operat ors
+C#
+IDs:
+Console
+The complete set of binary operator function names used is as follows: op_Addition,
+op_Subtraction, op_Multiply, op_Division, op_Modulus, op_BitwiseAnd, op_BitwiseOr,
+op_ExclusiveOr, op_LeftShift, op_RightShift, op_Equality, op_Inequality,
+op_LessThan, op_LessThanOrEqual, op_GreaterThan, and op_GreaterThanOrEqual.
+Conv ersion operat ors have a trailing “ ~” followed by the return type. When either the
+source or destination of a conversion operator is a generic type, the “ <” and “">”
+characters are replaced by the “ {” and “}” characters, respectively.
+C#
+IDs:
+Consolenamespace  Acme
+{
+    class Widget : IProcess
+    {
+        public static Widget operator +(Widget x1, Widget x2) { ... }
+    }
+}
+"M:Acme.Widget.op_Addition(Acme.Widget,Acme.Widget)"
+namespace  Acme
+{
+    class Widget : IProcess
+    {
+        public static explicit  operator  int(Widget x ) { ... }
+        public static implicit  operator  long(Widget x ) { ... }
+    }
+}The following example shows the source code of a P oint class:
+C#"M:Acme.Widget.op_Explicit(Acme.Widget)~System.Int32"
+"M:Acme.Widget.op_Implicit(Acme.Widget)~System.Int64"
+D.5 An example
+D.5.1 C# source code
+namespace  Graphics
+{
+    /// <summary>
+    /// Class <c>Point</c> models a point in a two-dimensional plane.
+    /// </summary>
+    public class Point
+    {
+        /// <value>
+        /// Property <c>X</c> represents the point's x-coordinate.
+        /// </value>
+        public int X { get; set; }
+        
+        /// <value>
+        /// Property <c>Y</c> represents the point's y-coordinate.
+        /// </value>
+        public int Y { get; set; }
+        
+        /// <summary>
+        /// This constructor initializes the new Point to (0,0).
+        /// </summary>
+        public Point() : this(0, 0) {}
+        
+        /// <summary>
+        /// This constructor initializes the new Point to
+        /// (<paramref name="xPosition"/> ,<paramref name="yPosition"/> ).
+        /// </summary>
+        /// <param name="xPosition"> The new Point's x-coordinate. </param>
+        /// <param name="yPosition"> The new Point's y-coordinate. </param>
+        public Point(int xPosition, int yPosition ) 
+        {
+            X = xPosition;
+            Y = yPosition;
+        }
+        
+        /// <summary>
+        /// This method changes the point's location to
+        /// the given coordinates. <see cref="Translate"/>
+        /// </summary>        /// <param name="xPosition"> The new x-coordinate. </param>
+        /// <param name="yPosition"> The new y-coordinate. </param>
+        public void Move(int xPosition, int yPosition ) 
+        {
+            X = xPosition;
+            Y = yPosition;
+        }
+        
+        /// <summary>
+        /// This method changes the point's location by
+        /// the given x- and y-offsets.
+        /// <example> For example:
+        /// <code>
+        /// Point p = new Point(3, 5);
+        /// p.Translate(-1, 3);
+        /// </code>
+        /// results in <c>p</c>'s having the value (2, 8).
+        /// <see cref="Move"/>
+        /// </example>
+        /// </summary>
+        /// <param name="dx"> The relative x-offset. </param>
+        /// <param name="dy"> The relative y-offset. </param>
+        public void Translate (int dx, int dy)
+        {
+            X += dx;
+            Y += dy;
+        }
+        
+        /// <summary>
+        /// This method determines whether two Points have the same  
+location.
+        /// </summary>
+        /// <param name="o">
+        /// The object to be compared to the current object.
+        /// </param>
+        /// <returns>
+        /// True if the Points have the same location and they have
+        /// the exact same type; otherwise, false.
+        /// </returns>
+        /// <seealso cref="operator=="/>
+        /// <seealso cref="operator!="/>
+        public override  bool Equals(object o)
+        {
+            if (o == null)
+            {
+                return false;
+            }
+            if ((object)this == o) 
+            {
+                return true;
+            }
+            if (GetType() == o.GetType()) 
+            {
+                Point p = (Point)o;
+                return (X == p.X) && (Y == p.Y);            }
+            return false;
+        }
+        /// <summary>
+        /// This method returns a Point's hashcode.
+        /// </summary>
+        /// <returns>
+        /// The int hashcode.
+        /// </returns>
+        public override  int GetHashCode ()
+        {
+            return X + (Y >> 4);    // a crude version
+        }
+        
+        /// <summary> Report a point's location as a string. </summary>
+        /// <returns>
+        /// A string representing a point's location, in the form (x,y),
+        /// without any leading, training, or embedded whitespace.
+        /// </returns>
+        public override  string ToString () => $"({X},{Y})";
+        
+        /// <summary>
+        /// This operator determines whether two Points have the same  
+location.
+        /// </summary>
+        /// <param name="p1"> The first Point to be compared. </param>
+        /// <param name="p2"> The second Point to be compared. </param>
+        /// <returns>
+        /// True if the Points have the same location and they have
+        /// the exact same type; otherwise, false.
+        /// </returns>
+        /// <seealso cref="Equals"/>
+        /// <seealso cref="operator!="/>
+        public static bool operator ==(Point p1, Point p2)
+        {
+            if ((object)p1 == null || (object)p2 == null)
+            {
+                return false;
+            }
+            if (p1.GetType() == p2.GetType())
+            {
+                return (p1.X == p2.X) && (p1.Y == p2.Y);
+            }
+            return false;
+        }
+        
+        /// <summary>
+        /// This operator determines whether two Points have the same  
+location.
+        /// </summary>
+        /// <param name="p1"> The first Point to be compared. </param>
+        /// <param name="p2"> The second Point to be compared. </param>
+        /// <returns>
+        /// True if the Points do not have the same location and theHere is the output produced by one documentation generator when given the source
+code for class Point, shown above:
+XML        /// exact same type; otherwise, false.
+        /// </returns>
+        /// <seealso cref="Equals"/>
+        /// <seealso cref="operator=="/>
+        public static bool operator !=(Point p1, Point p2) => !(p1 == p2);
+    }
+}
+D.5.2 Resulting XML
+<?xml version="1.0"?>
+<doc>
+  <assembly >
+    <name>Point</name>
+  </assembly >
+  <members>
+    <member name="T:Graphics.Point" >
+    <summary>Class <c>Point</c> models a point in a two-dimensional
+    plane.
+    </summary>
+    </member>
+    <member name="M:Graphics.Point.#ctor" >
+      <summary>This constructor initializes the new Point to (0, 0).
+</summary>
+    </member>
+    <member name="M:Graphics.Point.#ctor(System.Int32,System.Int32)" >
+      <summary>
+        This constructor initializes the new Point to
+        (<paramref  name="xPosition" />,<paramref  name="yPosition" />).
+      </summary>
+      <param name="xPosition" >The new Point's x-coordinate. </param>
+      <param name="yPosition" >The new Point's y-coordinate. </param>
+    </member>
+    <member name="M:Graphics.Point.Move(System.Int32,System.Int32)" >
+      <summary>
+        This method changes the point's location to
+        the given coordinates.
+        <see cref="M:Graphics.Point.Translate(System.Int32,System.Int32)" />
+      </summary>
+      <param name="xPosition" >The new x-coordinate. </param>
+      <param name="yPosition" >The new y-coordinate. </param>
+      </member>
+    <member name="M:Graphics.Point.Translate(System.Int32,System.Int32)" >
+      <summary>
+        This method changes the point's location by
+        the given x- and y-offsets.        <example>For example:
+        <code>
+        Point p = new Point(3,5);
+        p.Translate(-1,3);
+        </code>
+        results in <c>p</c>'s having the value (2,8).
+        </example>
+        <see cref="M:Graphics.Point.Move(System.Int32,System.Int32)" />
+      </summary>
+      <param name="dx">The relative x-offset. </param>
+      <param name="dy">The relative y-offset. </param>
+    </member>
+    <member name="M:Graphics.Point.Equals(System.Object)" >
+      <summary>
+        This method determines whether two Points have the same location.
+      </summary>
+      <param name="o">
+        The object to be compared to the current object.
+      </param>
+      <returns>
+        True if the Points have the same location and they have
+        the exact same type; otherwise, false.
+      </returns>
+      <seealso 
+        cref="M:Graphics.Point.op_Equality(Graphics.Point,Graphics.Point)"  
+/>
+      <seealso 
+        
+cref="M:Graphics.Point.op_Inequality(Graphics.Point,Graphics.Point)" />
+    </member>
+     <member name="M:Graphics.Point.ToString" >
+      <summary>
+        Report a point's location as a string.
+      </summary>
+      <returns>
+        A string representing a point's location, in the form (x,y),
+        without any leading, training, or embedded whitespace.
+      </returns>
+     </member>
+    <member 
+name="M:Graphics.Point.op_Equality(Graphics.Point,Graphics.Point)" >
+      <summary>
+        This operator determines whether two Points have the same location.
+      </summary>
+      <param name="p1">The first Point to be compared. </param>
+      <param name="p2">The second Point to be compared. </param>
+      <returns>
+        True if the Points have the same location and they have
+        the exact same type; otherwise, false.
+      </returns>
+      <seealso cref="M:Graphics.Point.Equals(System.Object)" />
+      <seealso
+        
+cref="M:Graphics.Point.op_Inequality(Graphics.Point,Graphics.Point)" />
+    </member>End o f informativ e text.    <member
+        
+name="M:Graphics.Point.op_Inequality(Graphics.Point,Graphics.Point)" >
+      <summary>
+        This operator determines whether two Points have the same location.
+      </summary>
+      <param name="p1">The first Point to be compared. </param>
+      <param name="p2">The second Point to be compared. </param>
+      <returns>
+        True if the Points do not have the same location and the
+        exact same type; otherwise, false.
+      </returns>
+      <seealso cref="M:Graphics.Point.Equals(System.Object)" />
+      <seealso
+        cref="M:Graphics.Point.op_Equality(Graphics.Point,Graphics.Point)" />
+      </member>
+      <member name="M:Graphics.Point.Main" >
+        <summary>
+          This is the entry point of the Point class testing program.
+          <para>
+            This program tests each method and operator, and
+            is intended to be run after any non-trivial maintenance has
+            been performed on the Point class.
+          </para>
+        </summary>
+      </member>
+      <member name="P:Graphics.Point.X" >
+        <value>
+          Property <c>X</c> represents the point's x-coordinate.
+        </value>
+      </member>
+      <member name="P:Graphics.Point.Y" >
+        <value>
+          Property <c>Y</c> represents the point's y-coordinate.
+        </value>
+    </member>
+  </members>
+</doc>
+６ Collaborat e with us on
+GitHub
+The source for this content can
+be found on GitHub, where you
+can also create and review
+issues and pull requests. For
+more information, see our
+contributor guide .C# Standar d documentation
+feedb ack
+C# Standard documentation is an
+open source project. Select a link to
+provide feedback:
+ Open a documentation issue Provide product feedbackAnnex E Bibliography
+Article •01/13/2022
+This annex is informativ e.
+ANSI X3.274-1996, Programming L anguage RE XX. (This document is useful in
+understanding floating-point decimal arithmetic rules.)
+ISO/IEC 9075-1, Information t echnology — Dat abase languages — SQL — P art 1:
+Framew ork (SQL/Fr amew ork)
+ISO/IEC 9899, Programming languages — C .
+ISO/IEC 14882 Programming languages — C++
+ISO 80000-1, Quantities and units — P art 1: General. (This document defines
+“banker’s rounding.”)
+End o f informativ e text.Nullable reference types in C#
+Article •06/23/2023
+The goal of this feature is to:
+Allow developers to express whether a variable, parameter or result of a reference
+type is intended to be null or not.
+Provide warnings when such variables, parameters and results are not used
+according to that intent.
+The language already contains the T? syntax for value types. It is straightforward to
+extend this syntax to reference types.
+It is assumed that the intent of an unadorned reference type T is for it to be non-null.
+A flow analysis tracks nullable reference variables. Where the analysis deems that they
+would not be null (e.g. after a check or an assignment), their value will be considered a
+non-null reference.
+A nullable reference can also explicitly be treated as non-null with the postfix x!
+operator (the "damnit" operator), for when flow analysis cannot establish a non-null
+situation that the developer knows is there.
+Otherwise, a warning is given if a nullable reference is dereferenced, or is converted to a
+non-null type.７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Expression of intent
+Checking of nulla ble referencesA warning is given when converting from S[] to T?[] and from S?[] to T[].
+A warning is given when converting from C<S> to C<T?> except when the type
+parameter is covariant ( out), and when converting from C<S?> to C<T> except when the
+type parameter is contravariant ( in).
+A warning is given on C<T?> if the type parameter has non-null constraints.
+A warning is given if a null literal is assigned to a non-null variable or passed as a non-
+null parameter.
+A warning is also given if a constructor does not explicitly initialize non-null reference
+fields.
+We cannot adequately track that all elements of an array of non-null references are
+initialized. However, we could issue a warning if no element of a newly created array is
+assigned to before the array is read from or passed on. That might handle the common
+case without being too noisy.
+We need to decide whether default(T) generates a warning, or is simply treated as
+being of the type T?.
+Nullability adornments should be represented in metadata as attributes. This means that
+downlevel compilers will ignore them.
+We need to decide if only nullable annotations are included, or there's also some
+indication of whether non-null was "on" in the assembly.
+If a type parameter T has non-nullable constraints, it is treated as non-nullable within its
+scope.
+If a type parameter is unconstrained or has only nullable constraints, the situation is a
+little more complex: this means that the corresponding type argument could be either
+nullable or non-nullable. The safe thing to do in that situation is to treat the type
+parameter as both nullable and non-nullable, giving warnings when either is violated.Checking of non-null references
+Metadata representation
+GenericsIt is worth considering whether explicit nullable reference constraints should be allowed.
+Note, however, that we cannot avoid having nullable reference types implicitly  be
+constraints in certain cases (inherited constraints).
+The class constraint is non-null. W e can consider whether class? should be a valid
+nullable constraint denoting "nullable reference type".
+In type inference, if a contributing type is a nullable reference type, the resulting type
+should be nullable. In other words, nullness is propagated.
+We should consider whether the null literal as a participating expression should
+contribute nullness. It doesn't today: for value types it leads to an error, whereas for
+reference types the null successfully converts to the plain type.
+C#
+As a feature, nullable reference types allow developers to express their intent, and
+provide warnings through flow analysis if that intent is contradicted. There is a common
+question as to whether or not null guards are necessary.
+C#Type inference
+string? n = "world"; 
+var x = b ? "Hello" : n; // string?  
+var y = b ? "Hello" : null; // string? or error  
+var z = b ? 7 : null; // Error today, could be int?  
+Null guard guidance
+Example of null guard
+public void DoWork(Worker worker ) 
+{ 
+    // Guard against worker being null  
+    if (worker is null) 
+    { 
+        throw new ArgumentNullException( nameof(worker));
+    } 
+    // Otherwise use worker argument  
+} In the previous example, the DoWork function accepts a Worker and guards against it
+potentially being null. If the worker argument is null, the DoWork function will throw.
+With nullable reference types, the code in the previous example makes the intent that
+the Worker parameter would not be null. If the DoWork function was a public API, such
+as a NuGet package or a shared library - as guidance you should leave null guards in
+place. As a public API, the only guarantee that a caller isn't passing null is to guard
+against it.
+A more compelling use of the previous example is to express that the Worker parameter
+could be null, thus making the null guard more appropriate. If you remove the null
+guard in the following example, the compiler warns that you may be dereferencing null.
+Regardless, both null guards are still valid.
+C#
+For non-public APIs, such as source code entirely in control by a developer or dev team
+- the nullable reference types could allow for the safe removal of null guards where the
+developers can guarantee it is not necessary. The feature can help with warnings, but it
+cannot guarantee that at runtime code execution could result in a
+NullReferenceException.
+Non-null warnings are an obvious breaking change on existing code, and should be
+accompanied with an opt-in mechanism.
+Less obviously, warnings from nullable types (as described above) are a breaking change
+on existing code in certain scenarios where the nullability is implicit:Express intent
+public void DoWork(Worker? worker ) 
+{ 
+    // Guard against worker being null  
+    if (worker is null) 
+    { 
+        throw new ArgumentNullException( nameof(worker));
+    } 
+    // Otherwise use worker argument  
+} 
+Breaking changesUnconstrained type parameters will be treated as implicitly nullable, so assigning
+them to object or accessing e.g. ToString will yield warnings.
+if type inference infers nullness from null expressions, then existing code will
+sometimes yield nullable rather than non-nullable types, which can lead to new
+warnings.
+So nullable warnings also need to be optional
+Finally, adding annotations to an existing API will be a breaking change to users who
+have opted in to warnings, when they upgrade the library. This, too, merits the ability to
+opt in or out. "I want the bug fixes, but I am not ready to deal with their new
+annotations"
+In summary, you need to be able to opt in/out of:
+Nullable warnings
+Non-null warnings
+Warnings from annotations in other files
+The granularity of the opt-in suggests an analyzer-like model, where swaths of code can
+opt in and out with pragmas and severity levels can be chosen by the user. Additionally,
+per-library options ("ignore the annotations from JSON.NET until I'm ready to deal with
+the fall out") may be expressible in code as attributes.
+The design of the opt-in/transition experience is crucial to the success and usefulness of
+this feature. W e need to make sure that:
+Users can adopt nullability checking gradually as they want to
+Library authors can add nullability annotations without fear of breaking customers
+Despite these, there is not a sense of "configuration nightmare"
+We could consider not using the ? annotations on locals, but just observing whether
+they are used in accordance with what gets assigned to them. I don't favor this; I think
+we should uniformly let people express their intent.
+We could consider a shorthand T! x on parameters, that auto-generates a runtime null
+check.
+Certain patterns on generic types, such as FirstOrDefault or TryGet, have slightly weird
+behavior with non-nullable type arguments, because they explicitly yield default values
+in certain situations. W e could try to nuance the type system to accommodate theseTweaksbetter. For instance, we could allow ? on unconstrained type parameters, even though
+the type argument could already be nullable. I doubt that it is worth it, and it leads to
+weirdness related to interaction with nullable value types.
+We could consider adopting some of the above semantics for nullable value types as
+well.
+We already mentioned type inference, where we could infer int? from (7, null),
+instead of just giving an error.
+Another opportunity is to apply the flow analysis to nullable value types. When they are
+deemed non-null, we could actually allow using as the non-nullable type in certain ways
+(e.g. member access). W e just have to be careful that the things that you can already do
+on a nullable value type will be preferred, for back compat reasons.Nullable value typesRecursive Pattern Matching
+Article •03/24/2022
+Pattern matching extensions for C# enable many of the benefits of algebraic data types
+and pattern matching from functional languages, but in a way that smoothly integrates
+with the feel of the underlying language. Elements of this approach are inspired by
+related features in the programming languages F#  and Scala .
+The is operator is extended to test an expression against a pattern.
+antlr
+This form of relational_expr ession  is in addition to the existing forms in the C#
+specification. It is a compile-time error if the relational_expr ession  to the left of the is
+token does not designate a value or does not have a type.７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+Detailed design
+Is Expression
+relational_expression  
+    : is_pattern_expression  
+    ; 
+is_pattern_expression  
+    : relational_expression 'is' pattern  
+    ; Every identi fier of the pattern introduces a new local variable that is definitely assigned
+after the is operator is true (i.e. definitely assigned when tr ue).
+Note: There is technically an ambiguity between type in an is-expression and
+constant_p attern, either of which might be a valid parse of a qualified identifier. W e
+try to bind it as a type for compatibility with previous versions of the language; only
+if that fails do we resolve it as we do an expression in other contexts, to the first
+thing found (which must be either a constant or a type). This ambiguity is only
+present on the right-hand-side of an is expression.
+Patterns are used in the is_pattern operator, in a switch_st atement , and in a
+switch_expr ession  to express the shape of data against which incoming data (which we
+call the input value) is to be compared. P atterns may be recursive so that parts of the
+data may be matched against sub-patterns.
+antlrPatterns
+pattern 
+    : declaration_pattern  
+    | constant_pattern  
+    | var_pattern  
+    | positional_pattern  
+    | property_pattern  
+    | discard_pattern  
+    ; 
+declaration_pattern  
+    : type simple_designation  
+    ; 
+constant_pattern  
+    : constant_expression  
+    ; 
+var_pattern  
+    : 'var' designation  
+    ; 
+positional_pattern  
+    : type? '(' subpatterns? ')' property_subpattern? simple_designation?  
+    ; 
+subpatterns  
+    : subpattern  
+    | subpattern ',' subpatterns  
+    ; 
+subpattern  
+    : pattern  
+    | identifier ':' pattern  
+    ; 
+property_subpattern  
+    : '{' '}' antlr
+The declar ation_p attern both tests that an expression is of a given type and casts it to
+that type if the test succeeds. This may introduce a local variable of the given type
+named by the given identifier, if the designation is a single_v ariable_designation . That
+local variable is definitely assigned  when the result of the pattern-matching operation is
+true.
+The runtime semantic of this expression is that it tests the runtime type of the left-hand
+relational_expr ession  operand against the type in the pattern. If it is of that runtime type
+(or some subtype) and not null, the result of the is operator is true.
+Certain combinations of static type of the left-hand-side and the given type are
+considered incompatible and result in compile-time error. A value of static type E is said
+to be pattern-compatible  with a type T if there exists an identity conversion, an implicit
+reference conversion, a boxing conversion, an explicit reference conversion, or an
+unboxing conversion from E to T, or if one of those types is an open type. It is a
+compile-time error if an input of type E is not pattern-compatible  with the type in a type
+pattern that it is matched with.
+The type pattern is useful for performing run-time type tests of reference types, and
+replaces the idiom
+C#    | '{' subpatterns ','? '}' 
+    ; 
+property_pattern  
+    : type? property_subpattern simple_designation?  
+    ; 
+simple_designation  
+    : single_variable_designation
+    | discard_designation  
+    ; 
+discard_pattern  
+    : '_' 
+    ; 
+Declaration Pattern
+declaration_pattern  
+    : type simple_designation  
+    ; With the slightly more concise
+C#
+It is an error if type is a nullable value type.
+The type pattern can be used to test values of nullable types: a value of type
+Nullable<T> (or a boxed T) matches a type pattern T2 id if the value is non-null and
+the type of T2 is T, or some base type or interface of T. For example, in the code
+fragment
+C#
+The condition of the if statement is true at runtime and the variable v holds the value
+3 of type int inside the block. After the block the variable v is in scope but not
+definitely assigned.
+antlr
+A constant pattern tests the value of an expression against a constant value. The
+constant may be any constant expression, such as a literal, the name of a declared const
+variable, or an enumeration constant. When the input value is not an open type, the
+constant expression is implicitly converted to the type of the matched expression; if the
+type of the input value is not pattern-compatible  with the type of the constant
+expression, the pattern-matching operation is an error.
+The pattern c is considered matching the converted input value e if object.Equals(c, e)
+would return true.var v = expr as Type; 
+if (v != null) { // code using v  
+if (expr is Type v) { // code using v  
+int? x = 3; 
+if (x is int v) { // code using v  
+Constant Pattern
+constant_pattern  
+    : constant_expression  
+    ; We expect to see e is null as the most common way to test for null in newly written
+code, as it cannot invoke a user-defined operator==.
+antlr
+If the designation  is a simple_designation , an expression e matches the pattern. In other
+words, a match to a var pattern always succeeds with a simple_designation . If the
+simple_designation  is a single_v ariable_designation , the value of e is bound to a newly
+introduced local variable. The type of the local variable is the static type of e.
+If the designation  is a tuple_designation , then the pattern is equivalent to a
+positional_p attern of the form (var designation , ... ) where the designation s are those
+found within the tuple_designation . For example, the pattern var (x, (y, z)) is
+equivalent to (var x, (var y, var z)).
+It is an error if the name var binds to a type.Var Pattern
+var_pattern  
+    : 'var' designation  
+    ; 
+designation  
+    : simple_designation  
+    | tuple_designation  
+    ; 
+simple_designation  
+    : single_variable_designation
+    | discard_designation  
+    ; 
+single_variable_designation  
+    : identifier  
+    ; 
+discard_designation  
+    : _ 
+    ; 
+tuple_designation  
+    : '(' designations? ')' 
+    ; 
+designations  
+    : designation  
+    | designations ',' designation  
+    ; 
+Discard Patternantlr
+An expression e matches the pattern _ always. In other words, every expression matches
+the discard pattern.
+A discard pattern may not be used as the pattern of an is_pattern_expr ession .
+A positional pattern checks that the input value is not null, invokes an appropriate
+Deconstruct method, and performs further pattern matching on the resulting values. It
+also supports a tuple-like pattern syntax (without the type being provided) when the
+type of the input value is the same as the type containing Deconstruct, or if the type of
+the input value is a tuple type, or if the type of the input value is object or ITuple and
+the runtime type of the expression implements ITuple.
+antlr
+If the type is omitted, we take it to be the static type of the input value.
+Given a match of an input value to the pattern type ( subpattern_list  ), a method is
+selected by searching in type for accessible declarations of Deconstruct and selecting
+one among them using the same rules as for the deconstruction declaration.
+It is an error if a positional_p attern omits the type, has a single subpattern without an
+identi fier, has no property_subp attern and has no simple_designation . This disambiguates
+between a constant_p attern that is parenthesized and a positional_p attern.
+In order to extract the values to match against the patterns in the list,discard_pattern  
+    : '_' 
+    ; 
+Positional Pattern
+positional_pattern  
+    : type? '(' subpatterns? ')' property_subpattern? simple_designation?  
+    ; 
+subpatterns  
+    : subpattern  
+    | subpattern ',' subpatterns  
+    ; 
+subpattern  
+    : pattern  
+    | identifier ':' pattern  
+    ; If type was omitted and the input value's type is a tuple type, then the number of
+subpatterns is required to be the same as the cardinality of the tuple. Each tuple
+element is matched against the corresponding subpattern, and the match succeeds
+if all of these succeed. If any subpattern has an identi fier, then that must name a
+tuple element at the corresponding position in the tuple type.
+Otherwise, if a suitable Deconstruct exists as a member of type, it is a compile-time
+error if the type of the input value is not pattern-compatible  with type. At runtime
+the input value is tested against type. If this fails then the positional pattern match
+fails. If it succeeds, the input value is converted to this type and Deconstruct is
+invoked with fresh compiler-generated variables to receive the out parameters.
+Each value that was received is matched against the corresponding subpattern, and
+the match succeeds if all of these succeed. If any subpattern has an identi fier, then
+that must name a parameter at the corresponding position of Deconstruct.
+Otherwise if type was omitted, and the input value is of type object or ITuple or
+some type that can be converted to ITuple by an implicit reference conversion,
+and no identi fier appears among the subpatterns, then we match using ITuple.
+Otherwise the pattern is a compile-time error.
+The order in which subpatterns are matched at runtime is unspecified, and a failed
+match may not attempt to match all subpatterns.
+This example uses many of the features described in this specification
+c#
+A property pattern checks that the input value is not null and recursively matches
+values extracted by the use of accessible properties or fields.
+antlrExample
+    var newState = (GetState(), action, hasKey) switch {
+        (DoorState.Closed, Action.Open, _) => DoorState.Opened,  
+        (DoorState.Opened, Action.Close, _) => DoorState.Closed,  
+        (DoorState.Closed, Action.Lock, true) => DoorState.Locked,
+        (DoorState.Locked, Action.Unlock, true) => DoorState.Closed,  
+        ( var state, _, _) => state };  
+Property PatternIt is an error if any subpattern of a property_pattern does not contain an identi fier (it
+must be of the second form, which has an identi fier). A trailing comma after the last
+subpattern is optional.
+Note that a null-checking pattern falls out of a trivial property pattern. T o check if the
+string s is non-null, you can write any of the following forms
+C#
+Given a match of an expression e to the pattern type { property_pattern_list  }, it is a
+compile-time error if the expression e is not pattern-compatible  with the type T
+designated by type. If the type is absent, we take it to be the static type of e. If the
+identi fier is present, it declares a pattern variable of type type. Each of the identifiers
+appearing on the left-hand-side of its property_pattern_list  must designate an accessible
+readable property or field of T. If the simple_designation  of the property_pattern is
+present, it defines a pattern variable of type T.
+At runtime, the expression is tested against T. If this fails then the property pattern
+match fails and the result is false. If it succeeds, then each property_subp attern field or
+property is read and its value matched against its corresponding pattern. The result of
+the whole match is false only if the result of any of these is false. The order in which
+subpatterns are matched is not specified, and a failed match may not match all
+subpatterns at runtime. If the match succeeds and the simple_designation  of the
+property_pattern is a single_v ariable_designation , it defines a variable of type T that is
+assigned the matched value.
+Note: The property pattern can be used to pattern-match with anonymous types.property_pattern  
+    : type? property_subpattern simple_designation?  
+    ; 
+property_subpattern  
+    : '{' '}' 
+    | '{' subpatterns ','? '}' 
+    ; 
+if (s is object o) ... // o is of type object  
+if (s is string x) ... // x is of type string  
+if (s is {} x) ... // x is of type string  
+if (s is {}) ...  
+ExampleC#
+A switch_expr ession  is added to support switch-like semantics for an expression context.
+The C# language syntax is augmented with the following syntactic productions:
+antlr
+The switch_expr ession  is not permitted as an expression_st atement .
+We are looking at relaxing this in a future revision.
+The type of the switch_expr ession  is the best c ommon type  (§11.6.3.15 ) of the
+expressions appearing to the right of the => tokens of the switch_expr ession_ar ms if
+such a type exists and the expression in every arm of the switch expression can be
+implicitly converted to that type. In addition, we add a new switch expr ession c onversion,
+which is a predefined implicit conversion from a switch expression to every type T for
+which there exists an implicit conversion from each arm's expression to T.
+It is an error if some switch_expr ession_ar m's pattern cannot affect the result because
+some previous pattern and guard will always match.if (o is string { Length: 5 } s) 
+Switch Expression
+multiplicative_expression  
+    : switch_expression  
+    | multiplicative_expression '*' switch_expression  
+    | multiplicative_expression '/' switch_expression  
+    | multiplicative_expression '%' switch_expression  
+    ; 
+switch_expression  
+    : range_expression 'switch'  '{' '}' 
+    | range_expression 'switch'  '{' switch_expression_arms ','? '}' 
+    ; 
+switch_expression_arms  
+    : switch_expression_arm  
+    | switch_expression_arms ',' switch_expression_arm  
+    ; 
+switch_expression_arm  
+    : pattern case_guard? '=>' expression  
+    ; 
+case_guard  
+    : 'when' null_coalescing_expression  
+    ; 
+A switch expression is said to be exhaustiv e if some arm of the switch expression
+handles every value of its input. The compiler shall produce a warning if a switch
+expression is not exhaustiv e.
+At runtime, the result of the switch_expr ession  is the value of the expression  of the first
+switch_expr ession_ar m for which the expression on the left-hand-side of the
+switch_expr ession  matches the switch_expr ession_ar m's pattern, and for which the
+case_guar d of the switch_expr ession_ar m, if present, evaluates to true. If there is no such
+switch_expr ession_ar m, the switch_expr ession  throws an instance of the exception
+System.Runtime.CompilerServices.SwitchExpressionException.
+In order to switch on a tuple literal using the switch_st atement , you have to write what
+appear to be redundant parens
+C#
+To permit
+C#
+the parentheses of the switch statement are optional when the expression being
+switched on is a tuple literal.
+Giving the compiler flexibility in reordering the operations executed during pattern-
+matching can permit flexibility that can be used to improve the efficiency of pattern-
+matching. The (unenforced) requirement would be that properties accessed in a pattern,
+and the Deconstruct methods, are required to be "pure" (side-effect free, idempotent,
+etc). That doesn't mean that we would add purity as a language concept, only that we
+would allow the compiler flexibility in reordering operations.
+Resolution 2018-04-04 LDM : confirmed: the compiler is permitted to reorder calls to
+Deconstruct, property accesses, and invocations of methods in ITuple, and may assumeOptional parens when switching on a tuple literal
+switch ((a, b))  
+{ 
+switch (a, b) 
+{ 
+Order of evaluation in pattern-matchingthat returned values are the same from multiple calls. The compiler should not invoke
+functions that cannot affect the result, and we will be very careful before making any
+changes to the compiler-generated order of evaluation in the future.
+The compilation of pattern matching can take advantage of common parts of patterns.
+For example, if the top-level type test of two successive patterns in a switch_st atement  is
+the same type, the generated code can skip the type test for the second pattern.
+When some of the patterns are integers or strings, the compiler can generate the same
+kind of code it generates for a switch-statement in earlier versions of the language.
+For more on these kinds of optimizations, see [Scott and Ramsey (2000)] .Some Possible Optimizations
+default interface methods
+Article •08/12/2022
+Add support for virtual ext ension methods  - methods in interfaces with concrete
+implementations. A class or struct that implements such an interface is required to have
+a single most speci fic implementation for the interface method, either implemented by
+the class or struct, or inherited from its base classes or interfaces. Virtual extension
+methods enable an API author to add methods to an interface in future versions without
+breaking source or binary compatibility with existing implementations of that interface.
+These are similar to Java's "Default Methods" .
+(Based on the likely implementation technique) this feature requires corresponding
+support in the CLI/CLR. Programs that take advantage of this feature cannot run on
+earlier versions of the platform.
+The principal motivations for this feature are
+Default interface methods enable an API author to add methods to an interface in
+future versions without breaking source or binary compatibility with existing
+implementations of that interface.
+The feature enables C# to interoperate with APIs targeting Android (Java)  and
+iOS (S wift) , which support similar features.
+As it turns out, adding default interface implementations provides the elements of
+the "traits" language feature７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+Motivation
+(https://en.wikipedia.org/wiki/T rait_(computer_programming) ). Traits have
+proven to be a powerful programming technique
+(http://scg.unibe.ch/archive/papers/Scha03aT raits.pdf ).
+The syntax for an interface is extended to permit
+member declarations that declare constants, operators, static constructors, and
+nested types;
+a body  for a method or indexer, property, or event accessor (that is, a "default"
+implementation);
+member declarations that declare static fields, methods, properties, indexers, and
+events;
+member declarations using the explicit interface implementation syntax; and
+Explicit access modifiers (the default access is public).
+Members with bodies permit the interface to provide a "default" implementation for the
+method in classes and structs that do not provide their own implementation.
+Interfaces may not contain instance state. While static fields are now permitted, instance
+fields are not permitted in interfaces. Instance auto-properties are not supported in
+interfaces, as they would implicitly declare a hidden field.
+Static and private methods permit useful refactoring and organization of code used to
+implement the interface's public API.
+A method override in an interface must use the explicit interface implementation syntax.
+It is an error to declare a class type, struct type, or enum type within the scope of a type
+parameter that was declared with a variance_annot ation . For example, the declaration of
+C below is an error.
+C#
+Detailed design
+interface  IOuter<out T> 
+{ 
+    class C { } // error: class declaration within the scope of variant type  
+parameter 'T'  
+} 
+Concrete methods in interfacesThe simplest form of this feature is the ability to declare a concrete method  in an
+interface, which is a method with a body.
+C#
+A class that implements this interface need not implement its concrete method.
+C#
+The final override for IA.M in class C is the concrete method M declared in IA. Note
+that a class does not inherit members from its interfaces; that is not changed by this
+feature:
+C#
+Within an instance member of an interface, this has the type of the enclosing interface.
+The syntax for an interface is relaxed to permit modifiers on its members. The following
+are permitted: private, protected, internal, public, virtual, abstract, sealed,
+static, extern, and partial.
+TODO : check what other modifiers exist.
+An interface member whose declaration includes a body is a virtual member unless
+the sealed or private modifier is used. The virtual modifier may be used on a
+function member that would otherwise be implicitly virtual. Similarly, although
+abstract is the default on interface members without bodies, that modifier may be
+given explicitly. A non-virtual member may be declared using the sealed keyword.interface  IA 
+{ 
+    void M() { WriteLine( "IA.M"); } 
+} 
+class C : IA { } // OK 
+IA i = new C(); 
+i.M(); // prints "IA.M"  
+new C().M(); // error: class 'C' does not contain a member 'M'  
+Modifiers in interfacesIt is an error for a private or sealed function member of an interface to have no body.
+A private function member may not have the modifier sealed.
+Access modifiers may be used on interface members of all kinds of members that are
+permitted. The access level public is the default but it may be given explicitly.
+Open Issue:  We need to specify the precise meaning of the access modifiers such as
+protected and internal, and which declarations do and do not override them (in a
+derived interface) or implement them (in a class that implements the interface).
+Interfaces may declare static members, including nested types, methods, indexers,
+properties, events, and static constructors. The default access level for all interface
+members is public.
+Interfaces may not declare instance constructors, destructors, or fields.
+Closed Issue:  Should operator declarations be permitted in an interface? Probably
+not conversion operators, but what about others? Decision : Operators are permitted
+except for conversion, equality, and inequality operators.
+Closed Issue:  Should new be permitted on interface member declarations that hide
+members from base interfaces? Decision : Yes.
+Closed Issue:  We do not currently permit partial on an interface or its members.
+That would require a separate proposal. Decision : Yes.
+https://github.com/dotnet/csharplang/blob/master/meetings/2018/LDM-2018-10-
+17.md#permit-partial-in-interface
+Explicit implementations allow the programmer to provide a most specific
+implementation of a virtual member in an interface where the compiler or runtime
+would not otherwise find one. An implementation declaration is permitted to explicitly
+implement a particular base interface method by qualifying the declaration with the
+interface name (no access modifier is permitted in this case). Implicit implementations
+are not permitted.
+C#
+Explicit implementation in interfaces
+interface  IA 
+{ Explicit implementations in interfaces may not be declared sealed.
+Public virtual function members in an interface may only be implemented in a derived
+interface explicitly (by qualifying the name in the declaration with the interface type that
+originally declared the method, and omitting an access modifier). The member must be
+accessible  where it is implemented.
+A virtual (concrete) method declared in an interface may be reabstracted in a derived
+interface
+C#
+The abstract modifier is required in the declaration of IB.M, to indicate that IA.M is
+being reabstracted.
+This is useful in derived interfaces where the default implementation of a method is
+inappropriate and a more appropriate implementation should be provided by
+implementing classes.
+Open Issue:  Should reabstraction be permitted?    void M() { WriteLine( "IA.M"); } 
+} 
+interface  IB : IA 
+{ 
+    void IA.M() { WriteLine( "IB.M"); } // Explicit implementation  
+} 
+interface  IC : IA 
+{ 
+    void M() { WriteLine( "IC.M"); } // Creates a new M, unrelated to `IA.M`.  
+Warning 
+} 
+Reabstraction
+interface  IA 
+{ 
+    void M() { WriteLine( "IA.M"); } 
+} 
+interface  IB : IA 
+{ 
+    abstract  void IA.M();  
+} 
+class C : IB { } // error: class 'C' does not implement 'IA.M'.  
+The most specific implementation ruleWe require that every interface and class have a most speci fic implement ation  for every
+virtual member among the implementations appearing in the type or its direct and
+indirect interfaces. The most speci fic implement ation  is a unique implementation that is
+more specific than every other implementation. If there is no implementation, the
+member itself is considered the most specific implementation.
+One implementation M1 is considered more speci fic than another implementation M2 if
+M1 is declared on type T1, M2 is declared on type T2, and either
+1. T1 contains T2 among its direct or indirect interfaces, or
+2. T2 is an interface type but T1 is not an interface type.
+For example:
+C#
+The most specific implementation rule ensures that a conflict (i.e. an ambiguity arising
+from diamond inheritance) is resolved explicitly by the programmer at the point where
+the conflict arises.
+Because we support explicit reabstractions in interfaces, we could do so in classes as
+well
+C#interface  IA 
+{ 
+    void M() { WriteLine( "IA.M"); } 
+} 
+interface  IB : IA 
+{ 
+    void IA.M() { WriteLine( "IB.M"); } 
+} 
+interface  IC : IA 
+{ 
+    void IA.M() { WriteLine( "IC.M"); } 
+} 
+interface  ID : IB, IC { } // error: no most specific implementation for  
+'IA.M' 
+abstract  class C : IB, IC { } // error: no most specific implementation for  
+'IA.M' 
+abstract  class D : IA, IB, IC // ok 
+{ 
+    public abstract  void M(); 
+} Open issue : should we support explicit interface abstract implementations in
+classes?
+In addition, it is an error if in a class declaration the most specific implementation of
+some interface method is an abstract implementation that was declared in an interface.
+This is an existing rule restated using the new terminology.
+C#
+It is possible for a virtual property declared in an interface to have a most specific
+implementation for its get accessor in one interface and a most specific implementation
+for its set accessor in a different interface. This is considered a violation of the most
+speci fic implement ation  rule.
+Because interfaces may now contain executable code, it is useful to abstract common
+code into private and static methods. W e now permit these in interfaces.
+Closed issue : Should we support private methods? Should we support static
+methods? Decision: YES
+Open issue : should we permit interface methods to be protected or internal or
+other access? If so, what are the semantics? Are they virtual by default? If so, is
+there a way to make them non-virtual?
+Open issue : If we support static methods, should we support (static) operators?abstract  class E : IA, IB, IC // ok 
+{ 
+    abstract  void IA.M();  
+} 
+interface  IF 
+{ 
+    void M();
+} 
+abstract  class F : IF { } // error: 'F' does not implement 'IF.M'  
+static and private methods
+Base interface invocationsCode in a type that derives from an interface with a default method can explicitly invoke
+that interface's "base" implementation.
+C#
+An instance (nonstatic) method is permitted to invoke the implementation of an
+accessible instance method in a direct base interface nonvirtually by naming it using the
+syntax base(Type).M. This is useful when an override that is required to be provided due
+to diamond inheritance is resolved by delegating to one particular base implementation.
+C#interface  I0 
+{ 
+   void M() { Console.WriteLine( "I0"); } 
+} 
+interface  I1 : I0 
+{ 
+   override  void M() { Console.WriteLine( "I1"); } 
+} 
+interface  I2 : I0 
+{ 
+   override  void M() { Console.WriteLine( "I2"); } 
+} 
+interface  I3 : I1, I2 
+{ 
+   // an explicit override that invoke's a base interface's default method  
+   void I0.M() { I2. base.M(); } 
+} 
+interface  IA 
+{ 
+    void M() { WriteLine( "IA.M"); } 
+} 
+interface  IB : IA 
+{ 
+    override  void IA.M() { WriteLine( "IB.M"); } 
+} 
+interface  IC : IA 
+{ 
+    override  void IA.M() { WriteLine( "IC.M"); } 
+} 
+class D : IA, IB, IC 
+{ 
+    void IA.M() { base(IB).M(); }  
+} When a virtual or abstract member is accessed using the syntax base(Type).M, it is
+required that Type contains a unique most speci fic override for M.
+Interfaces now contain types. These types may be used in the base clause as base
+interfaces. When binding a base clause, we may need to know the set of base interfaces
+to bind those types (e.g. to lookup in them and to resolve protected access). The
+meaning of an interface's base clause is thus circularly defined. To break the cycle, we
+add a new language rules corresponding to a similar rule already in place for classes.
+While determining the meaning of the interface_base of an interface, the base interfaces
+are temporarily assumed to be empty. Intuitively this ensures that the meaning of a base
+clause cannot recursively depend on itself.
+We used t o hav e the following rules:
+"When a class B derives from a class A, it is a compile-time error for A to depend on B. A
+class directly depends on  its direct base class (if any) and directly depends on  the class
+within which it is immediately nested (if any). Given this definition, the complete set of
+classes  upon which a class depends is the reflexive and transitive closure of the directly
+depends on  relationship."
+It is a compile-time error for an interface to directly or indirectly inherit from itself. The
+base int erfaces  of an interface are the explicit base interfaces and their base interfaces.
+In other words, the set of base interfaces is the complete transitive closure of the explicit
+base interfaces, their explicit base interfaces, and so on.
+We are adjusting them as follows:
+When a class B derives from a class A, it is a compile-time error for A to depend on B. A
+class directly depends on  its direct base class (if any) and directly depends on  the type
+within which it is immediately nested (if any).
+When an interface IB extends an interface IA, it is a compile-time error for IA to depend
+on IB. An interface directly depends on  its direct base interfaces (if any) and directly
+depends on  the type within which it is immediately nested (if any).
+Given these definitions, the complete set of types  upon which a type depends is the
+reflexive and transitive closure of the directly depends on  relationship.Binding base clauses
+Effect on existing programsThe rules presented here are intended to have no effect on the meaning of existing
+programs.
+Example 1:
+C#
+Example 2:
+C#
+The same rules give similar results to the analogous situation involving default interface
+methods:
+C#interface  IA 
+{ 
+    void M();
+} 
+class C: IA // Error: IA.M has no concrete most specific override in C  
+{ 
+    public static void M() { } // method unrelated to 'IA.M' because static  
+} 
+interface  IA 
+{ 
+    void M();
+} 
+class Base: IA 
+{ 
+    void IA.M() { }  
+} 
+class Derived: Base, IA // OK, all interface members have a concrete most  
+specific override  
+{ 
+    private void M() { } // method unrelated to 'IA.M' because private  
+} 
+interface  IA 
+{ 
+    void M() { } 
+} 
+class Derived: IA // OK, all interface members have a concrete most specific  
+override  
+{ 
+    private void M() { } // method unrelated to 'IA.M' because private  
+} Closed issue : confirm that this is an intended consequence of the specification.
+Decision: YES
+Closed Issue:  The spec should describe the runtime method resolution algorithm in
+the face of interface default methods. W e need to ensure that the semantics are
+consistent with the language semantics, e.g. which declared methods do and do not
+override or implement an internal method.
+In order for compilers to detect when they are compiling for a runtime that supports this
+feature, libraries for such runtimes are modified to advertise that fact through the API
+discussed in https://github.com/dotnet/corefx/issues/17116 . We add
+C#
+Open issue : Is that the best name for the CLR feature? The CLR feature does much
+more than just that (e.g. relaxes protection constraints, supports overrides in
+interfaces, etc). P erhaps it should be called something like "concrete methods in
+interfaces", or "traits"?
+[ ] It would be useful to catalog the kinds of source and binary compatibility effects
+caused by adding default interface methods and overrides to existing interfaces.
+This proposal requires a coordinated update to the CLR specification (to support
+concrete methods in interfaces and method resolution). It is therefore fairly "expensive"Runtime method resolution
+CLR support API
+namespace  System.Runtime.CompilerServices  
+{ 
+    public static class RuntimeFeature  
+    { 
+        // Presence of the field indicates runtime support  
+        public const string DefaultInterfaceImplementation =  
+nameof(DefaultInterfaceImplementation);  
+    } 
+} 
+Further areas to be specified
+Drawbacksand it may be worth doing in combination with other features that we also anticipate
+would require CLR changes.
+None.
+Open questions are called out throughout the proposal, above.
+See also https://github.com/dotnet/csharplang/issues/406  for a list of open
+questions.
+The detailed specification must describe the resolution mechanism used at runtime
+to select the precise method to be invoked.
+The interaction of metadata produced by new compilers and consumed by older
+compilers needs to be worked out in detail. For example, we need to ensure that
+the metadata representation that we use does not cause the addition of a default
+implementation in an interface to break an existing class that implements that
+interface when compiled by an older compiler. This may affect the metadata
+representation that we can use.
+The design must consider interoperation with other languages and existing
+compilers for other languages.
+The earlier draft spec contained the ability to "reabstract" an inherited method:
+C#Alternatives
+Unresolved questions
+Resolved Questions
+Abstract Override
+interface  IA 
+{ 
+    void M();
+} 
+interface  IB : IA 
+{ 
+    override  void M() { } 
+} 
+interface  IC : IB 
+{ 
+    override  void M(); // make it abstract again  
+} My notes for 2017-03-20 showed that we decided not to allow this. However, there are
+at least two use cases for it:
+1. The Java APIs, with which some users of this feature hope to interoperate, depend
+on this facility.
+2. Programming with traits benefits from this. R eabstraction is one of the elements of
+the "traits" language feature
+(https://en.wikipedia.org/wiki/T rait_(computer_programming) ). The following is
+permitted with classes:
+C#
+Unfortunately this code cannot be refactored as a set of interfaces (traits) unless this is
+permitted. By the Jared pr inciple o f greed, it should be permitted.
+Closed issue:  Should reabstraction be permitted? [YES] My notes were wrong. The
+LDM notes  say that reabstraction is permitted in an interface. Not in a class.
+From Aleksey T singauz :
+We decided to allow modifiers explicitly stated on interface members, unless there is
+a reason to disallow some of them. This brings an interesting question around
+virtual modifier. Should it be required on members with default implementation?
+We could say that:
+if there is no implementation and neither virtual, nor sealed are specified, we
+assume the member is abstract.
+public abstract  class Base 
+{ 
+    public abstract  void M(); 
+} 
+public abstract  class A : Base 
+{ 
+    public override  void M() { } 
+} 
+public abstract  class B : A 
+{ 
+    public override  abstract  void M(); // reabstract Base.M  
+} 
+Virtual Modifier vs Sealed Modifier
+if there is an implementation and neither abstract, nor sealed are specified, we
+assume the member is virtual.
+sealed modifier is required to make a method neither virtual, nor abstract.
+Alternatively, we could say that virtual modifier is required for a virtual member. I.e,
+if there is a member with implementation not explicitly marked with virtual modifier,
+it is neither virtual, nor abstract. This approach might provide better experience
+when a method is moved from a class to an interface:
+an abstract method stays abstract.
+a virtual method stays virtual.
+a method without any modifier stays neither virtual, nor abstract.
+sealed modifier cannot be applied to a method that is not an override.
+What do you think?
+Closed Issue:  Should a concrete method (with implementation) be implicitly
+virtual? [YES]
+Decisions:  Made in the LDM 2017-04-05:
+1. non-virtual should be explicitly expressed through sealed or private.
+2. sealed is the keyword to make interface instance members with bodies non-virtual
+3. We want to allow all modifiers in interfaces
+4. Default accessibility for interface members is public, including nested types
+5. private function members in interfaces are implicitly sealed, and sealed is not
+permitted on them.
+6. Private classes (in interfaces) are permitted and can be sealed, and that means
+sealed in the class sense of sealed.
+7. Absent a good proposal, partial is still not allowed on interfaces or their members.
+When a library provides a default implementation
+C#Binary Compatibility 1
+interface  I1 
+{ 
+    void M() { Impl1 }  
+} 
+interface  I2 : I1 
+{ We understand that the implementation of I1.M in C is I1.M. What if the assembly
+containing I2 is changed as follows and recompiled
+C#
+but C is not recompiled. What happens when the program is run? An invocation of (C
+as I1).M()
+1. Runs I1.M
+2. Runs I2.M
+3. Throws some kind of runtime error
+Decision:  Made 2017-04-11: Runs I2.M, which is the unambiguously most specific
+override at runtime.
+Closed Issue:  Can an event be overridden "piecewise"?
+Consider this case:
+C#} 
+class C : I2 
+{ 
+} 
+interface  I2 : I1 
+{ 
+    override  void M() { Impl2 }  
+} 
+Event accessors (closed)
+public interface  I1 
+{ 
+    event T e1; 
+} 
+public interface  I2 : I1 
+{ 
+    override  event T 
+    { 
+        add { } 
+        // error: "remove" accessor missing  
+    } 
+} This "partial" implementation of the event is not permitted because, as in a class, the
+syntax for an event declaration does not permit only one accessor; both (or neither)
+must be provided. Y ou could accomplish the same thing by permitting the abstract
+remove accessor in the syntax to be implicitly abstract by the absence of a body:
+C#
+Note that this is a new (pr oposed) syntax. In the current grammar, event accessors have a
+mandatory body.
+Closed Issue:  Can an event accessor be (implicitly) abstract by the omission of a
+body, similarly to the way that methods in interfaces and property accessors are
+(implicitly) abstract by the omission of a body?
+Decision:  (2017-04-18) No, event declarations require both concrete accessors (or
+neither).
+Closed Issue:  We should confirm that this is permitted (otherwise adding a default
+implementation would be a breaking change):
+C#public interface  I1 
+{ 
+    event T e1; 
+} 
+public interface  I2 : I1 
+{ 
+    override  event T 
+    { 
+        add { } 
+        remove; // implicitly abstract  
+    } 
+} 
+Reabstraction in a Class (closed)
+interface  I1 
+{ 
+    void M() { } 
+} 
+abstract  class C : I1 
+{ 
+    public abstract  void M(); // implement I1.M with an abstract method in C  
+} Decision:  (2017-04-18) Y es, adding a body to an interface member declaration shouldn't
+break C.
+The previous question implicitly assumes that the sealed modifier can be applied to an
+override in an interface. This contradicts the draft specification. Do we want to permit
+sealing an override? Source and binary compatibility effects of sealing should be
+considered.
+Closed Issue:  Should we permit sealing an override?
+Decision:  (2017-04-18) Let's not allowed sealed on overrides in interfaces. The only use
+of sealed on interface members is to make them non-virtual in their initial declaration.
+The draft of the proposal prefers class overrides to interface overrides in diamond
+inheritance scenarios:
+We require that every interface and class have a most speci fic override for every
+interface method among the overrides appearing in the type or its direct and
+indirect interfaces. The most speci fic override is a unique override that is more
+specific than every other override. If there is no override, the method itself is
+considered the most specific override.
+One override M1 is considered more speci fic than another override M2 if M1 is
+declared on type T1, M2 is declared on type T2, and either
+1. T1 contains T2 among its direct or indirect interfaces, or
+2. T2 is an interface type but T1 is not an interface type.
+The scenario is this
+C#Sealed Override (closed)
+Diamond inheritance and classes (closed)
+interface  IA 
+{ 
+    void M();
+} 
+interface  IB : IA 
+{ 
+    override  void M() { WriteLine( "IB"); } We should confirm this behavior (or decide otherwise)
+Closed Issue:  Confirm the draft spec, above, for most speci fic override as it applies to
+mixed classes and interfaces (a class takes priority over an interface). See
+https://github.com/dotnet/csharplang/blob/master/meetings/2017/LDM-2017-04-
+19.md#diamonds-with-classes .
+There are some unfortunate interactions between default interface methods and structs.
+C#
+Note that interface members are not inherited:
+C#
+Consequently, the client must box the struct to invoke interface methods
+C#} 
+class Base : IA 
+{ 
+    void IA.M() { WriteLine( "Base"); } 
+} 
+class Derived : Base, IB // allowed?  
+{ 
+    static void Main() 
+    { 
+        IA a = new Derived();  
+        a.M();           // what does it do?  
+    } 
+} 
+Interface methods vs structs (closed)
+interface  IA 
+{ 
+    public void M() { } 
+} 
+struct S : IA 
+{ 
+} 
+var s = default(S); 
+s.M(); // error: 'S' does not contain a member 'M'  Boxing in this way defeats the principal benefits of a struct type. Moreover, any
+mutation methods will have no apparent effect, because they are operating on a boxed
+copy of the struct:
+C#
+Closed Issue:  What can we do about this:
+1. Forbid a struct from inheriting a default implementation. All interface
+methods would be treated as abstract in a struct. Then we may take time
+later to decide how to make it work better.
+2. Come up with some kind of code generation strategy that avoids boxing.
+Inside a method like IB.Increment, the type of this would perhaps be akin to
+a type parameter constrained to IB. In conjunction with that, to avoid boxing
+in the caller, non-abstract methods would be inherited from interfaces. This
+may increase compiler and CLR implementation work substantially.
+3. Not worry about it and just leave it as a wart.
+4. Other ideas?
+Decision:  Not worry about it and just leave it as a wart. See
+https://github.com/dotnet/csharplang/blob/master/meetings/2017/LDM-2017-04-
+19.md#structs-and-default-implementations .IA s = default(S); // an S, boxed  
+s.M(); // ok 
+interface  IB 
+{ 
+    public void Increment () { P += 1; } 
+    public int P { get; set; } 
+} 
+struct T : IB 
+{ 
+    public int P { get; set; } // auto-property  
+} 
+T t = default(T); 
+Console.WriteLine(t.P); // prints 0  
+(t as IB).Increment();  
+Console.WriteLine(t.P); // prints 0  
+Base interface invocations (closed)The draft spec suggests a syntax for base interface invocations inspired by Java:
+Interface.base.M(). We need to select a syntax, at least for the initial prototype. My
+favorite is base<Interface>.M().
+Closed Issue:  What is the syntax for a base member invocation?
+Decision:  The syntax is base(Interface).M(). See
+https://github.com/dotnet/csharplang/blob/master/meetings/2017/LDM-2017-04-
+19.md#base-invocation . The interface so named must be a base interface, but does
+not need to be a direct base interface.
+Open Issue:  Should base interface invocations be permitted in class members?
+Decision : Yes. https://github.com/dotnet/csharplang/blob/master/meetings/2017/LDM-
+2017-04-19.md#base-invocation
+In an interface, non-public members from base interfaces are overridden using the
+override modifier. If it is an "explicit" override that names the interface containing the
+member, the access modifier is omitted.
+Closed Issue:  If it is an "implicit" override that does not name the interface, does the
+access modifier have to match?
+Decision:  Only public members may be implicitly overridden, and the access must
+match. See https://github.com/dotnet/csharplang/blob/master/meetings/2017/LDM-
+2017-04-18.md#dim-implementing-a-non-public-interface-member-not-in-list .
+Open Issue:  Is the access modifier required, optional, or omitted on an explicit
+override such as override void IB.M() {}?
+Open Issue:  Is override required, optional, or omitted on an explicit override such
+as void IB.M() {}?
+How does one implement a non-public interface member in a class? P erhaps it must be
+done explicitly?
+C#
+Overriding non-public interface members (closed)
+Closed Issue:  How does one implement a non-public interface member in a class?
+Decision:  You can only implement non-public interface members explicitly. See
+https://github.com/dotnet/csharplang/blob/master/meetings/2017/LDM-2017-04-
+18.md#dim-implementing-a-non-public-interface-member-not-in-list .
+Decision : No override keyword permitted on interface members.
+https://github.com/dotnet/csharplang/blob/master/meetings/2018/LDM-2018-10-
+17.md#does-an-override-in-an-interface-introduce-a-new-member
+Consider the following code in which each type is in a separate assembly
+C#
+We understand that the implementation of I1.M in C is I2.M. What if the assembly
+containing I3 is changed as follows and recompiledinterface  IA 
+{ 
+    internal  void MI(); 
+    protected  void MP(); 
+} 
+class C : IA 
+{ 
+    // are these implementations?
+    internal  void MI() {} 
+    protected  void MP() {} 
+} 
+Binary Compatibility 2 (closed)
+interface  I1 
+{ 
+    void M() { Impl1 }  
+} 
+interface  I2 : I1 
+{ 
+    override  void M() { Impl2 }  
+} 
+interface  I3 : I1 
+{ 
+} 
+class C : I2, I3 
+{ 
+} C#
+but C is not recompiled. What happens when the program is run? An invocation of (C
+as I1).M()
+1. Runs I1.M
+2. Runs I2.M
+3. Runs I3.M
+4. Either 2 or 3, deterministically
+5. Throws some kind of runtime exception
+Decision : Throw an exception (5). See
+https://github.com/dotnet/csharplang/blob/master/meetings/2018/LDM-2018-10-
+17.md#issues-in-default-interface-methods .
+Given that interfaces may be used in ways analogous to the way abstract classes are
+used, it may be useful to declare them partial. This would be particularly useful in the
+face of generators.
+Propos al: Remove the language restriction that interfaces and members of
+interfaces may not be declared partial.
+Decision : Yes. See
+https://github.com/dotnet/csharplang/blob/master/meetings/2018/LDM-2018-10-
+17.md#permit-partial-in-interface .
+Open Issue:  Is a static Main method in an interface a candidate to be the
+program's entry point?
+Decision : Yes. See
+https://github.com/dotnet/csharplang/blob/master/meetings/2018/LDM-2018-10-
+17.md#main-in-an-interface .interface  I3 : I1 
+{ 
+    override  void M() { Impl3 }  
+} 
+Permit partial in interface? (closed)
+Main in an interface? (closed)
+Can we please confirm (or reverse) our decision to permit non-virtual public methods in
+an interface?
+C#
+Semi-Clos ed Issue:  (2017-04-18) W e think it is going to be useful, but will come
+back to it. This is a mental model tripping block.
+Decision : Yes. https://github.com/dotnet/csharplang/blob/master/meetings/2018/LDM-
+2018-10-17.md#confirm-that-we-support-public-non-virtual-methods .
+There are a few ways to observe whether an override declaration introduces a new
+member or not.
+C#Confirm intent to support public non-virtual methods
+(closed)
+interface  IA 
+{ 
+    public sealed void M() { } 
+} 
+Does an override in an interface introduce a new
+member? (closed)
+interface  IA 
+{ 
+    void M(int x) { } 
+} 
+interface  IB : IA 
+{ 
+    override  void M(int y) { } 
+} 
+interface  IC : IB 
+{ 
+    static void M2() 
+    { 
+        M(y: 3); // permitted?  
+    } 
+    override  void IB.M(int z) { } // permitted? What does it override?  
+} Open Issue:  Does an override declaration in an interface introduce a new member?
+(closed)
+In a class, an overriding method is "visible" in some senses. For example, the names of
+its parameters take precedence over the names of parameters in the overridden
+method. It may be possible to duplicate that behavior in interfaces, as there is always a
+most specific override. But do we want to duplicate that behavior?
+Also, it is possible to "override" an override method? [Moot]
+Decision : No override keyword permitted on interface members.
+https://github.com/dotnet/csharplang/blob/master/meetings/2018/LDM-2018-10-
+17.md#does-an-override-in-an-interface-introduce-a-new-member .
+We say that private members are not virtual, and the combination of virtual and private
+is disallowed. But what about a property with a private accessor?
+C#
+Is this allowed? Is the set accessor here virtual or not? Can it be overridden where it is
+accessible? Does the following implicitly implement only the get accessor?
+C#
+Properties with a private accessor (closed)
+interface  IA 
+{ 
+    public virtual int P 
+    { 
+        get => 3; 
+        private set => { } 
+    } 
+} 
+class C : IA 
+{ 
+    public int P 
+    { 
+        get => 4; 
+        set { } 
+    } 
+} Is the following presumably an error because IA.P.set isn't virtual and also because it
+isn't accessible?
+C#
+Decision : The first example looks valid, while the last does not. This is resolved
+analogously to how it already works in C#.
+https://github.com/dotnet/csharplang/blob/master/meetings/2018/LDM-2018-10-
+17.md#properties-with-a-private-accessor
+Our previous "resolution" to how to handle base invocations doesn't actually provide
+sufficient expressiveness. It turns out that in C# and the CLR, unlike Java, you need to
+specify both the interface containing the method declaration and the location of the
+implementation you want to invoke.
+I propose the following syntax for base calls in interfaces. I’m not in love with it, but it
+illustrates what any syntax must be able to express:
+C#class C : IA 
+{ 
+    int IA.P 
+    { 
+        get => 4; 
+        set { } 
+    } 
+} 
+Base Interface Invocations, round 2 (closed)
+interface  I1 { void M(); } 
+interface  I2 { void M(); } 
+interface  I3 : I1, I2 { void I1.M() { } void I2.M() { } }  
+interface  I4 : I1, I2 { void I1.M() { } void I2.M() { } }  
+interface  I5 : I3, I4 
+{ 
+    void I1.M() 
+    { 
+        base<I3>(I1).M(); // calls I3's implementation of I1.M  
+        base<I4>(I1).M(); // calls I4's implementation of I1.M  
+    } 
+    void I2.M() 
+    { 
+        base<I3>(I2).M(); // calls I3's implementation of I2.M  
+        base<I4>(I2).M(); // calls I4's implementation of I2.M  
+    } 
+} If there is no ambiguity, you can write it more simply
+C#
+Or
+C#
+Or
+C#interface  I1 { void M(); } 
+interface  I3 : I1 { void I1.M() { } }  
+interface  I4 : I1 { void I1.M() { } }  
+interface  I5 : I3, I4 
+{ 
+    void I1.M() 
+    { 
+        base<I3>.M(); // calls I3's implementation of I1.M  
+        base<I4>.M(); // calls I4's implementation of I1.M  
+    } 
+} 
+interface  I1 { void M(); } 
+interface  I2 { void M(); } 
+interface  I3 : I1, I2 { void I1.M() { } void I2.M() { } }  
+interface  I5 : I3 
+{ 
+    void I1.M() 
+    { 
+        base(I1).M(); // calls I3's implementation of I1.M  
+    } 
+    void I2.M() 
+    { 
+        base(I2).M(); // calls I3's implementation of I2.M  
+    } 
+} 
+interface  I1 { void M(); } 
+interface  I3 : I1 { void I1.M() { } }  
+interface  I5 : I3 
+{ 
+    void I1.M() 
+    { 
+        base.M(); // calls I3's implementation of I1.M  
+    } 
+} Decision : Decided on base(N.I1<T>).M(s), conceding that if we have an invocation
+binding there may be problem here later on.
+https://github.com/dotnet/csharplang/blob/master/meetings/2018/LDM-2018-11-
+14.md#default-interface-implementations
+@vancem  asserts that we should seriously consider producing a warning if a value type
+declaration fails to override some interface method, even if it would inherit an
+implementation of that method from an interface. Because it causes boxing and
+undermines constrained calls.
+Decision : This seems like something more suited for an analyzer. It also seems like this
+warning could be noisy, since it would fire even if the default interface method is never
+called and no boxing will ever occur.
+https://github.com/dotnet/csharplang/blob/master/meetings/2018/LDM-2018-10-
+17.md#warning-for-struct-not-implementing-default-method
+When are interface static constructors run? The current CLI draft proposes that it occurs
+when the first static method or field is accessed. If there are neither of those then it
+might never be run??
+[2018-10-09 The CLR team proposes "Going to mirror what we do for valuetypes (cctor
+check on access to each instance method)"]
+Decision : Static constructors are also run on entry to instance methods, if the static
+constructor was not beforefieldinit, in which case static constructors are run before
+access to the first static field.
+https://github.com/dotnet/csharplang/blob/master/meetings/2018/LDM-2018-10-
+17.md#when-are-interface-static-constructors-run
+2017-03-08 LDM Meeting Notes  2017-03-21 LDM Meeting Notes  2017-03-23
+meeting "CLR Behavior for Default Interface Methods"  2017-04-05 LDM Meeting
+Notes  2017-04-11 LDM Meeting Notes  2017-04-18 LDM Meeting Notes  2017-
+04-19 LDM Meeting Notes  2017-05-17 LDM Meeting Notes  2017-05-31 LDM
+Warning for struct not implementing default method?
+(closed)
+Interface static constructors (closed)
+Design meetings
+Meeting Notes  2017-06-14 LDM Meeting Notes  2018-10-17 LDM Meeting Notes
+2018-11-14 LDM Meeting Notes
+Async Streams
+Article •10/11/2022
+C# has support for iterator methods and async methods, but no support for a method
+that is both an iterator and an async method. We should rectify this by allowing for
+await to be used in a new form of async iterator, one that returns an
+IAsyncEnumerable<T> or IAsyncEnumerator<T> rather than an IEnumerable<T> or
+IEnumerator<T>, with IAsyncEnumerable<T> consumable in a new await foreach. An
+IAsyncDisposable interface is also used to enable asynchronous cleanup.
+https://github.com/dotnet/roslyn/issues/261
+https://github.com/dotnet/roslyn/issues/114
+There has been much discussion of IAsyncDisposable (e.g.
+https://github.com/dotnet/roslyn/issues/114 ) and whether it's a good idea. However,
+it's a required concept to add in support of async iterators. Since finally blocks may７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+Related discussion
+Detailed design
+Interfaces
+IAsyncDisposable
+contain awaits, and since finally blocks need to be run as part of disposing of
+iterators, we need async disposal. It's also just generally useful any time cleaning up of
+resources might take any period of time, e.g. closing files (requiring flushes),
+deregistering callbacks and providing a way to know when deregistration has
+completed, etc.
+The following interface is added to the core .NET libraries (e.g. S ystem.Private.CoreLib /
+System.Runtime):
+C#
+As with Dispose, invoking DisposeAsync multiple times is acceptable, and subsequent
+invocations after the first should be treated as nops, returning a synchronously
+completed successful task ( DisposeAsync need not be thread-safe, though, and need not
+support concurrent invocation). Further, types may implement both IDisposable and
+IAsyncDisposable, and if they do, it's similarly acceptable to invoke Dispose and then
+DisposeAsync or vice versa, but only the first should be meaningful and subsequent
+invocations of either should be a nop. As such, if a type does implement both,
+consumers are encouraged to call once and only once the more relevant method based
+on the context, Dispose in synchronous contexts and DisposeAsync in asynchronous
+ones.
+(I'm leaving discussion of how IAsyncDisposable interacts with using to a separate
+discussion. And coverage of how it interacts with foreach is handled later in this
+proposal.)
+Alternatives considered:
+DisposeAsync accepting a CancellationToken: while in theory it makes sense that
+anything async can be canceled, disposal is about cleanup, closing things out,
+free'ing resources, etc., which is generally not something that should be canceled;
+cleanup is still important for work that's canceled. The same CancellationToken
+that caused the actual work to be canceled would typically be the same token
+passed to DisposeAsync, making DisposeAsync worthless because cancellation of
+the work would cause DisposeAsync to be a nop. If someone wants to avoid beingnamespace  System 
+{ 
+    public interface  IAsyncDisposable  
+    { 
+        ValueTask DisposeAsync (); 
+    } 
+} blocked waiting for disposal, they can avoid waiting on the resulting ValueTask, or
+wait on it only for some period of time.
+DisposeAsync returning a Task: Now that a non-generic ValueTask exists and can
+be constructed from an IValueTaskSource, returning ValueTask from DisposeAsync
+allows an existing object to be reused as the promise representing the eventual
+async completion of DisposeAsync, saving a Task allocation in the case where
+DisposeAsync completes asynchronously.
+Configuring DisposeAsync with a bool continueOnCapturedContext
+(ConfigureAwait): While there may be issues related to how such a concept is
+exposed to using, foreach, and other language constructs that consume this, from
+an interface perspective it's not actually doing any await'ing and there's nothing
+to configure... consumers of the ValueTask can consume it however they wish.
+IAsyncDisposable inher iting IDisposable: Since only one or the other should be
+used, it doesn't make sense to force types to implement both.
+IDisposableAsync instead o f IAsyncDisposable: We've been following the naming
+that things/types are an "async something" whereas operations are "done async",
+so types have "Async" as a prefix and methods have "Async" as a suffix.
+Two interfaces are added to the core .NET libraries:
+C#
+Typical consumption (without additional language features) would look like:
+C#IAsyncEnumerable / IAsyncEnumerator
+namespace  System.Collections.Generic  
+{ 
+    public interface  IAsyncEnumerable <out T> 
+    { 
+        IAsyncEnumerator<T> GetAsyncEnumerator (CancellationToken  
+cancellationToken = default); 
+    } 
+    public interface  IAsyncEnumerator <out T> : IAsyncDisposable  
+    { 
+        ValueTask< bool> MoveNextAsync (); 
+        T Current { get; } 
+    } 
+} Discarded options considered:
+Task<bool> MoveNextAsync(); T current { get; }: Using Task<bool> would
+support using a cached task object to represent synchronous, successful
+MoveNextAsync calls, but an allocation would still be required for asynchronous
+completion. By returning ValueTask<bool>, we enable the enumerator object to
+itself implement IValueTaskSource<bool> and be used as the backing for the
+ValueTask<bool> returned from MoveNextAsync, which in turn allows for
+significantly reduced overheads.
+ValueTask<(bool, T)> MoveNextAsync();: It's not only harder to consume, but it
+means that T can no longer be covariant.
+ValueTask<T?> TryMoveNextAsync();: Not covariant.
+Task<T?> TryMoveNextAsync();: Not covariant, allocations on every call, etc.
+ITask<T?> TryMoveNextAsync();: Not covariant, allocations on every call, etc.
+ITask<(bool,T)> TryMoveNextAsync();: Not covariant, allocations on every call, etc.
+Task<bool> TryMoveNextAsync(out T result);: The out result would need to be set
+when the operation returns synchronously, not when it asynchronously completes
+the task potentially sometime long in the future, at which point there'd be no way
+to communicate the result.
+IAsyncEnumerator<T> not implementing IAsyncDisposable: We could choose to
+separate these. However, doing so complicates certain other areas of the proposal,
+as code must then be able to deal with the possibility that an enumerator doesn't
+provide disposal, which makes it difficult to write pattern-based helpers. Further, it
+will be common for enumerators to have a need for disposal (e.g. any C# async
+iterator that has a finally block, most things enumerating data from a network
+connection, etc.), and if one doesn't, it is simple to implement the method purely
+as public ValueTask DisposeAsync() => default(ValueTask); with minimal
+additional overhead.
+_ IAsyncEnumerator<T> GetAsyncEnumerator(): No cancellation token parameter.IAsyncEnumerator<T> enumerator = enumerable.GetAsyncEnumerator();  
+try 
+{ 
+    while (await enumerator.MoveNextAsync())  
+    { 
+        Use(enumerator.Current);  
+    } 
+} 
+finally { await enumerator.DisposeAsync(); }  
+Viable alternative:C#
+TryGetNext is used in an inner loop to consume items with a single interface call as long
+as they're available synchronously. When the next item can't be retrieved synchronously,
+it returns false, and any time it returns false, a caller must subsequently invoke
+WaitForNextAsync to either wait for the next item to be available or to determine that
+there will never be another item. T ypical consumption (without additional language
+features) would look like:
+C#
+The advantage of this is two-fold, one minor and one major:
+Minor : Allo ws for an enumer ator to suppor t multiple c onsumer s. There may be
+scenarios where it's valuable for an enumerator to support multiple concurrent
+consumers. That can't be achieved when MoveNextAsync and Current are separate
+such that an implementation can't make their usage atomic. In contrast, this
+approach provides a single method TryGetNext that supports pushing thenamespace  System.Collections.Generic  
+{ 
+    public interface  IAsyncEnumerable <out T> 
+    { 
+        IAsyncEnumerator<T> GetAsyncEnumerator (); 
+    } 
+    public interface  IAsyncEnumerator <out T> : IAsyncDisposable  
+    { 
+        ValueTask< bool> WaitForNextAsync (); 
+        T TryGetNext (out bool success ); 
+    } 
+} 
+IAsyncEnumerator<T> enumerator = enumerable.GetAsyncEnumerator();  
+try 
+{ 
+    while (await enumerator.WaitForNextAsync())  
+    { 
+        while (true) 
+        {  
+            int item = enumerator.TryGetNext( out bool success);  
+            if (!success) break; 
+            Use(item);  
+        }  
+    } 
+} 
+finally { await enumerator.DisposeAsync(); }  enumerator forward and getting the next item, so the enumerator can enable
+atomicity if desired. However, it's likely that such scenarios could also be enabled
+by giving each consumer its own enumerator from a shared enumerable. Further,
+we don't want to enforce that every enumerator support concurrent usage, as that
+would add non-trivial overheads to the majority case that doesn't require it, which
+means a consumer of the interface generally couldn't rely on this any way.
+Major : Performanc e. The MoveNextAsync/Current approach requires two interface
+calls per operation, whereas the best case for WaitForNextAsync/TryGetNext is that
+most iterations complete synchronously, enabling a tight inner loop with
+TryGetNext, such that we only have one interface call per operation. This can have
+a measurable impact in situations where the interface calls dominate the
+computation.
+However, there are non-trivial downsides, including significantly increased complexity
+when consuming these manually, and an increased chance of introducing bugs when
+using them. And while the performance benefits show up in microbenchmarks, we don't
+believe they'll be impactful in the vast majority of real usage. If it turns out they are, we
+can introduce a second set of interfaces in a light-up fashion.
+Discarded options considered:
+ValueTask<bool> WaitForNextAsync(); bool TryGetNext(out T result);: out
+parameters can't be covariant. There's also a small impact here (an issue with the
+try pattern in general) that this likely incurs a runtime write barrier for reference
+type results.
+There are several possible approaches to supporting cancellation:
+1. IAsyncEnumerable<T>/IAsyncEnumerator<T> are cancellation-agnostic:
+CancellationToken doesn't appear anywhere. Cancellation is achieved by logically
+baking the CancellationToken into the enumerable and/or enumerator in whatever
+manner is appropriate, e.g. when calling an iterator, passing the CancellationToken
+as an argument to the iterator method and using it in the body of the iterator, as is
+done with any other parameter.
+2. IAsyncEnumerator<T>.GetAsyncEnumerator(CancellationToken): You pass a
+CancellationToken to GetAsyncEnumerator, and subsequent MoveNextAsync
+operations respect it however it can.
+3. IAsyncEnumerator<T>.MoveNextAsync(CancellationToken): You pass a
+CancellationToken to each individual MoveNextAsync call.Cancellation4. 1 && 2: Y ou both embed CancellationTokens into your enumerable/enumerator
+and pass CancellationTokens into GetAsyncEnumerator.
+5. 1 && 3: Y ou both embed CancellationTokens into your enumerable/enumerator
+and pass CancellationTokens into MoveNextAsync.
+From a purely theoretical perspective, (5) is the most robust, in that (a) MoveNextAsync
+accepting a CancellationToken enables the most fine-grained control over what's
+canceled, and (b) CancellationToken is just any other type that can passed as an
+argument into iterators, embedded in arbitrary types, etc.
+However, there are multiple problems with that approach:
+How does a CancellationToken passed to GetAsyncEnumerator make it into the
+body of the iterator? We could expose a new iterator keyword that you could dot
+off of to get access to the CancellationToken passed to GetEnumerator, but a)
+that's a lot of additional machinery, b) we're making it a very first-class citizen, and
+c) the 99% case would seem to be the same code both calling an iterator and
+calling GetAsyncEnumerator on it, in which case it can just pass the
+CancellationToken as an argument into the method.
+How does a CancellationToken passed to MoveNextAsync get into the body of the
+method? This is even worse, as if it's exposed off of an iterator local object, its
+value could change across awaits, which means any code that registered with the
+token would need to unregister from it prior to awaits and then re-register after;
+it's also potentially quite expensive to need to do such registering and
+unregistering in every MoveNextAsync call, regardless of whether implemented by
+the compiler in an iterator or by a developer manually.
+How does a developer cancel a foreach loop? If it's done by giving a
+CancellationToken to an enumerable/enumerator, then either a) we need to
+support foreach'ing over enumerators, which raises them to being first-class
+citizens, and now you need to start thinking about an ecosystem built up around
+enumerators (e.g. LINQ methods) or b) we need to embed the CancellationToken
+in the enumerable anyway by having some WithCancellation extension method
+off of IAsyncEnumerable<T> that would store the provided token and then pass it
+into the wrapped enumerable's GetAsyncEnumerator when the GetAsyncEnumerator
+on the returned struct is invoked (ignoring that token). Or, you can just use the
+CancellationToken you have in the body of the foreach.
+If/when query comprehensions are supported, how would the CancellationToken
+supplied to GetEnumerator or MoveNextAsync be passed into each clause? The
+easiest way would simply be for the clause to capture it, at which point whatever
+token is passed to GetAsyncEnumerator/MoveNextAsync is ignored.An earlier version of this document recommended (1), but we since switched to (4).
+The two main problems with (1):
+producers of cancellable enumerables have to implement some boilerplate, and
+can only leverage the compiler's support for async-iterators to implement a
+IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken) method.
+it is likely that many producers would be tempted to just add a CancellationToken
+parameter to their async-enumerable signature instead, which will prevent
+consumers from passing the cancellation token they want when they are given an
+IAsyncEnumerable type.
+There are two main consumption scenarios:
+1. await foreach (var i in GetData(token)) ... where the consumer calls the
+async-iterator method,
+2. await foreach (var i in givenIAsyncEnumerable.WithCancellation(token)) ...
+where the consumer deals with a given IAsyncEnumerable instance.
+We find that a reasonable compromise to support both scenarios in a way that is
+convenient for both producers and consumers of async-streams is to use a specially
+annotated parameter in the async-iterator method. The [EnumeratorCancellation]
+attribute is used for this purpose. Placing this attribute on a parameter tells the compiler
+that if a token is passed to the GetAsyncEnumerator method, that token should be used
+instead of the value originally passed for the parameter.
+Consider IAsyncEnumerable<int> GetData([EnumeratorCancellation] CancellationToken
+token = default). The implementer of this method can simply use the parameter in the
+method body. The consumer can use either consumption patterns above:
+1. if you use GetData(token), then the token is saved into the async-enumerable and
+will be used in iteration,
+2. if you use givenIAsyncEnumerable.WithCancellation(token), then the token passed
+to GetAsyncEnumerator will supersede any token saved in the async-enumerable.
+foreach will be augmented to support IAsyncEnumerable<T> in addition to its existing
+support for IEnumerable<T>. And it will support the equivalent of IAsyncEnumerable<T>
+as a pattern if the relevant members are exposed publicly, falling back to using the
+interface directly if not, in order to enable struct-based extensions that avoid allocatingforeachas well as using alternative awaitables as the return type of MoveNextAsync and
+DisposeAsync.
+Using the syntax:
+C#
+C# will continue to treat enumerable as a synchronous enumerable, such that even if it
+exposes the relevant APIs for async enumerables (exposing the pattern or implementing
+the interface), it will only consider the synchronous APIs.
+To force foreach to instead only consider the asynchronous APIs, await is inserted as
+follows:
+C#
+No syntax would be provided that would support using either the async or the sync
+APIs; the developer must choose based on the syntax used.
+The compile-time processing of an await foreach statement first determines the
+collection type , enumer ator type  and iteration type  of the expression (very similar to
+https://github.com/dotnet/csharpstandard/blob/draft-
+v6/standard/statements.md#1295-the-foreach-statement ). This determination
+proceeds as follows:
+If the type  X of expression  is dynamic or an array type, then an error is produced
+and no further steps are taken.
+Otherwise, determine whether the type  X has an appropriate GetAsyncEnumerator
+method:
+Perform member lookup on the type  X with identifier GetAsyncEnumerator and
+no type arguments. If the member lookup does not produce a match, or it
+produces an ambiguity, or produces a match that is not a method group, check
+for an enumerable interface as described below.Syntax
+foreach (var i in enumerable)  
+await foreach (var i in enumerable)  
+Semantics
+Perform overload resolution using the resulting method group and an empty
+argument list. If overload resolution results in no applicable methods, results in
+an ambiguity, or results in a single best method but that method is either static
+or not public, check for an enumerable interface as described below.
+If the return type  E of the GetAsyncEnumerator method is not a class, struct or
+interface type, an error is produced and no further steps are taken.
+Member lookup is performed on  E with the identifier Current and no type
+arguments. If the member lookup produces no match, the result is an error, or
+the result is anything except a public instance property that permits reading, an
+error is produced and no further steps are taken.
+Member lookup is performed on  E with the identifier MoveNextAsync and no
+type arguments. If the member lookup produces no match, the result is an
+error, or the result is anything except a method group, an error is produced and
+no further steps are taken.
+Overload resolution is performed on the method group with an empty
+argument list. If overload resolution results in no applicable methods, results in
+an ambiguity, or results in a single best method but that method is either static
+or not public, or its return type is not awaitable into bool, an error is produced
+and no further steps are taken.
+The collection type is  X, the enumerator type is  E, and the iteration type is the
+type of the Current property.
+Otherwise, check for an enumerable interface:
+If among all the types  Tᵢ for which there is an implicit conversion from X to
+IAsyncEnumerable<ᵢ>, there is a unique type  T such that T is not dynamic and
+for all the other  Tᵢ there is an implicit conversion from IAsyncEnumerable<T> to
+IAsyncEnumerable<Tᵢ>, then the collection type is the interface
+IAsyncEnumerable<T>, the enumerator type is the interface IAsyncEnumerator<T>,
+and the iteration type is  T.
+Otherwise, if there is more than one such type  T, then an error is produced and
+no further steps are taken.
+Otherwise, an error is produced and no further steps are taken.
+The above steps, if successful, unambiguously produce a collection type  C, enumerator
+type E and iteration type  T.
+C#
+is then expanded to:await foreach (V v in x) «embedded_statement»  C#
+The body of the finally block is constructed according to the following steps:
+If the type  E has an appropriate DisposeAsync method:
+Perform member lookup on the type  E with identifier DisposeAsync and no type
+arguments. If the member lookup does not produce a match, or it produces an
+ambiguity, or produces a match that is not a method group, check for the
+disposal interface as described below.
+Perform overload resolution using the resulting method group and an empty
+argument list. If overload resolution results in no applicable methods, results in
+an ambiguity, or results in a single best method but that method is either static
+or not public, check for the disposal interface as described below.
+If the return type of the DisposeAsync method is not awaitable, an error is
+produced and no further steps are taken.
+The finally clause is expanded to the semantic equivalent of:
+C#
+Otherwise, if there is an implicit conversion from E to the System.IAsyncDisposable
+interface, then
+If E is a non-nullable value type then the finally clause is expanded to the
+semantic equivalent of:
+C#{ 
+    E e = ((C)(x)).GetAsyncEnumerator();  
+    try { 
+        while (await e.MoveNextAsync()) {  
+            V v = (V)(T)e.Current;  
+            «embedded_statement»  
+        }  
+    } 
+    finally { 
+        ... // Dispose e  
+    } 
+} 
+  finally { 
+      await e.DisposeAsync();  
+  } 
+  finally { 
+      await ((System.IAsyncDisposable)e).DisposeAsync();  
+  } Otherwise the finally clause is expanded to the semantic equivalent of:
+C#
+except that if E is a value type, or a type parameter instantiated to a value type,
+then the conversion of e to System.IAsyncDisposable shall not cause boxing to
+occur.
+Otherwise, the finally clause is expanded to an empty block:
+C#
+This pattern-based compilation will allow ConfigureAwait to be used on all of the awaits,
+via a ConfigureAwait extension method:
+C#
+This will be based on types we'll add to .NET as well, likely to
+System.Threading.T asks.Extensions.dll:
+C#finally { 
+    System.IAsyncDisposable d = e as System.IAsyncDisposable;  
+    if (d != null) await d.DisposeAsync();  
+} 
+finally { 
+} 
+ConfigureAwait
+await foreach (T item in enumerable.ConfigureAwait( false)) 
+{ 
+   ... 
+} 
+// Approximate implementation, omitting arg validation and the like  
+namespace  System.Threading.Tasks  
+{ 
+    public static class AsyncEnumerableExtensions  
+    { 
+        public static ConfiguredAsyncEnumerable<T> ConfigureAwait<T>( this 
+IAsyncEnumerable<T> enumerable, bool continueOnCapturedContext) =>
+            new ConfiguredAsyncEnumerable<T>(enumerable,  
+continueOnCapturedContext);  Note that this approach will not enable ConfigureAwait to be used with pattern-based
+enumerables, but then again it's already the case that the ConfigureAwait is only
+exposed as an extension on Task/Task<T>/ValueTask/ValueTask<T> and can't be
+applied to arbitrary awaitable things, as it only makes sense when applied to T asks (it
+controls a behavior implemented in T ask's continuation support), and thus doesn't make
+sense when using a pattern where the awaitable things may not be tasks. Anyone
+returning awaitable things can provide their own custom behavior in such advanced
+scenarios.        public struct ConfiguredAsyncEnumerable<T>  
+        {  
+            private readonly  IAsyncEnumerable<T> _enumerable;  
+            private readonly  bool _continueOnCapturedContext;  
+            internal  ConfiguredAsyncEnumerable (IAsyncEnumerable<T>  
+enumerable, bool continueOnCapturedContext ) 
+            {  
+                _enumerable = enumerable;  
+                _continueOnCapturedContext = continueOnCapturedContext;  
+            }  
+            public ConfiguredAsyncEnumerator<T> GetAsyncEnumerator () => 
+                new ConfiguredAsyncEnumerator<T>
+(_enumerable.GetAsyncEnumerator(), _continueOnCapturedContext);  
+            public struct ConfiguredAsyncEnumerator<T>  
+            {  
+                private readonly  IAsyncEnumerator<T> _enumerator;  
+                private readonly  bool _continueOnCapturedContext;  
+                internal  Enumerator (IAsyncEnumerator<T> enumerator, bool 
+continueOnCapturedContext ) 
+                {  
+                    _enumerator = enumerator;  
+                    _continueOnCapturedContext = continueOnCapturedContext;  
+                }  
+                public ConfiguredValueTaskAwaitable< bool> MoveNextAsync () => 
+                    
+_enumerator.MoveNextAsync().ConfigureAwait(_continueOnCapturedContext);  
+                public T Current => _enumerator.Current;  
+                public ConfiguredValueTaskAwaitable DisposeAsync () => 
+                    
+_enumerator.DisposeAsync().ConfigureAwait(_continueOnCapturedContext);  
+            }  
+        }  
+    } 
+} (If we can come up with some way to support a scope- or assembly-level
+ConfigureAwait solution, then this won't be necessary.)
+The language / compiler will support producing IAsyncEnumerable<T>s and
+IAsyncEnumerator<T>s in addition to consuming them. T oday the language supports
+writing an iterator like:
+C#
+but await can't be used in the body of these iterators. We will add that support.
+The existing language support for iterators infers the iterator nature of the method
+based on whether it contains any yields. The same will be true for async iterators. Such
+async iterators will be demarcated and differentiated from synchronous iterators via
+adding async to the signature, and must then also have either IAsyncEnumerable<T> or
+IAsyncEnumerator<T> as its return type. For example, the above example could be
+written as an async iterator as follows:
+C#Async Iterators
+static IEnumerable< int> MyIterator () 
+{ 
+    try 
+    { 
+        for (int i = 0; i < 100; i++) 
+        {  
+            Thread.Sleep( 1000); 
+            yield return i; 
+        }  
+    } 
+    finally 
+    { 
+        Thread.Sleep( 200); 
+        Console.WriteLine( "finally" ); 
+    } 
+} 
+Syntax
+static async IAsyncEnumerable< int> MyIterator () 
+{ 
+    try 
+    { 
+        for (int i = 0; i < 100; i++) Alternatives considered:
+Not using async in the signatur e: Using async is likely technically required by the
+compiler, as it uses it to determine whether await is valid in that context. But even
+if it's not required, we've established that await may only be used in methods
+marked as async, and it seems important to keep the consistency.
+Enabling cust om builder s for IAsyncEnumerable<T>: That's something we could look
+at for the future, but the machinery is complicated and we don't support that for
+the synchronous counterparts.
+Having an iterator keyword in the signatur e: Async iterators would use async
+iterator in the signature, and yield could only be used in async methods that
+included iterator; iterator would then be made optional on synchronous
+iterators. Depending on your perspective, this has the benefit of making it very
+clear by the signature of the method whether yield is allowed and whether the
+method is actually meant to return instances of type IAsyncEnumerable<T> rather
+than the compiler manufacturing one based on whether the code uses yield or
+not. But it is different from synchronous iterators, which don't and can't be made
+to require one. Plus some developers don't like the extra syntax. If we were
+designing it from scratch, we'd probably make this required, but at this point
+there's much more value in keeping async iterators close to sync iterators.
+There are over ~200 overloads of methods on the System.Linq.Enumerable class, all of
+which work in terms of IEnumerable<T>; some of these accept IEnumerable<T>, some of
+them produce IEnumerable<T>, and many do both. Adding LINQ support for
+IAsyncEnumerable<T> would likely entail duplicating all of these overloads for it, for
+another ~200. And since IAsyncEnumerator<T> is likely to be more common as a
+standalone entity in the asynchronous world than IEnumerator<T> is in the synchronous
+world, we could potentially need another ~200 overloads that work with        {  
+            await Task.Delay( 1000); 
+            yield return i; 
+        }  
+    } 
+    finally 
+    { 
+        await Task.Delay( 200); 
+        Console.WriteLine( "finally" ); 
+    } 
+} 
+LINQIAsyncEnumerator<T>. Plus, a large number of the overloads deal with predicates (e.g.
+Where that takes a Func<T, bool>), and it may be desirable to have
+IAsyncEnumerable<T>-based overloads that deal with both synchronous and
+asynchronous predicates (e.g. Func<T, ValueTask<bool>> in addition to Func<T, bool>).
+While this isn't applicable to all of the now ~400 new overloads, a rough calculation is
+that it'd be applicable to half, which means another ~200 overloads, for a total of ~600
+new methods.
+That is a staggering number of APIs, with the potential for even more when extension
+libraries like Interactive Extensions (Ix) are considered. But Ix already has an
+implementation of many of these, and there doesn't seem to be a great reason to
+duplicate that work; we should instead help the community improve Ix and recommend
+it for when developers want to use LINQ with IAsyncEnumerable<T>.
+There is also the issue of query comprehension syntax. The pattern-based nature of
+query comprehensions would allow them to "just work" with some operators, e.g. if Ix
+provides the following methods:
+C#
+then this C# code will "just work":
+C#
+However, there is no query comprehension syntax that supports using await in the
+clauses, so if Ix added, for example:
+C#
+then this would "just work":public static IAsyncEnumerable<TResult> Select<TSource, TResult>( this 
+IAsyncEnumerable<TSource> source, Func<TSource, TResult> func);  
+public static IAsyncEnumerable<T> Where(this IAsyncEnumerable<T> source,  
+Func<T, bool> func); 
+IAsyncEnumerable< int> enumerable = ...;  
+IAsyncEnumerable< int> result = from item in enumerable  
+                               where item % 2 == 0 
+                               select item * 2; 
+public static IAsyncEnumerable<TResult> Select<TSource, TResult>( this 
+IAsyncEnumerable<TSource> source, Func<TSource, ValueTask<TResult>> func);  C#
+but there'd be no way to write it with the await inline in the select clause. As a
+separate effort, we could look into adding async { ... } expressions to the language,
+at which point we could allow them to be used in query comprehensions and the above
+could instead be written as:
+C#
+or to enabling await to be used directly in expressions, such as by supporting async
+from. However, it's unlikely a design here would impact the rest of the feature set one
+way or the other, and this isn't a particularly high-value thing to invest in right now, so
+the proposal is to do nothing additional here right now.
+Integration with IObservable<T> and other asynchronous frameworks (e.g. reactive
+streams) would be done at the library level rather than at the language level. For
+example, all of the data from an IAsyncEnumerator<T> can be published to an
+IObserver<T> simply by await foreach'ing over the enumerator and OnNext'ing the data
+to the observer, so an AsObservable<T> extension method is possible. Consuming an
+IObservable<T> in a await foreach requires buffering the data (in case another item is
+pushed while the previous item is still being processing), but such a push-pull adapter
+can easily be implemented to enable an IObservable<T> to be pulled from with anIAsyncEnumerable< string> result = from url in urls 
+                                  where item % 2 == 0 
+                                  select SomeAsyncMethod (item); 
+async ValueTask< int> SomeAsyncMethod (int item)
+{ 
+    await Task.Yield();  
+    return item * 2; 
+} 
+IAsyncEnumerable< int> result = from item in enumerable  
+                               where item % 2 == 0 
+                               select async 
+                               {  
+                                   await Task.Yield();  
+                                   return item * 2; 
+                               };
+Integration with other asynchronous
+frameworksIAsyncEnumerator<T>. Etc. Rx/Ix already provide prototypes of such implementations,
+and libraries like
+https://github.com/dotnet/corefx/tree/master/src/S ystem.Threading.Channels  provide
+various kinds of buffering data structures. The language need not be involved at this
+stage.
+Ranges
+Article •11/09/2021
+This feature is about delivering two new operators that allow constructing System.Index
+and System.Range objects, and using them to index/slice collections at runtime.
+To use the new syntactic forms for System.Index and System.Range, new well-known
+types and members may be necessary, depending on which syntactic forms are used.
+To use the "hat" operator ( ^), the following is required
+C#
+To use the System.Index type as an argument in an array element access, the following
+member is required:７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+Overview
+Well-known types and members
+namespace  System 
+{ 
+    public readonly  struct Index 
+    { 
+        public Index(int value, bool fromEnd ); 
+    } 
+} C#
+The .. syntax for System.Range will require the System.Range type, as well as one or
+more of the following members:
+C#
+The .. syntax allows for either, both, or none of its arguments to be absent. R egardless
+of the number of arguments, the Range constructor is always sufficient for using the
+Range syntax. However, if any of the other members are present and one or more of the
+.. arguments are missing, the appropriate member may be substituted.
+Finally, for a value of type System.Range to be used in an array element access
+expression, the following member must be present:
+C#
+C# has no way of indexing a collection from the end, but rather most indexers use the
+"from start" notion, or do a "length - i" expression. W e introduce a new Index expression
+that means "from the end". The feature will introduce a new unary prefix "hat" operator.
+Its single operand must be convertible to System.Int32. It will be lowered into the
+appropriate System.Index factory method call.int System.Index.GetOffset( int length);  
+namespace  System 
+{ 
+    public readonly  struct Range 
+    { 
+        public Range(System.Index start, System.Index end ); 
+        public static Range StartAt(System.Index start ); 
+        public static Range EndAt(System.Index end ); 
+        public static Range All { get; } 
+    } 
+} 
+namespace  System.Runtime.CompilerServices  
+{ 
+    public static class RuntimeHelpers  
+    { 
+        public static T[] GetSubArray<T>(T[] array, System.Range range);  
+    } 
+} 
+System.IndexWe augment the grammar for unary_expr ession  with the following additional syntax
+form:
+antlr
+We call this the index fr om end  operator. The predefined index fr om end  operators are as
+follows:
+C#
+The behavior of this operator is only defined for input values greater than or equal to
+zero.
+Examples:
+C#
+C# has no syntactic way to access "ranges" or "slices" of collections. Usually users are
+forced to implement complex structures to filter/operate on slices of memory, or resort
+to LINQ methods like list.Skip(5).Take(2). With the addition of System.Span<T> and
+other similar types, it becomes more important to have this kind of operation supported
+on a deeper level in the language/runtime, and have the interface unified.
+The language will introduce a new range operator x..y. It is a binary infix operator that
+accepts two expressions. Either operand can be omitted (examples below), and they
+have to be convertible to System.Index. It will be lowered to the appropriate
+System.Range factory method call.
+We replace the C# grammar rules for multiplicativ e_expr ession  with the following (in
+order to introduce a new precedence level):unary_expression  
+    : '^' unary_expression  
+    ; 
+System.Index operator  ^(int fromEnd);  
+var array = new int[] { 1, 2, 3, 4, 5 }; 
+var thirdItem = array[ 2];    // array[2]  
+var lastItem = array[^ 1];    // array[new Index(1, fromEnd: true)]  
+System.Rangeantlr
+All forms of the range oper ator have the same precedence. This new precedence group
+is lower than the unary oper ators and higher than the multiplicativ e arithmetic oper ators.
+We call the .. operator the range oper ator. The built-in range operator can roughly be
+understood to correspond to the invocation of a built-in operator of this form:
+C#
+Examples:
+C#
+Moreover, System.Index should have an implicit conversion from System.Int32, in order
+to avoid the need to overload mixing integers and indexes over multi-dimensional
+signatures.range_expression  
+    : unary_expression  
+    | range_expression? '..' range_expression?  
+    ; 
+multiplicative_expression  
+    : range_expression  
+    | multiplicative_expression '*' range_expression  
+    | multiplicative_expression '/' range_expression  
+    | multiplicative_expression '%' range_expression  
+    ; 
+System.Range operator  ..(Index start = 0, Index end = ^ 0); 
+var array = new int[] { 1, 2, 3, 4, 5 }; 
+var slice1 = array[ 2..^3];    // array[new Range(2, new Index(3, fromEnd:  
+true))] 
+var slice2 = array[..^ 3];     // array[Range.EndAt(new Index(3, fromEnd:  
+true))] 
+var slice3 = array[ 2..];      // array[Range.StartAt(2)]  
+var slice4 = array[..];       // array[Range.All]  
+Adding Index and Range support to existing
+library types
+Implicit Index supportThe language will provide an instance indexer member with a single parameter of type
+Index for types which meet the following criteria:
+The type is Countable.
+The type has an accessible instance indexer which takes a single int as the
+argument.
+The type does not have an accessible instance indexer which takes an Index as the
+first parameter. The Index must be the only parameter or the remaining
+parameters must be optional.
+A type is C ount able if it has a property named Length or Count with an accessible getter
+and a return type of int. The language can make use of this property to convert an
+expression of type Index into an int at the point of the expression without the need to
+use the type Index at all. In case both Length and Count are present, Length will be
+preferred. For simplicity going forward, the proposal will use the name Length to
+represent Count or Length.
+For such types, the language will act as if there is an indexer member of the form T
+this[Index index] where T is the return type of the int based indexer including any
+ref style annotations. The new member will have the same get and set members with
+matching accessibility as the int indexer.
+The new indexer will be implemented by converting the argument of type Index into an
+int and emitting a call to the int based indexer. For discussion purposes, let's use the
+example of receiver[expr]. The conversion of expr to int will occur as follows:
+When the argument is of the form ^expr2 and the type of expr2 is int, it will be
+translated to receiver.Length - expr2.
+Otherwise, it will be translated as expr.GetOffset(receiver.Length).
+Regardless of the specific conversion strategy, the order of evaluation should be
+equivalent to the following:
+1. receiver is evaluated;
+2. expr is evaluated;
+3. length is evaluated, if needed;
+4. the int based indexer is invoked.
+This allows for developers to use the Index feature on existing types without the need
+for modification. For example:
+C#The receiver and Length expressions will be spilled as appropriate to ensure any side
+effects are only executed once. For example:
+C#
+This code will print "Get Length 3".
+The language will provide an instance indexer member with a single parameter of type
+Range for types which meet the following criteria:
+The type is Countable.
+The type has an accessible member named Slice which has two parameters of
+type int.List<char> list = ...;  
+var value = list[^ 1]; 
+// Gets translated to  
+var value = list[list.Count - 1]; 
+class Collection  { 
+    private int[] _array = new[] { 1, 2, 3 }; 
+    public int Length {  
+        get { 
+            Console.Write( "Length " ); 
+            return _array.Length;  
+        }  
+    } 
+    public int this[int index] => _array[index];  
+} 
+class SideEffect  { 
+    Collection Get() { 
+        Console.Write( "Get "); 
+        return new Collection();  
+    } 
+    void Use() { 
+        int i = Get()[^ 1]; 
+        Console.WriteLine(i);  
+    } 
+} 
+Implicit Range supportThe type does not have an instance indexer which takes a single Range as the first
+parameter. The Range must be the only parameter or the remaining parameters
+must be optional.
+For such types, the language will bind as if there is an indexer member of the form T
+this[Range range] where T is the return type of the Slice method including any ref
+style annotations. The new member will also have matching accessibility with Slice.
+When the Range based indexer is bound on an expression named receiver, it will be
+lowered by converting the Range expression into two values that are then passed to the
+Slice method. For discussion purposes, let's use the example of receiver[expr].
+The first argument of Slice will be obtained by converting the range typed expression
+in the following way:
+When expr is of the form expr1..expr2 (where expr2 can be omitted) and expr1
+has type int, then it will be emitted as expr1.
+When expr is of the form ^expr1..expr2 (where expr2 can be omitted), then it will
+be emitted as receiver.Length - expr1.
+When expr is of the form ..expr2 (where expr2 can be omitted), then it will be
+emitted as 0.
+Otherwise, it will be emitted as expr.Start.GetOffset(receiver.Length).
+This value will be re-used in the calculation of the second Slice argument. When doing
+so it will be referred to as start. The second argument of Slice will be obtained by
+converting the range typed expression in the following way:
+When expr is of the form expr1..expr2 (where expr1 can be omitted) and expr2
+has type int, then it will be emitted as expr2 - start.
+When expr is of the form expr1..^expr2 (where expr1 can be omitted), then it will
+be emitted as (receiver.Length - expr2) - start.
+When expr is of the form expr1.. (where expr1 can be omitted), then it will be
+emitted as receiver.Length - start.
+Otherwise, it will be emitted as expr.End.GetOffset(receiver.Length) - start.
+Regardless of the specific conversion strategy, the order of evaluation should be
+equivalent to the following:
+1. receiver is evaluated;
+2. expr is evaluated;
+3. length is evaluated, if needed;4. the Slice method is invoked.
+The receiver, expr, and length expressions will be spilled as appropriate to ensure any
+side effects are only executed once. For example:
+C#
+This code will print "Get Length 2".
+The language will special case the following known types:
+string: the method Substring will be used instead of Slice.
+array: the method System.Runtime.CompilerServices.RuntimeHelpers.GetSubArray
+will be used instead of Slice.
+The new operators ( ^ and ..) are syntactic sugar. The functionality can be
+implemented by explicit calls to System.Index and System.Range factory methods, but itclass Collection  { 
+    private int[] _array = new[] { 1, 2, 3 }; 
+    public int Length {  
+        get { 
+            Console.Write( "Length " ); 
+            return _array.Length;  
+        }  
+    } 
+    public int[] Slice(int start, int length) { 
+        var slice = new int[length];  
+        Array.Copy(_array, start, slice, 0, length);  
+        return slice; 
+    } 
+} 
+class SideEffect  { 
+    Collection Get() { 
+        Console.Write( "Get "); 
+        return new Collection();  
+    } 
+    void Use() { 
+        var array = Get()[ 0..2]; 
+        Console.WriteLine(array.Length);  
+    } 
+} 
+Alternativeswill result in a lot more boilerplate code, and the experience will be unintuitive.
+These two operators will be lowered to regular indexer/method calls, with no change in
+subsequent compiler layers.
+Compiler can optimize indexers for built-in types like arrays and strings, and lower
+the indexing to the appropriate existing methods.
+System.Index will throw if constructed with a negative value.
+^0 does not throw, but it translates to the length of the collection/enumerable it is
+supplied to.
+Range.All is semantically equivalent to 0..^0, and can be deconstructed to these
+indices.
+The inspiration for this behavior was collection initializers. Using the structure of a type
+to convey that it had opted into a feature. In the case of collection initializers types can
+opt into the feature by implementing the interface IEnumerable (non generic).
+This proposal initially required that types implement ICollection in order to qualify as
+Indexable. That required a number of special cases though:
+ref struct: these cannot implement interfaces yet types like Span<T> are ideal for
+index / range support.
+string: does not implement ICollection and adding that interface has a large
+cost.
+This means to support key types special casing is already needed. The special casing of
+string is less interesting as the language does this in other areas ( foreach lowering,
+constants, etc ...). The special casing of ref struct is more concerning as it's special
+casing an entire class of types. They get labeled as Indexable if they simply have a
+property named Count with a return type of int.IL Representation
+Runtim e behavior
+Considerations
+Detect Indexable based on ICollectionAfter consideration the design was normalized to say that any type which has a property
+Count / Length with a return type of int is Indexable. That removes all special casing,
+even for string and arrays.
+Detecting on the property names Count or Length does complicate the design a bit.
+Picking just one to standardize though is not sufficient as it ends up excluding a large
+number of types:
+Use Length: excludes pretty much every collection in S ystem.Collections and sub-
+namespaces. Those tend to derive from ICollection and hence prefer Count over
+length.
+Use Count: excludes string, arrays, Span<T> and most ref struct based types
+The extra complication on the initial detection of Indexable types is outweighed by its
+simplification in other aspects.
+The name Slice was chosen as it's the de-facto standard name for slice style operations
+in .NET. S tarting with netcoreapp2.1 all span style types use the name Slice for slicing
+operations. Prior to netcoreapp2.1 there really aren't any examples of slicing to look to
+for an example. T ypes like List<T>, ArraySegment<T>, SortedList<T> would've been
+ideal for slicing but the concept didn't exist when types were added.
+Thus, Slice being the sole example, it was chosen as the name.
+Another way to view the Index transformation in an indexer expression is as a target
+type conversion. Instead of binding as if there is a member of the form return_type
+this[Index], the language instead assigns a target typed conversion to int.
+This concept could be generalized to all member access on Countable types. Whenever
+an expression with type Index is used as an argument to an instance member
+invocation and the receiver is Countable then the expression will have a target type
+conversion to int. The member invocations applicable for this conversion include
+methods, indexers, properties, extension methods, etc ... Only constructors are excluded
+as they have no receiver.Detect just Count
+Choice of Slice as a name
+Index target type conversionThe target type conversion will be implemented as follows for any expression which has
+a type of Index. For discussion purposes lets use the example of receiver[expr]:
+When expr is of the form ^expr2 and the type of expr2 is int, it will be translated
+to receiver.Length - expr2.
+Otherwise, it will be translated as expr.GetOffset(receiver.Length).
+The receiver and Length expressions will be spilled as appropriate to ensure any side
+effects are only executed once. For example:
+C#
+This code will print "Get Length 3".
+This feature would be beneficial to any member which had a parameter that represented
+an index. For example List<T>.InsertAt. This also has the potential for confusion as the
+language can't give any guidance as to whether or not an expression is meant for
+indexing. All it can do is convert any Index expression to int when invoking a member
+on a Countable type.
+Restrictions:class Collection  { 
+    private int[] _array = new[] { 1, 2, 3 }; 
+    public int Length {  
+        get { 
+            Console.Write( "Length " ); 
+            return _array.Length;  
+        }  
+    } 
+    public int GetAt(int index) => _array[index];  
+} 
+class SideEffect  { 
+    Collection Get() { 
+        Console.Write( "Get "); 
+        return new Collection();  
+    } 
+    void Use() { 
+        int i = Get().GetAt(^ 1); 
+        Console.WriteLine(i);  
+    } 
+} This conversion is only applicable when the expression with type Index is directly
+an argument to the member. It would not apply to any nested expressions.
+All members in the pattern must be instance members
+If a Length method is found but it has the wrong return type, continue looking for
+Count
+The indexer used for the Index pattern must have exactly one int parameter
+The Slice method used for the Range pattern must have exactly two int parameters
+When looking for the pattern members, we look for original definitions, not
+constructed members
+Jan 10, 2018
+Jan 18, 2018
+Jan 22, 2018
+Dec 3, 2018
+Mar 25, 2019
+April 1st, 2019
+April 15, 2019Decisions made during implementation
+Design meetings
+"pattern-based using" and "using
+declarations"
+Article •06/23/2023
+The language will add two new capabilities around the using statement in order to
+make resource management simpler: using should recognize a disposable pattern in
+addition to IDisposable and add a using declaration to the language.
+The using statement is an effective tool for resource management today but it requires
+quite a bit of ceremony. Methods that have a number of resources to manage can get
+syntactically bogged down with a series of using statements. This syntax burden is
+enough that most coding style guidelines explicitly have an exception around braces for
+this scenario.
+The using declaration removes much of the ceremony here and gets C# on par with
+other languages that include resource management blocks. Additionally the pattern-
+based using lets developers expand the set of types that can participate here. In many
+cases removing the need to create wrapper types that only exist to allow for a values
+use in a using statement.
+Together these features allow developers to simplify and expand the scenarios where
+using can be applied.７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+MotivationThe language will allow for using to be added to a local variable declaration. Such a
+declaration will have the same effect as declaring the variable in a using statement at
+the same location.
+C#
+The lifetime of a using local will extend to the end of the scope in which it is declared.
+The using locals will then be disposed in the reverse order in which they are declared.
+C#
+There are no restrictions around goto, or any other control flow construct in the face of
+a using declaration. Instead the code acts just as it would for the equivalent using
+statement:
+C#Detailed Design
+using declaration
+if (...)  
+{  
+   using FileStream f = new FileStream( @"C:\users\jaredpar\using.md" ); 
+   // statements  
+} 
+// Equivalent to  
+if (...)  
+{  
+   using (FileStream f = new FileStream( @"C:\users\jaredpar\using.md" ))  
+   { 
+    // statements  
+   } 
+} 
+{  
+    using var f1 = new FileStream( "..."); 
+    using var f2 = new FileStream( "..."), f3 = new FileStream( "..."); 
+    ... 
+    // Dispose f3  
+    // Dispose f2  
+    // Dispose f1  
+} A local declared in a using local declaration will be implicitly read-only. This matches
+the behavior of locals declared in a using statement.
+The language grammar for using declarations will be the following:
+antlr
+Restrictions around using declaration:
+May not appear directly inside a case label but instead must be within a block
+inside the case label.
+May not appear as part of an out variable declaration.
+Must have an initializer for each declarator.
+The local type must be implicitly convertible to IDisposable or fulfill the using
+pattern.
+The language will add the notion of a disposable pattern for ref struct types: that is a
+ref struct which has an accessible Dispose instance method. T ypes which fit the
+disposable pattern can participate in a using statement or declaration without being
+required to implement IDisposable.{ 
+    using var f1 = new FileStream( "..."); 
+  target:  
+    using var f2 = new FileStream( "..."); 
+    if (someCondition)  
+    { 
+        // Causes f2 to be disposed but has no effect on f1  
+        goto target;  
+    } 
+} 
+local-using-declaration:  
+  'using' type using-declarators  
+using-declarators:  
+  using-declarator  
+  using-declarators , using-declarator  
+   
+using-declarator:  
+  identifier = expression  
+pattern-based usingC#
+This will allow developers to leverage using for ref struct types. These types can't
+implement interfaces today and hence can't participate in using statements.
+The same restrictions from a traditional using statement apply here as well: local
+variables declared in the using are read-only, a null value will not cause an exception
+to be thrown, etc ... The code generation will be different only in that there will not be a
+cast to IDisposable before calling Dispose:
+C#
+In order to fit the disposable pattern the Dispose method must be an accessible
+instance member, parameterless and have a void return type. It cannot be an extension
+method.
+A using declaration is illegal directly inside a case label due to complications around
+its actual lifetime. One potential solution is to simply give it the same lifetime as an out
+var in the same location. It was deemed the extra complexity to the featureref struct Resource  
+{  
+    public void Dispose() { ... }  
+} 
+using (var r = new Resource())  
+{ 
+    // statements  
+} 
+{ 
+   Resource r = new Resource();  
+   try { 
+      // statements  
+   } 
+   finally { 
+      if (r != null) r.Dispose();  
+   } 
+} 
+Considerations
+case labels without blocksimplementation and the ease of the work around (just add a block to the case label)
+didn't justify taking this route.
+A fixed statement has all of the properties of using statements that motivated the
+ability to have using locals. Consideration should be given to extending this feature to
+fixed locals as well. The lifetime and ordering rules should apply equally well for using
+and fixed here.Future Expansions
+fixed localsStatic local functions
+Article •06/23/2023
+Support local functions that disallow capturing state from the enclosing scope.
+Avoid unintentionally capturing state from the enclosing context. Allow local functions
+to be used in scenarios where a static method is required.
+A local function declared static cannot capture state from the enclosing scope. As a
+result, locals, parameters, and this from the enclosing scope are not available within a
+static local function.
+A static local function cannot reference instance members from an implicit or explicit
+this or base reference.
+A static local function may reference static members from the enclosing scope.
+A static local function may reference constant definitions from the enclosing scope.
+nameof() in a static local function may reference locals, parameters, or this or base
+from the enclosing scope.７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+Motivation
+Detailed designAccessibility rules for private members in the enclosing scope are the same for static
+and non- static local functions.
+A static local function definition is emitted as a static method in metadata, even if
+only used in a delegate.
+A non-static local function or lambda can capture state from an enclosing static local
+function but cannot capture state outside the enclosing static local function.
+A static local function cannot be invoked in an expression tree.
+A call to a local function is emitted as call rather than callvirt, regardless of whether
+the local function is static.
+Overload resolution of a call within a local function not affected by whether the local
+function is static.
+Removing the static modifier from a local function in a valid program does not change
+the meaning of the program.
+https://github.com/dotnet/csharplang/blob/master/meetings/2018/LDM-2018-09-
+10.md#static-local-functionsDesign meetings
+Null coalescing assignment
+Article •06/23/2023
+Simplifies a common coding pattern where a variable is assigned a value if it is null.
+As part of this proposal, we will also loosen the type requirements on ?? to allow an
+expression whose type is an unconstrained type parameter to be used on the left-hand
+side.
+It is common to see code of the form
+C#
+This proposal adds a non-overloadable binary operator to the language that performs
+this function.
+There have been at least eight separate community requests for this feature.７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+Motivation
+if (variable == null) 
+{ 
+    variable = expression;  
+} 
+Detailed designWe add a new form of assignment operator
+antlr
+Which follows the existing semantic rules for compound assignment operators
+(§11.18.3 ), except that we elide the assignment if the left-hand side is non-null. The
+rules for this feature are as follows.
+Given a ??= b, where A is the type of a, B is the type of b, and A0 is the underlying
+type of A if A is a nullable value type:
+1. If A does not exist or is a non-nullable value type, a compile-time error occurs.
+2. If B is not implicitly convertible to A or A0 (if A0 exists), a compile-time error
+occurs.
+3. If A0 exists and B is implicitly convertible to A0, and B is not dynamic, then the
+type of a ??= b is A0. a ??= b is evaluated at runtime as:
+C#
+Except that a is only evaluated once.
+4. Otherwise, the type of a ??= b is A. a ??= b is evaluated at runtime as a ?? (a =
+b), except that a is only evaluated once.
+For the relaxation of the type requirements of ??, we update the spec where it currently
+states that, given a ?? b, where A is the type of a:
+1. If A exists and is not a nullable type or a reference type, a compile-time error
+occurs.
+We relax this requirement to:
+1. If A exists and is a non-nullable value type, a compile-time error occurs.
+This allows the null coalescing operator to work on unconstrained type parameters, as
+the unconstrained type parameter T exists, is not a nullable type, and is not a reference
+type.assignment_operator  
+    : '??=' 
+    ; 
+var tmp = a.GetValueOrDefault();  
+if (!a.HasValue) { tmp = b; a = tmp; }  
+tmp As with any language feature, we must question whether the additional complexity to
+the language is repaid in the additional clarity offered to the body of C# programs that
+would benefit from the feature.
+The programmer can write (x = x ?? y), if (x == null) x = y;, or x ?? (x = y) by
+hand.
+[ ] Requires LDM review
+[ ] Should we also support &&= and ||= operators?
+None.Drawbacks
+Alternatives
+Unresolved questions
+Design meetingsReadonly Instance Members
+Article •06/23/2023
+Championed Issue: https://github.com/dotnet/csharplang/issues/1710
+Provide a way to specify individual instance members on a struct do not modify state, in
+the same way that readonly struct specifies no instance members modify state.
+It is worth noting that readonly instance member != pure instance member. A pure
+instance member guarantees no state will be modified. A readonly instance member
+only guarantees that instance state will not be modified.
+All instance members on a readonly struct could be considered implicitly readonly
+instance members. Explicit readonly instance members declared on non-readonly structs
+would behave in the same manner. For example, they would still create hidden copies if
+you called an instance member (on the current instance or on a field of the instance)
+which was itself not-readonly.
+Today, users have the ability to create readonly struct types which the compiler
+enforces that all fields are readonly (and by extension, that no instance members modify
+the state). However, there are some scenarios where you have an existing API that
+exposes accessible fields or that has a mix of mutating and non-mutating members.
+Under these circumstances, you cannot mark the type as readonly (it would be a
+breaking change).７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+MotivationThis normally doesn't have much impact, except in the case of in parameters. With in
+parameters for non-readonly structs, the compiler will make a copy of the parameter for
+each instance member invocation, since it cannot guarantee that the invocation does
+not modify internal state. This can lead to a multitude of copies and worse overall
+performance than if you had just passed the struct directly by value. For an example, see
+this code on sharplab
+Some other scenarios where hidden copies can occur include static readonly fields
+and literals. If they are supported in the future, blittable constants would end up in
+the same boat; that is they all currently necessitate a full copy (on instance member
+invocation) if the struct is not marked readonly.
+Allow a user to specify that an instance member is, itself, readonly and does not modify
+the state of the instance (with all the appropriate verification done by the compiler, of
+course). For example:
+C#
+Design
+public struct Vector2  
+{ 
+    public float x; 
+    public float y; 
+    public readonly  float GetLengthReadonly () 
+    { 
+        return MathF.Sqrt(LengthSquared);  
+    } 
+    public float GetLength () 
+    { 
+        return MathF.Sqrt(LengthSquared);  
+    } 
+    public readonly  float GetLengthIllegal () 
+    { 
+        var tmp = MathF.Sqrt(LengthSquared);  
+        x = tmp;    // Compiler error, cannot write x  
+        y = tmp;    // Compiler error, cannot write y  
+        return tmp; 
+    } 
+    public readonly  float LengthSquared  
+    { 
+        get Readonly can be applied to property accessors to indicate that this will not be mutated
+in the accessor. The following examples have readonly setters because those accessors
+modify the state of member field, but do not modify the value of that member field.
+C#
+When readonly is applied to the property syntax, it means that all accessors are
+readonly.        {  
+            return (x * x) +  
+                   (y * y);  
+        }  
+    } 
+} 
+public static class MyClass 
+{ 
+    public static float ExistingBehavior (in Vector2 vector ) 
+    { 
+        // This code causes a hidden copy, the compiler effectively emits:  
+        //    var tmpVector = vector;  
+        //    return tmpVector.GetLength();  
+        // 
+        // This is done because the compiler doesn't know that `GetLength()`  
+        // won't mutate `vector`.
+        return vector.GetLength();  
+    } 
+    public static float ReadonlyBehavior (in Vector2 vector ) 
+    { 
+        // This code is emitted exactly as listed. There are no hidden  
+        // copies as the `readonly` modifier indicates that the method  
+        // won't mutate `vector`.
+        return vector.GetLengthReadonly();  
+    } 
+} 
+public readonly  int Prop1 
+{ 
+    get 
+    { 
+        return this._store[ "Prop1"]; 
+    } 
+    set 
+    { 
+        this._store[ "Prop1"] = value; 
+    } 
+} C#
+Readonly can only be applied to accessors which do not mutate the containing type.
+C#
+Readonly can be applied to some auto-implemented properties, but it won't have a
+meaningful effect. The compiler will treat all auto-implemented getters as readonly
+whether or not the readonly keyword is present.
+C#
+Readonly can be applied to manually-implemented events, but not field-like events.
+Readonly cannot be applied to individual event accessors (add/remove).public readonly  int Prop2 
+{ 
+    get 
+    { 
+        return this._store[ "Prop2"]; 
+    } 
+    set 
+    { 
+        this._store[ "Prop2"] = value; 
+    } 
+} 
+public int Prop3 
+{ 
+    readonly  get 
+    { 
+        return this._prop3;  
+    } 
+    set 
+    { 
+        this._prop3 = value; 
+    } 
+} 
+// Allowed  
+public readonly  int Prop4 { get; } 
+public int Prop5 { readonly  get; } 
+public int Prop6 { readonly  get; set; } 
+// Not allowed  
+public readonly  int Prop7 { get; set; } 
+public int Prop8 { get; readonly  set; } C#
+Some other syntax examples:
+Expression bodied members: public readonly float ExpressionBodiedMember => (x
+* x) + (y * y);
+Generic constraints: public readonly void GenericMethod<T>(T value) where T :
+struct { }
+The compiler would emit the instance member, as usual, and would additionally emit a
+compiler recognized attribute indicating that the instance member does not modify
+state. This effectively causes the hidden this parameter to become in T instead of ref
+T.
+This would allow the user to safely call said instance method without the compiler
+needing to make a copy.
+The restrictions would include:
+The readonly modifier cannot be applied to static methods, constructors or
+destructors.
+The readonly modifier cannot be applied to delegates.
+The readonly modifier cannot be applied to members of class or interface.// Allowed  
+public readonly  event Action<EventArgs> Event1  
+{ 
+    add { } 
+    remove { } 
+} 
+// Not allowed  
+public readonly  event Action<EventArgs> Event2;  
+public event Action<EventArgs> Event3  
+{ 
+    readonly  add { } 
+    readonly  remove { }
+} 
+public static readonly  event Event4 
+{ 
+    add { } 
+    remove { } 
+} 
+DrawbacksSame drawbacks as exist with readonly struct methods today. Certain code may still
+cause hidden copies.
+Using an attribute or another keyword may also be possible.
+This proposal is somewhat related to (but is more a subset of) functional purity
+and/or constant expressions, both of which have had some existing proposals.NotesPermit stackalloc in nested contexts
+Article •06/23/2023
+We modify the section Stack allocation  (§22.9 ) of the C# language specification to
+relax the places when a stackalloc expression may appear. W e delete
+antlr
+and replace them with
+antlr７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Stack allocation
+local_variable_initializer_unsafe
+    : stackalloc_initializer  
+    ; 
+stackalloc_initializer  
+    : 'stackalloc'  unmanaged_type '[' expression ']' 
+    ; 
+primary_no_array_creation_expression  
+    : stackalloc_initializer  
+    ; 
+stackalloc_initializer  
+    : 'stackalloc'  unmanaged_type '[' expression? ']' array_initializer?  
+    | 'stackalloc'  '[' expression? ']' array_initializer  
+    ; Note that the addition of an array_initializer  to stackalloc_initializer  (and making the
+index expression optional) was an extension in C# 7.3  and is not described here.
+The element type  of the stackalloc expression is the unmanaged_type  named in the
+stackalloc expression, if any, or the common type among the elements of the
+array_initializer  otherwise.
+The type of the stackalloc_initializer  with element type  K depends on its syntactic
+context:
+If the stackalloc_initializer  appears directly as the local_v ariable_initializer  of a
+local_v ariable_declar ation  statement or a for_initializer , then its type is K*.
+Otherwise its type is System.Span<K>.
+The stackalloc c onversion is a new built-in implicit conversion from expression. When the
+type of a stackalloc_initializer  is K*, there is an implicit stackalloc c onversion from the
+stackalloc_initializer  to the type System.Span<K>.
+Stackalloc ConversionRecords
+Article •02/08/2023
+This proposal tracks the specification for the C# 9 records feature, as agreed to by the
+C# language design team.
+The syntax for a record is as follows:
+antlr
+Record types are reference types, similar to a class declaration. It is an error for a record
+to provide a record_base argument_list if the record_declaration does not contain a
+parameter_list. At most one partial type declaration of a partial record may provide a
+parameter_list.７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+record_declaration  
+    : attributes? class_modifier* 'partial' ? 'record'  identifier  
+type_parameter_list?  
+      parameter_list? record_base? type_parameter_constraints_clause*  
+record_body  
+    ; 
+record_base  
+    : ':' class_type argument_list?  
+    | ':' interface_type_list  
+    | ':' class_type argument_list? ',' interface_type_list  
+    ; 
+record_body  
+    : '{' class_member_declaration* '}' ';'? 
+    | ';' 
+    ; Record parameters cannot use ref, out or this modifiers (but in and params are
+allowed).
+Records cannot inherit from classes, unless the class is object, and classes cannot
+inherit from records. R ecords can inherit from other records.
+In addition to the members declared in the record body, a record type has additional
+synthesized members. Members are synthesized unless a member with a "matching"
+signature is declared in the record body or an accessible concrete non-virtual member
+with a "matching" signature is inherited. A matching member prevents the compiler
+from generating that member, not any other synthesized members. T wo members are
+considered matching if they have the same signature or would be considered "hiding" in
+an inheritance scenario. It is an error for a member of a record to be named "Clone". It is
+an error for an instance field of a record to have an unsafe type.
+The synthesized members are as follows:
+If the record is derived from object, the record type includes a synthesized readonly
+property equivalent to a property declared as follows:
+C#
+The property is private if the record type is sealed. Otherwise, the property is virtual
+and protected. The property can be declared explicitly. It is an error if the explicit
+declaration does not match the expected signature or accessibility, or if the explicit
+declaration doesn't allow overriding it in a derived type and the record type is not
+sealed.
+If the record type is derived from a base record type Base, the record type includes a
+synthesized readonly property equivalent to a property declared as follows:
+C#Inheritance
+Members of a record type
+Equality members
+Type EqualityContract { get; } The property can be declared explicitly. It is an error if the explicit declaration does not
+match the expected signature or accessibility, or if the explicit declaration doesn't allow
+overriding it in a derived type and the record type is not sealed. It is an error if either
+synthesized, or explicitly declared property doesn't override a property with this
+signature in the record type Base (for example, if the property is missing in the Base, or
+sealed, or not virtual, etc.). The synthesized property returns typeof(R) where R is the
+record type.
+The record type implements System.IEquatable<R> and includes a synthesized strongly-
+typed overload of Equals(R? other) where R is the record type. The method is public,
+and the method is virtual unless the record type is sealed. The method can be
+declared explicitly. It is an error if the explicit declaration does not match the expected
+signature or accessibility, or the explicit declaration doesn't allow overriding it in a
+derived type and the record type is not sealed.
+If Equals(R? other) is user-defined (not synthesized) but GetHashCode is not, a warning
+is produced.
+C#
+The synthesized Equals(R?) returns true if and only if each of the following are true:
+other is not null, and
+For each instance field fieldN in the record type that is not inherited, the value of
+System.Collections.Generic.EqualityComparer<TN>.Default.Equals(fieldN,
+other.fieldN) where TN is the field type, and
+If there is a base record type, the value of base.Equals(other) (a non-virtual call to
+public virtual bool Equals(Base? other)); otherwise the value of
+EqualityContract == other.EqualityContract.
+The record type includes synthesized == and != operators equivalent to operators
+declared as follows:
+C#protected  override  Type EqualityContract { get; } 
+public virtual bool Equals(R? other ); 
+public static bool operator ==(R? left, R? right)  
+    => ( object)left == right || (left?.Equals(right) ?? false); The Equals method called by the == operator is the Equals(R? other) method specified
+above. The != operator delegates to the == operator. It is an error if the operators are
+declared explicitly.
+If the record type is derived from a base record type Base, the record type includes a
+synthesized override equivalent to a method declared as follows:
+C#
+It is an error if the override is declared explicitly. It is an error if the method doesn't
+override a method with same signature in record type Base (for example, if the method
+is missing in the Base, or sealed, or not virtual, etc.). The synthesized override returns
+Equals((object?)other).
+The record type includes a synthesized override equivalent to a method declared as
+follows:
+C#
+It is an error if the override is declared explicitly. It is an error if the method doesn't
+override object.Equals(object? obj) (for example, due to shadowing in intermediate
+base types, etc.). The synthesized override returns Equals(other as R) where R is the
+record type.
+The record type includes a synthesized override equivalent to a method declared as
+follows:
+C#
+The method can be declared explicitly. It is an error if the explicit declaration doesn't
+allow overriding it in a derived type and the record type is not sealed. It is an error if
+either synthesized, or explicitly declared method doesn't override object.GetHashCode()
+(for example, due to shadowing in intermediate base types, etc.).public static bool operator !=(R? left, R? right)  
+    => !(left == right);  
+public sealed override  bool Equals(Base? other ); 
+public override  bool Equals(object? obj); 
+public override  int GetHashCode (); A warning is reported if one of Equals(R?) and GetHashCode() is explicitly declared but
+the other method is not explicit.
+The synthesized override of GetHashCode() returns an int result of combining the
+following values:
+For each instance field fieldN in the record type that is not inherited, the value of
+System.Collections.Generic.EqualityComparer<TN>.Default.GetHashCode(fieldN)
+where TN is the field type, and
+If there is a base record type, the value of base.GetHashCode(); otherwise the value
+of
+System.Collections.Generic.EqualityComparer<System.Type>.Default.GetHashCode(E
+qualityContract).
+For example, consider the following record types:
+C#
+For those record types, the synthesized equality members would be something like:
+C#record R1(T1 P1); 
+record R2(T1 P1, T2 P2 ) : R1(P1); 
+record R3(T1 P1, T2 P2, T3 P3 ) : R2(P1, P2); 
+class R1 : IEquatable <R1> 
+{ 
+    public T1 P1 { get; init; } 
+    protected  virtual Type EqualityContract => typeof(R1); 
+    public override  bool Equals(object? obj) => Equals(obj as R1); 
+    public virtual bool Equals(R1? other ) 
+    { 
+        return !(other is null) && 
+            EqualityContract == other.EqualityContract &&  
+            EqualityComparer<T1>.Default.Equals(P1, other.P1);  
+    } 
+    public static bool operator ==(R1? left, R1? right)  
+        => ( object)left == right || (left?.Equals(right) ?? false); 
+    public static bool operator !=(R1? left, R1? right)  
+        => !(left == right);  
+    public override  int GetHashCode () 
+    { 
+        return 
+HashCode.Combine(EqualityComparer<Type>.Default.GetHashCode(EqualityContract
+), 
+            EqualityComparer<T1>.Default.GetHashCode(P1));  
+    } A record type contains two copying members:
+A constructor taking a single argument of the record type. It is referred to as a
+"copy constructor".} 
+class R2 : R1, IEquatable <R2> 
+{ 
+    public T2 P2 { get; init; } 
+    protected  override  Type EqualityContract => typeof(R2); 
+    public override  bool Equals(object? obj) => Equals(obj as R2); 
+    public sealed override  bool Equals(R1? other ) => Equals(( object?)other);  
+    public virtual bool Equals(R2? other ) 
+    { 
+        return base.Equals((R1?)other) &&  
+            EqualityComparer<T2>.Default.Equals(P2, other.P2);  
+    } 
+    public static bool operator ==(R2? left, R2? right)  
+        => ( object)left == right || (left?.Equals(right) ?? false); 
+    public static bool operator !=(R2? left, R2? right)  
+        => !(left == right);  
+    public override  int GetHashCode () 
+    { 
+        return HashCode.Combine( base.GetHashCode(),  
+            EqualityComparer<T2>.Default.GetHashCode(P2));  
+    } 
+} 
+class R3 : R2, IEquatable <R3> 
+{ 
+    public T3 P3 { get; init; } 
+    protected  override  Type EqualityContract => typeof(R3); 
+    public override  bool Equals(object? obj) => Equals(obj as R3); 
+    public sealed override  bool Equals(R2? other ) => Equals(( object?)other);  
+    public virtual bool Equals(R3? other ) 
+    { 
+        return base.Equals((R2?)other) &&  
+            EqualityComparer<T3>.Default.Equals(P3, other.P3);  
+    } 
+    public static bool operator ==(R3? left, R3? right)  
+        => ( object)left == right || (left?.Equals(right) ?? false); 
+    public static bool operator !=(R3? left, R3? right)  
+        => !(left == right);  
+    public override  int GetHashCode () 
+    { 
+        return HashCode.Combine( base.GetHashCode(),  
+            EqualityComparer<T3>.Default.GetHashCode(P3));  
+    } 
+} 
+Copy and Clone membersA synthesized public parameterless instance "clone" method with a compiler-
+reserved name
+The purpose of the copy constructor is to copy the state from the parameter to the new
+instance being created. This constructor doesn't run any instance field/property
+initializers present in the record declaration. If the constructor is not explicitly declared, a
+constructor will be synthesized by the compiler. If the record is sealed, the constructor
+will be private, otherwise it will be protected. An explicitly declared copy constructor
+must be either public or protected, unless the record is sealed. The first thing the
+constructor must do, is to call a copy constructor of the base, or a parameter-less object
+constructor if the record inherits from object. An error is reported if a user-defined copy
+constructor uses an implicit or explicit constructor initializer that doesn't fulfill this
+requirement. After a base copy constructor is invoked, a synthesized copy constructor
+copies values for all instance fields implicitly or explicitly declared within the record type.
+The sole presence of a copy constructor, whether explicit or implicit, doesn't prevent an
+automatic addition of a default instance constructor.
+If a virtual "clone" method is present in the base record, the synthesized "clone" method
+overrides it and the return type of the method is the current containing type if the
+"covariant returns" feature is supported and the override return type otherwise. An error
+is produced if the base record clone method is sealed. If a virtual "clone" method is not
+present in the base record, the return type of the clone method is the containing type
+and the method is virtual, unless the record is sealed or abstract. If the containing record
+is abstract, the synthesized clone method is also abstract. If the "clone" method is not
+abstract, it returns the result of a call to a copy constructor.
+If the record is derived from object, the record includes a synthesized method
+equivalent to a method declared as follows:
+C#
+The method is private if the record type is sealed. Otherwise, the method is virtual
+and protected.
+The method:
+1. calls the method
+System.Runtime.CompilerServices.RuntimeHelpers.EnsureSufficientExecutionStackPrinting members: PrintMembers and ToString methods
+bool PrintMembers (System.Text.StringBuilder builder ); () if the method is present and the record has printable members.
+2. for each of the record's printable members (non-static public field and readable
+property members), appends that member's name followed by " = " followed by
+the member's value separated with ", ",
+3. return true if the record has printable members.
+For a member that has a value type, we will convert its value to a string representation
+using the most efficient method available to the target platform. At present that means
+calling ToString before passing to StringBuilder.Append.
+If the record type is derived from a base record Base, the record includes a synthesized
+override equivalent to a method declared as follows:
+C#
+If the record has no printable members, the method calls the base PrintMembers
+method with one argument (its builder parameter) and returns the result.
+Otherwise, the method:
+1. calls the base PrintMembers method with one argument (its builder parameter),
+2. if the PrintMembers method returned true, append ", " to the builder,
+3. for each of the record's printable members, appends that member's name followed
+by " = " followed by the member's value: this.member (or this.member.ToString()
+for value types), separated with ", ",
+4. return true.
+The PrintMembers method can be declared explicitly. It is an error if the explicit
+declaration does not match the expected signature or accessibility, or if the explicit
+declaration doesn't allow overriding it in a derived type and the record type is not
+sealed.
+The record includes a synthesized method equivalent to a method declared as follows:
+C#
+The method can be declared explicitly. It is an error if the explicit declaration does not
+match the expected signature or accessibility, or if the explicit declaration doesn't allow
+overriding it in a derived type and the record type is not sealed. It is an error if eitherprotected  override  bool PrintMembers (StringBuilder builder ); 
+public override  string ToString (); synthesized, or explicitly declared method doesn't override object.ToString() (for
+example, due to shadowing in intermediate base types, etc.).
+The synthesized method:
+1. creates a StringBuilder instance,
+2. appends the record name to the builder, followed by " { ",
+3. invokes the record's PrintMembers method giving it the builder, followed by " " if it
+returned true,
+4. appends "}",
+5. returns the builder's contents with builder.ToString().
+For example, consider the following record types:
+C#
+For those record types, the synthesized printing members would be something like:
+C#record R1(T1 P1); 
+record R2(T1 P1, T2 P2, T3 P3 ) : R1(P1); 
+class R1 : IEquatable <R1> 
+{ 
+    public T1 P1 { get; init; } 
+     
+    protected  virtual bool PrintMembers (StringBuilder builder ) 
+    { 
+        builder.Append( nameof(P1)); 
+        builder.Append( " = "); 
+        builder.Append( this.P1); // or builder.Append(this.P1.ToString());  
+if P1 has a value type  
+         
+        return true; 
+    } 
+     
+    public override  string ToString () 
+    { 
+        var builder = new StringBuilder();  
+        builder.Append( nameof(R1)); 
+        builder.Append( " { "); 
+        if (PrintMembers(builder))  
+            builder.Append( " "); 
+        builder.Append( "}"); 
+        return builder.ToString();  
+    } In addition to the above members, records with a parameter list ("positional records")
+synthesize additional members with the same conditions as the members above.
+A record type has a public constructor whose signature corresponds to the value
+parameters of the type declaration. This is called the primary constructor for the type,} 
+class R2 : R1, IEquatable <R2> 
+{ 
+    public T2 P2 { get; init; } 
+    public T3 P3 { get; init; } 
+     
+    protected  override  bool PrintMembers (StringBuilder builder ) 
+    { 
+        if (base.PrintMembers(builder))  
+            builder.Append( ", "); 
+             
+        builder.Append( nameof(P2)); 
+        builder.Append( " = "); 
+        builder.Append( this.P2); // or builder.Append(this.P2); if P2 has a  
+value type  
+         
+        builder.Append( ", "); 
+         
+        builder.Append( nameof(P3)); 
+        builder.Append( " = "); 
+        builder.Append( this.P3); // or builder.Append(this.P3); if P3 has a  
+value type  
+         
+        return true; 
+    } 
+     
+    public override  string ToString () 
+    { 
+        var builder = new StringBuilder();  
+        builder.Append( nameof(R2)); 
+        builder.Append( " { "); 
+        if (PrintMembers(builder))  
+            builder.Append( " "); 
+        builder.Append( "}"); 
+        return builder.ToString();  
+    } 
+} 
+Positional record members
+Primary Constructorand causes the implicitly declared default class constructor, if present, to be suppressed.
+It is an error to have a primary constructor and a constructor with the same signature
+already present in the class.
+At runtime the primary constructor
+1. executes the instance initializers appearing in the class-body
+2. invokes the base class constructor with the arguments provided in the record_base
+clause, if present
+If a record has a primary constructor, any user-defined constructor, except "copy
+constructor" must have an explicit this constructor initializer.
+Parameters of the primary constructor as well as members of the record are in scope
+within the argument_list of the record_base clause and within initializers of instance
+fields or properties. Instance members would be an error in these locations (similar to
+how instance members are in scope in regular constructor initializers today, but an error
+to use), but the parameters of the primary constructor would be in scope and useable
+and would shadow members. S tatic members would also be useable, similar to how
+base calls and initializers work in ordinary constructors today.
+A warning is produced if a parameter of the primary constructor is not read.
+Expression variables declared in the argument_list are in scope within the
+argument_list. The same shadowing rules as within an argument list of a regular
+constructor initializer apply.
+For each record parameter of a record type declaration there is a corresponding public
+property member whose name and type are taken from the value parameter
+declaration.
+For a record:
+A public get and init auto-property is created (see separate init accessor
+specification). An inherited abstract property with matching type is overridden. It
+is an error if the inherited property does not have public overridable get and
+init accessors. It is an error if the inherited property is hidden.  
+The auto-property is initialized to the value of the corresponding primary
+constructor parameter. Attributes can be applied to the synthesized auto-propertyPropertiesand its backing field by using property: or field: targets for attributes
+syntactically applied to the corresponding record parameter.
+A positional record with at least one parameter synthesizes a public void-returning
+instance method called Deconstruct with an out parameter declaration for each
+parameter of the primary constructor declaration. Each parameter of the Deconstruct
+method has the same type as the corresponding parameter of the primary constructor
+declaration. The body of the method assigns to each parameter of the Deconstruct
+method, the value of the instance property of the same name. The method can be
+declared explicitly. It is an error if the explicit declaration does not match the expected
+signature or accessibility, or is static.
+The following example shows a positional record R with its compiler synthesized
+Deconstruct method, along with its usage:
+C#
+A with expression is a new expression using the following syntax.
+antlrDeconstruct
+public record R(int P1, string P2 = "xyz") 
+{ 
+    public void Deconstruct (out int P1, out string P2) 
+    { 
+        P1 = this.P1; 
+        P2 = this.P2; 
+    } 
+} 
+class Program 
+{ 
+    static void Main() 
+    { 
+        R r = new R(12); 
+        ( int p1, string p2) = r;  
+        Console.WriteLine( $"p1: {p1}, p2: {p2}"); 
+    } 
+} 
+with expressionA with expression is not permitted as a statement.
+A with expression allows for "non-destructive mutation", designed to produce a copy of
+the receiver expression with modifications in assignments in the
+member_initializer_list.
+A valid with expression has a receiver with a non-void type. The receiver type must be a
+record.
+On the right hand side of the with expression is a member_initializer_list with a
+sequence of assignments to identi fier, which must be an accessible instance field or
+property of the receiver's type.
+First, receiver's "clone" method (specified above) is invoked and its result is converted to
+the receiver's type. Then, each member_initializer is processed the same way as an
+assignment to a field or property access of the result of the conversion. Assignments are
+processed in lexical order.with_expression  
+    : switch_expression  
+    | switch_expression 'with' '{' member_initializer_list? '}' 
+    ; 
+member_initializer_list  
+    : member_initializer ( ',' member_initializer)*  
+    ; 
+member_initializer  
+    : identifier '=' expression  
+    ; Top-level statemen ts
+Article •06/23/2023
+Allow a sequence of statements  to occur right before the
+namesp ace_member_declar ation s of a compilation_unit  (i.e. source file).
+The semantics are that if such a sequence of statements  is present, the following type
+declaration, modulo the actual method name, would be emitted:
+c#
+See also https://github.com/dotnet/csharplang/issues/3117 .
+There's a certain amount of boilerplate surrounding even the simplest of programs,
+because of the need for an explicit Main method. This seems to get in the way of
+language learning and program clarity. The primary goal of the feature therefore is to
+allow C# programs without unnecessary boilerplate around them, for the sake of
+learners and the clarity of code.７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+partial class Program 
+{ 
+    static async Task Main(string[] args) 
+    { 
+        // statements  
+    } 
+} 
+MotivationThe only additional syntax is allowing a sequence of statement s in a compilation unit,
+just before the namesp ace_member_declar ation s:
+antlr
+Only one compilation_unit  is allowed to have statement s.
+Example:
+c#
+If any top-level statements are present in any compilation unit of the program, the
+meaning is as if they were combined in the block body of a Main method of a Program
+class in the global namespace, as follows:
+c#Detailed design
+Syntax
+compilation_unit  
+    : extern_alias_directive* using_directive* global_attributes? statement*  
+namespace_member_declaration*  
+    ; 
+if (args.Length == 0 
+    || ! int.TryParse(args[ 0], out int n) 
+    || n < 0) return; 
+Console.WriteLine(Fib(n).curr);  
+(int curr, int prev) Fib( int i) 
+{ 
+    if (i == 0) return (1, 0); 
+    var (curr, prev) = Fib(i - 1); 
+    return (curr + prev, curr);  
+} 
+Semantics
+partial class Program 
+{ 
+    static async Task Main(string[] args) 
+    { 
+        // statements  The type is named "Program", so can be referenced by name from source code. It is a
+partial type, so a type named "Program" in source code must also be declared as partial.  
+But the method name "Main" is used only for illustration purposes, the actual name
+used by the compiler is implementation dependent and the method cannot be
+referenced by name from source code.
+The method is designated as the entry point of the program. Explicitly declared methods
+that by convention could be considered as an entry point candidates are ignored. A
+warning is reported when that happens. It is an error to specify -main:<type> compiler
+switch when there are top-level statements.
+The entry point method always has one formal parameter, string[] args. The execution
+environment creates and passes a string[] argument containing the command-line
+arguments that were specified when the application was started. The string[]
+argument is never null, but it may have a length of zero if no command-line arguments
+were specified. The ‘args’ parameter is in scope within top-level statements and is not in
+scope outside of them. R egular name conflict/shadowing rules apply.
+Async operations are allowed in top-level statements to the degree they are allowed in
+statements within a regular async entry point method. However, they are not required, if
+await expressions and other async operations are omitted, no warning is produced.
+The signature of the generated entry point method is determined based on operations
+used by the top level statements as follows:
+Async-operations\R eturn-with-
+expressionPresent Absent
+Present static Task<int>
+Main(string[] args)static Task Main(string[]
+args)
+Absent static int Main(string[]
+args)static void Main(string[]
+args)
+The example above would yield the following $Main method declaration:
+c#    } 
+} 
+partial class Program 
+{ 
+    static void $Main(string[] args)  
+    { At the same time an example like this:
+c#
+would yield:
+c#
+An example like this:
+c#
+would yield:
+c#        if (args.Length == 0 
+            || ! int.TryParse(args[ 0], out int n) 
+            || n < 0) return; 
+        Console.WriteLine(Fib(n).curr);  
+         
+        ( int curr, int prev) Fib( int i) 
+        {  
+            if (i == 0) return (1, 0); 
+            var (curr, prev) = Fib(i - 1); 
+            return (curr + prev, curr);  
+        }  
+    } 
+} 
+await System.Threading.Tasks.Task.Delay( 1000); 
+System.Console.WriteLine( "Hi!"); 
+partial class Program 
+{ 
+    static async Task $Main( string[] args)  
+    { 
+        await System.Threading.Tasks.Task.Delay( 1000); 
+        System.Console.WriteLine( "Hi!"); 
+    } 
+} 
+await System.Threading.Tasks.Task.Delay( 1000); 
+System.Console.WriteLine( "Hi!"); 
+return 0; 
+partial class Program 
+{ 
+    static async Task<int> $Main( string[] args)  And an example like this:
+c#
+would yield:
+c#
+Even though top-level local variables and functions are "wrapped" into the generated
+entry point method, they should still be in scope throughout the program in every
+compilation unit. For the purpose of simple-name evaluation, once the global
+namespace is reached:
+First, an attempt is made to evaluate the name within the generated entry point
+method and only if this attempt fails
+The "regular" evaluation within the global namespace declaration is performed.
+This could lead to name shadowing of namespaces and types declared within the global
+namespace as well as to shadowing of imported names.
+If the simple name evaluation occurs outside of the top-level statements and the
+evaluation yields a top-level local variable or function, that should lead to an error.
+In this way we protect our future ability to better address "T op-level functions" (scenario
+2 in https://github.com/dotnet/csharplang/issues/3117 ), and are able to give useful    { 
+        await System.Threading.Tasks.Task.Delay( 1000); 
+        System.Console.WriteLine( "Hi!"); 
+        return 0; 
+    } 
+} 
+System.Console.WriteLine( "Hi!"); 
+return 2; 
+partial class Program 
+{ 
+    static int $Main(string[] args)  
+    { 
+        System.Console.WriteLine( "Hi!"); 
+        return 2; 
+    } 
+} 
+Scope of top-level local variables and local functions
+diagnostics to users who mistakenly believe them to be supported.Nullable Reference Types Specification
+Article •10/20/2021
+This is a w ork in pr ogress - s everal parts are missing or inc omplet e.
+This feature adds two new kinds of nullable types (nullable reference types and nullable
+generic types) to the existing nullable value types, and introduces a static flow analysis
+for purpose of null-safety.
+Nullable reference types and nullable type parameters have the same syntax T? as the
+short form of nullable value types, but do not have a corresponding long form.
+For the purposes of the specification, the current nullable_type production is renamed
+to nullable_value_type, and nullable_reference_type and nullable_type_parameter
+productions are added:
+antlr７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Syntax
+Nullable reference types and nullable type parameters
+type 
+    : value_type  
+    | reference_type  
+    | nullable_type_parameter  
+    | type_parameter  
+    | type_unsafe  
+    ; 
+reference_type  
+    : ...  The non_nullable_reference_type in a nullable_reference_type must be a nonnullable
+reference type (class, interface, delegate or array).
+The non_nullable_non_value_type_parameter in nullable_type_parameter must be a type
+parameter that isn't constrained to be a value type.
+Nullable reference types and nullable type parameters cannot occur in the following
+positions:
+as a base class or interface
+as the receiver of a member_access
+as the type in an object_creation_expression
+as the delegate_type in a delegate_creation_expression
+as the type in an is_expression, a catch_clause or a type_pattern
+as the interface in a fully qualified interface member name
+A warning is given on a nullable_reference_type and nullable_type_parameter in a
+disabled  nullable annotation context.
+The class constraint has a nullable counterpart class?:
+antlr    | nullable_reference_type  
+    ; 
+nullable_reference_type  
+    : non_nullable_reference_type '?' 
+    ; 
+non_nullable_reference_type  
+    : reference_type  
+    ; 
+nullable_type_parameter  
+    : non_nullable_non_value_type_parameter '?' 
+    ; 
+non_nullable_non_value_type_parameter  
+    : type_parameter  
+    ; 
+class and class? constraint
+primary_constraint  
+    : ...  A type parameter constrained with class (in an enabled  annotation context) must be
+instantiated with a nonnullable reference type.
+A type parameter constrained with class? (or class in a disabled  annotation context)
+may either be instantiated with a nullable or nonnullable reference type.
+A warning is given on a class? constraint in a disabled  annotation context.
+The behavior of ? annotations on type parameters that aren't constrained to be either a
+struct or class is covered in Unconstrained type parameter annotations .
+A type parameter constrained with notnull may not be a nullable type (nullable value
+type, nullable reference type or nullable type parameter).
+antlr
+The default constraint can be used on a method override or explicit implementation to
+disambiguate T? meaning "nullable type parameter" from "nullable value type"
+(Nullable<T>). Lacking the default constraint a T? syntax in an override or explicit
+implementation will be interpreted as Nullable<T>
+See Unconstrained type parameter annotations .
+The post-fix ! operator is called the null-forgiving operator. It can be applied on a
+primary_expr ession  or within a null_c onditional_expr ession :
+antlr    | 'class' '?' 
+    ; 
+notnull constraint
+primary_constraint  
+    : ...  
+    | 'notnull'  
+    ; 
+default constraint
+The null-forgiving operatorFor example:
+C#
+The postfix ! operator has no runtime effect - it evaluates to the result of the
+underlying expression. Its only role is to change the null state of the expression to "not
+null", and to limit warnings given on its use.
+#nullable directives control the nullable annotation and warning contexts.
+antlrprimary_expression  
+    : ...  
+    | null_forgiving_expression  
+    ; 
+null_forgiving_expression  
+    : primary_expression '!' 
+    ; 
+null_conditional_expression  
+    : primary_expression null_conditional_operations_no_suppression  
+suppression?  
+    ; 
+null_conditional_operations_no_suppression  
+    : null_conditional_operations? '?' '.' identifier type_argument_list?  
+    | null_conditional_operations? '?' '[' argument_list ']' 
+    | null_conditional_operations '.' identifier type_argument_list?  
+    | null_conditional_operations '[' argument_list ']' 
+    | null_conditional_operations '(' argument_list? ')' 
+    ; 
+null_conditional_operations  
+    : null_conditional_operations_no_suppression suppression?  
+    ; 
+suppression  
+    : '!' 
+    ; 
+var v = expr!;  
+expr!.M();  
+_ = a?.b!.c;  
+Nullable compiler directives#pragma warning directives are expanded to allow changing the nullable warning
+context:
+antlr
+For example:
+C#
+Every line of source code has a nullable annot ation c ontext and a nullable war ning
+context. These control whether nullable annotations have effect, and whether nullability
+warnings are given. The annotation context of a given line is either disabled  or enabled .
+The warning context of a given line is either disabled  or enabled .
+Both contexts can be specified at the project level (outside of C# source code), or
+anywhere within a source file via #nullable pre-processor directives. If no project levelpp_directive  
+    : ...  
+    | pp_nullable  
+    ; 
+pp_nullable  
+    : whitespace? '#' whitespace? 'nullable'  whitespace nullable_action  
+(whitespace nullable_target)? pp_new_line  
+    ; 
+nullable_action  
+    : 'disable'  
+    | 'enable'  
+    | 'restore'  
+    ; 
+nullable_target  
+    : 'warnings'  
+    | 'annotations'  
+    ; 
+pragma_warning_body  
+    : ...  
+    | 'warning'  whitespace warning_action whitespace 'nullable'  
+    ; 
+#pragma warning disable nullable  
+Nullable contextssettings are provided the default is for both contexts to be disabled .
+The #nullable directive controls the annotation and warning contexts within the source
+text, and take precedence over the project-level settings.
+A directive sets the context(s) it controls for subsequent lines of code, until another
+directive overrides it, or until the end of the source file.
+The effect of the directives is as follows:
+#nullable disable: Sets the nullable annotation and warning contexts to disabled
+#nullable enable: Sets the nullable annotation and warning contexts to enabled
+#nullable restore: Restores the nullable annotation and warning contexts to
+project settings
+#nullable disable annotations: Sets the nullable annotation context to disabled
+#nullable enable annotations: Sets the nullable annotation context to enabled
+#nullable restore annotations: Restores the nullable annotation context to
+project settings
+#nullable disable warnings: Sets the nullable warning context to disabled
+#nullable enable warnings: Sets the nullable warning context to enabled
+#nullable restore warnings: Restores the nullable warning context to project
+settings
+A given type can have one of three nullabilities: oblivious , nonnullable , and nullable .
+Nonnullable  types may cause warnings if a potential null value is assigned to them.
+Oblivious  and nullable  types, however, are " null-assignable " and can have null values
+assigned to them without warnings.
+Values of oblivious  and nonnullable  types can be dereferenced or assigned without
+warnings. V alues of nullable  types, however, are " null-yielding " and may cause warnings
+when dereferenced or assigned without proper null checking.
+The default null st ate of a null-yielding type is "maybe null" or "maybe default". The
+default null state of a non-null-yielding type is "not null".
+The kind of type and the nullable annotation context it occurs in determine its
+nullability:
+A nonnullable value type S is always nonnullableNullability of typesA nullable value type S? is always nullable
+An unannotated reference type C in a disabled  annotation context is oblivious
+An unannotated reference type C in an enabled  annotation context is nonnullable
+A nullable reference type C? is nullable  (but a warning may be yielded in a disabled
+annotation context)
+Type parameters additionally take their constraints into account:
+A type parameter T where all constraints (if any) are either nullable types or the
+class? constraint is nullable
+A type parameter T where at least one constraint is either oblivious  or nonnullable
+or one of the struct or class or notnull constraints is
+oblivious  in a disabled  annotation context
+nonnullable  in an enabled  annotation context
+A nullable type parameter T? is nullable , but a warning is yielded in a disabled
+annotation context if T isn't a value type
+A type is deemed to occur in a given annotation context when the last token of the
+type is within that context.
+Whether a given reference type C in source code is interpreted as oblivious or
+nonnullable depends on the annotation context of that source code. But once
+established, it is considered part of that type, and "travels with it" e.g. during
+substitution of generic type arguments. It is as if there is an annotation like ? on the
+type, but invisible.
+Nullable reference types can be used as generic constraints.
+class? is a new constraint denoting "possibly nullable reference type", whereas class
+in an enabled  annotation context denotes "nonnullable reference type".
+default is a new constraint denoting a type parameter that isn't known to be a
+reference or value type. It can only be used on overridden and explicitly implemented
+methods. With this constraint, T? means a nullable type parameter, as opposed to
+being a shorthand for Nullable<T>.
+notnull is a new constraint denoting a type parameter that is nonnullable.Oblivious vs nonnullable
+ConstraintsThe nullability of a type argument or of a constraint does not impact whether the type
+satisfies the constraint, except where that is already the case today (nullable value types
+do not satisfy the struct constraint). However, if the type argument does not satisfy the
+nullability requirements of the constraint, a warning may be given.
+Every expression in a given source location has a null st ate, which indicated whether it is
+believed to potentially evaluate to null. The null state is either "not null", "maybe null",
+or "maybe default". The null state is used to determine whether a warning should be
+given about null-unsafe conversions and dereferences.
+The distinction between "maybe null" and "maybe default" is subtle and applies to type
+parameters. The distinction is that a type parameter T which has the state "maybe null"
+means the value is in the domain of legal values for T however that legal value may
+include null. Where as a "maybe default" means that the value may be outside the
+legal domain of values for T.
+Example:
+c#
+For certain expressions denoting variables, fields or properties, the null state is tracked
+between occurrences, based on assignments to them, tests performed on them and theNull state and null tracking
+// The value `t` here has the state "maybe null". It's possible for `T` to  
+be instantiated  
+// with `string?` in which case `null` would be within the domain of legal  
+values here. The  
+// assumption though is the value provided here is within the legal values  
+of `T`. Hence  
+// if `T` is `string` then `null` will not be a value, just as we assume  
+that `null` is not  
+// provided for a normal `string` parameter  
+void M<T>(T t)  
+{ 
+    // There is no guarantee that default(T) is within the legal values for  
+T hence the  
+    // state *must* be "maybe-default" and hence `local` must be `T?`  
+    T? local = default(T); 
+} 
+Null tracking for variablescontrol flow between them. This is similar to how definite assignment is tracked for
+variables. The tracked expressions are the ones of the following form:
+antlr
+Where the identifiers denote fields or properties.
+The null state for tracked variables is "not null" in unreachable code. This follows other
+decisions around unreachable code like considering all locals to be definitely assigned.
+Describe null st ate transitions similar t o def inite assignment
+The null state of an expression is derived from its form and type, and from the null state
+of variables involved in it.
+The null state of a null literal depends on the target type of the expression. If the target
+type is a type parameter constrained to a reference type then it's "maybe default".
+Otherwise it is "maybe null".
+The null state of a default literal depends on the target type of the default literal. A
+default literal with target type T has the same null state as the default(T) expression.
+The null state of any other literal is "not null".
+If a simple_name is not classified as a value, its null state is "not null". Otherwise it is a
+tracked expression, and its null state is its tracked null state at this source location.tracked_expression  
+    : simple_name  
+    | this  
+    | base  
+    | tracked_expression '.' identifier  
+    ; 
+Null state for expressions
+Literals
+Simple names
+Member accessIf a member_access is not classified as a value, its null state is "not null". Otherwise, if it is
+a tracked expression, its null state is its tracked null state at this source location.
+Otherwise its null state is the default null state of its type.
+c#
+If an invocation_expression invokes a member that is declared with one or more
+attributes for special null behavior, the null state is determined by those attributes.
+Otherwise the null state of the expression is the default null state of its type.
+The null state of an invocation_expression is not tracked by the compiler.
+c#var person = new Person();  
+// The receiver is a tracked expression hence the member_access of the  
+property  
+// is tracked as well  
+if (person.FirstName is not null) 
+{ 
+    Use(person.FirstName);  
+} 
+// The return of an invocation is not a tracked expression hence the  
+member_access  
+// of the return is also not tracked  
+if (GetAnonymous().FirstName is not null) 
+{ 
+    // Warning: Cannot convert null literal to non-nullable reference type.  
+    Use(GetAnonymous().FirstName);  
+} 
+void Use(string s)  
+{  
+    // ... 
+} 
+public class Person 
+{ 
+    public string? FirstName { get; set; } 
+    public string? LastName { get; set; } 
+    private static Person s_anonymous = new Person();  
+    public static Person GetAnonymous () => s_anonymous;  
+} 
+Invocation expressionsIf an element_access invokes an indexer that is declared with one or more attributes for
+special null behavior, the null state is determined by those attributes. Otherwise the null
+state of the expression is the default null state of its type.
+c#// The result of an invocation_expression is not tracked  
+if (GetText() is not null) 
+{ 
+    // Warning: Converting null literal or possible null value to non-
+nullable type.  
+    string s = GetText();  
+    // Warning: Dereference of a possibly null reference.  
+    Use(s);  
+} 
+// Nullable friendly pattern  
+if (GetText() is string s) 
+{ 
+    Use(s);  
+} 
+string? GetText() => ...  
+Use(string s) {  }  
+Element access
+object?[] array = ...;  
+if (array[ 0] != null) 
+{ 
+    // Warning: Converting null literal or possible null value to non-
+nullable type.  
+    object o = array[ 0]; 
+    // Warning: Dereference of a possibly null reference.  
+    Console.WriteLine(o.ToString());  
+} 
+// Nullable friendly pattern  
+if (array[ 0] is {} o) 
+{ 
+    Console.WriteLine(o.ToString());  
+} 
+Base accessIf B denotes the base type of the enclosing type, base.I has the same null state as
+((B)this).I and base[E] has the same null state as ((B)this)[E].
+default(T) has the null state based on the properties of the type T:
+If the type is a nonnullable  type then it has the null state "not null"
+Else if the type is a type parameter then it has the null state "maybe default"
+Else it has the null state "maybe null"
+A null_conditional_expression has the null state based on the expression type. Note
+that this refers to the type of the null_conditional_expression, not the original type of
+the member being invoked:
+If the type is a nullable  value type then it has the null state "maybe null"
+Else if the type is a nullable  type parameter then it has the null state "maybe
+default"
+Else it has the null state "maybe null"
+If a cast expression (T)E invokes a user-defined conversion, then the null state of the
+expression is the default null state for the type of the user-defined conversion.
+Otherwise:
+If T is a nonnullable  value type then T has the null state "not null"
+Else if T is a nullable  value type then T has the null state "maybe null"
+Else if T is a nullable  type in the form U? where U is a type parameter then T has
+the null state "maybe default"
+Else if T is a nullable  type, and E has null state "maybe null" or "maybe default",
+then T has the null state "maybe null"
+Else if T is a type parameter, and E has null state "maybe null" or "maybe default",
+then T has the null state "maybe default"
+Else T has the same null state as EDefault expressions
+Null-conditional expressions ?.
+Cast expressions
+Unary and binary operatorsIf a unary or binary operator invokes an user-defined operator then the null state of the
+expression is the default null state for the type of the user-defined operator. Otherwise
+it is the null state of the expression.
+Something special t o do for binar y + over str ings and delegat es?
+The null state of await E is the default null state of its type.
+The null state of an E as T expression depends first on properties of the type T. If the
+type of T is nonnullable  then the null state is "not null". Otherwise the null state
+depends on the conversion from the type of E to type T:
+If the conversion is an identity, boxing, implicit reference, or implicit nullable
+conversion, then the null state is the null state of E
+Else if T is a type parameter then it has the null state "maybe default"
+Else it has the null state "maybe null"
+The null state of E1 ?? E2 is the null state of E2
+The null state of E1 ? E2 : E3 is based on the null state of E2 and E3:
+If both are "not null" then the null state is "not null"
+Else if either is "maybe default" then the null state is "maybe default"
+Else the null state is "not null"
+The null state of a query expression is the default null state of its type.
+Additional w ork needed her eAwait expressions
+The as operator
+The null-coalescing operator
+The conditional operator
+Query expressions
+Assignment operatorsE1 = E2 and E1 op= E2 have the same null state as E2 after any implicit conversions
+have been applied.
+(E), checked(E) and unchecked(E) all have the same null state as E.
+The null state of the following expression forms is always "not null":
+this access
+interpolated strings
+new expressions (object, delegate, anonymous object and array creation
+expressions)
+typeof expressions
+nameof expressions
+anonymous functions (anonymous methods and lambda expressions)
+null-forgiving expressions
+is expressions
+Nested functions (lambdas and local functions) are treated like methods, except in
+regards to their captured variables. The initial state of a captured variable inside a
+lambda or local function is the intersection of the nullable state of the variable at all the
+"uses" of that nested function or lambda. A use of a local function is either a call to that
+function, or where it is converted to a delegate. A use of a lambda is the point at which
+it is defined in source.
+var infers an annotated type for reference types, and type parameters that aren't
+constrained to be a value type. For instance:
+in var s = ""; the var is inferred as string?.
+in var t = new T(); with an unconstrained T the var is inferred as T?.Expressions that propagate null state
+Expressions that are never null
+Nested functions
+Type inference
+nullable implicitly typed local variablesGeneric type inference is enhanced to help decide whether inferred reference types
+should be nullable or not. This is a best effort. It may yield warnings regarding nullability
+constraints, and may lead to nullable warnings when the inferred types of the selected
+overload are applied to the arguments.
+Nullable reference types flow into the bounds from the initial expressions, as described
+below. In addition, two new kinds of bounds, namely null and default are introduced.
+Their purpose is to carry through occurrences of null or default in the input
+expressions, which may cause an inferred type to be nullable, even when it otherwise
+wouldn't.
+The determination of what bounds to add in the first phase are enhanced as follows:
+If an argument Ei has a reference type, the type U used for inference depends on the
+null state of Ei as well as its declared type:
+If the declared type is a nonnullable reference type U0 or a nullable reference type
+U0? then
+if the null state of Ei is "not null" then U is U0
+if the null state of Ei is "maybe null" then U is U0?
+Otherwise if Ei has a declared type, U is that type
+Otherwise if Ei is null then U is the special bound null
+Otherwise if Ei is default then U is the special bound default
+Otherwise no inference is made.
+In inferences from the type U to the type V, if V is a nullable reference type V0?, then
+V0 is used instead of V in the following clauses.
+If V is one of the unfixed type variables, U is added as an exact, upper or lower
+bound as before
+Otherwise, if U is null or default, no inference is made
+Otherwise, if U is a nullable reference type U0?, then U0 is used instead of U in the
+subsequent clauses.Generic type inference
+The first phase
+Exact, upper-bound and lower-bound inferencesThe essence is that nullability that pertains directly to one of the unfixed type variables
+is preserved into its bounds. For the inferences that recurse further into the source and
+target types, on the other hand, nullability is ignored. It may or may not match, but if it
+doesn't, a warning will be issued later if the overload is chosen and applied.
+The spec currently does not do a good job of describing what happens when multiple
+bounds are identity convertible to each other, but are different. This may happen
+between object and dynamic, between tuple types that differ only in element names,
+between types constructed thereof and now also between C and C? for reference types.
+In addition we need to propagate "nullness" from the input expressions to the result
+type.
+To handle these we add more phases to fixing, which is now:
+1. Gather all the types in all the bounds as candidates, removing ? from all that are
+nullable reference types
+2. Eliminate candidates based on requirements of exact, lower and upper bounds
+(keeping null and default bounds)
+3. Eliminate candidates that do not have an implicit conversion to all the other
+candidates
+4. If the remaining candidates do not all have identity conversions to one another,
+then type inference fails
+5. Merge the remaining candidates as described below
+6. If the resulting candidate is a reference type and all of the exact bounds or any of
+the lower bounds are nullable reference types, null or default, then ? is added
+to the resulting candidate, making it a nullable reference type.
+Merging is described between two candidate types. It is transitive and commutative, so
+the candidates can be merged in any order with the same ultimate result. It is undefined
+if the two candidate types are not identity convertible to each other.
+The Merge function takes two candidate types and a direction ( + or -):
+Merge(T, T, d) = T
+Merge(S, T?, +) = Merge(S?, T, +) = Merge(S, T, +)?
+Merge(S, T?, -) = Merge(S?, T, -) = Merge(S, T, -)
+Merge(C<S1,...,Sn>, C<T1,...,Tn>, +) = C<Merge(S1, T1, d1),...,Merge(Sn, Tn,
+dn)>, wher e
+di = + if the i'th type parameter of C<...> is covariantFixingdi = - if the i'th type parameter of C<...> is contra- or invariant
+Merge(C<S1,...,Sn>, C<T1,...,Tn>, -) = C<Merge(S1, T1, d1),...,Merge(Sn, Tn,
+dn)>, wher e
+di = - if the i'th type parameter of C<...> is covariant
+di = + if the i'th type parameter of C<...> is contra- or invariant
+Merge((S1 s1,..., Sn sn), (T1 t1,..., Tn tn), d) = (Merge(S1, T1,
+d)n1,...,Merge(Sn, Tn, d) nn), wher e
+ni is absent if si and ti differ, or if both are absent
+ni is si if si and ti are the same
+Merge(object, dynamic) = Merge(dynamic, object) = dynamic
+Warnings
+Potential null assignment
+Potential null dereference
+Constraint nullability mismatch
+Nullable types in disabled annotation context
+Override and implementation nullability mismatch
+Attributes for special null behaviorPattern-matching changes for C# 9.0
+Article •09/21/2021
+We are considering a small handful of enhancements to pattern-matching for C# 9.0
+that have natural synergy and work well to address a number of common programming
+problems:
+https://github.com/dotnet/csharplang/issues/2925  Type patterns
+https://github.com/dotnet/csharplang/issues/1350  Parenthesized patterns to
+enforce or emphasize precedence of the new combinators
+https://github.com/dotnet/csharplang/issues/1350  Conjunctive and patterns
+that require both of two different patterns to match;
+https://github.com/dotnet/csharplang/issues/1350  Disjunctive or patterns that
+require either of two different patterns to match;
+https://github.com/dotnet/csharplang/issues/1350  Negated not patterns that
+require a given pattern not to match; and
+https://github.com/dotnet/csharplang/issues/812  Relational patterns that
+require the input value to be less than, less than or equal to, etc a given constant.
+Parenthesized patterns permit the programmer to put parentheses around any pattern.
+This is not so useful with the existing patterns in C# 8.0, however the new pattern
+combinators introduce a precedence that the programmer may want to override.
+antlr７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Parenthesized Patterns
+primary_pattern  
+    : parenthesized_pattern  
+    | // all of the existing forms  We permit a type as a pattern:
+antlr
+This retcons the existing is-type-expr ession  to be an is-pattern-expr ession  in which the
+pattern is a type-p attern, though we would not change the syntax tree produced by the
+compiler.
+One subtle implementation issue is that this grammar is ambiguous. A string such as
+a.b can be parsed either as a qualified name (in a type context) or a dotted expression
+(in an expression context). The compiler is already capable of treating a qualified name
+the same as a dotted expression in order to handle something like e is Color.Red. The
+compiler's semantic analysis would be further extended to be capable of binding a
+(syntactic) constant pattern (e.g. a dotted expression) as a type in order to treat it as a
+bound type pattern in order to support this construct.
+After this change, you would be able to write
+C#    ; 
+parenthesized_pattern  
+    : '(' pattern ')' 
+    ; 
+Type Patterns
+primary_pattern  
+    : type-pattern  
+    | // all of the existing forms  
+    ; 
+type_pattern  
+    : type  
+    ; 
+void M(object o1, object o2) 
+{ 
+    var t = (o1, o2);  
+    if (t is (int, string)) {} // test if o1 is an int and o2 is a string  
+    switch (o1) { 
+        case int: break; // test if o1 is an int  
+        case System.String: break; // test if o1 is a string  
+    } 
+} Relational patterns permit the programmer to express that an input value must satisfy a
+relational constraint when compared to a constant value:
+C#
+Relational patterns support the relational operators <, <=, >, and >= on all of the built-
+in types that support such binary relational operators with two operands of the same
+type in an expression. Specifically, we support all of these relational patterns for sbyte,
+byte, short, ushort, int, uint, long, ulong, char, float, double, decimal, nint, and
+nuint.
+antlr
+The expression is required to evaluate to a constant value. It is an error if that constant
+value is double.NaN or float.NaN. It is an error if the expression is a null constant.
+When the input is a type for which a suitable built-in binary relational operator is
+defined that is applicable with the input as its left operand and the given constant as its
+right operand, the evaluation of that operator is taken as the meaning of the relational
+pattern. Otherwise we convert the input to the type of the expression using an explicit
+nullable or unboxing conversion. It is a compile-time error if no such conversion exists.Relational Patterns
+    public static LifeStage LifeStageAtAge (int age) => age switch 
+    { 
+        < 0 =>  LifeStage.Prenatal,  
+        < 2 =>  LifeStage.Infant,  
+        < 4 =>  LifeStage.Toddler,  
+        < 6 =>  LifeStage.EarlyChild,  
+        < 12 => LifeStage.MiddleChild,  
+        < 20 => LifeStage.Adolescent,  
+        < 40 => LifeStage.EarlyAdult,  
+        < 65 => LifeStage.MiddleAdult,  
+        _ =>    LifeStage.LateAdult,  
+    }; 
+primary_pattern  
+    : relational_pattern  
+    ; 
+relational_pattern  
+    : '<' relational_expression  
+    | '<=' relational_expression  
+    | '>' relational_expression  
+    | '>=' relational_expression  
+    ; The pattern is considered not to match if the conversion fails. If the conversion succeeds
+then the result of the pattern-matching operation is the result of evaluating the
+expression e OP v where e is the converted input, OP is the relational operator, and v
+is the constant expression.
+Pattern combinat ors permit matching both of two different patterns using and (this can
+be extended to any number of patterns by the repeated use of and), either of two
+different patterns using or (ditto), or the negation  of a pattern using not.
+A common use of a combinator will be the idiom
+c#
+More readable than the current idiom e is object, this pattern clearly expresses that
+one is checking for a non-null value.
+The and and or combinators will be useful for testing ranges of values
+c#
+This example illustrates that and will have a higher parsing priority (i.e. will bind more
+closely) than or. The programmer can use the parenthesized p attern to make the
+precedence explicit:
+c#
+Like all patterns, these combinators can be used in any context in which a pattern is
+expected, including nested patterns, the is-pattern-expr ession , the switch-expr ession , and
+the pattern of a switch statement's case label.
+antlrPattern Combinators
+if (e is not null) ... 
+bool IsLetter (char c) => c is >= 'a' and <= 'z' or >= 'A' and <= 'Z'; 
+bool IsLetter (char c) => c is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z'); 
+pattern 
+    : disjunctive_pattern  
+    ; Due to the introduction of the type p attern, it is possible for a generic type to appear
+before the token =>. We therefore add => to the set of tokens listed in 7.5.4.2 Gr ammar
+Ambiguities  to permit disambiguation of the < that begins the type argument list. See
+also https://github.com/dotnet/roslyn/issues/47614 .
+Are and, or, and not some kind of contextual keyword? If so, is there a breaking
+change (e.g. compared to their use as a designator in a declar ation-p attern).
+We expect to support all of the primitive types that can be compared in an expression
+using a relational operator. The meaning in simple cases is clear
+c#
+But when the input is not such a primitive type, what type do we attempt to convert it
+to?
+c#disjunctive_pattern  
+    : disjunctive_pattern 'or' conjunctive_pattern  
+    | conjunctive_pattern  
+    ; 
+conjunctive_pattern  
+    : conjunctive_pattern 'and' negated_pattern  
+    | negated_pattern  
+    ; 
+negated_pattern  
+    : 'not' negated_pattern  
+    | primary_pattern  
+    ; 
+primary_pattern  
+    : // all of the patterns forms previously defined  
+    ; 
+Change to 7.5.4.2 Grammar Ambiguities
+Open Issues with Proposed Changes
+Syntax for relational operators
+Semantics (e.g. type) for relational operators
+bool IsValidPercentage (int x) => x is >= 0 and <= 100; We have proposed that when the input type is already a comparable primitive, that is
+the type of the comparison. However, when the input is not a comparable primitive, we
+treat the relational as including an implicit type test to the type of the constant on the
+right-hand-side of the relational. If the programmer intends to support more than one
+input type, that must be done explicitly:
+c#
+It has been suggested that when you write an and combinator, type information learned
+on the left about the top-level type could flow to the right. For example
+C#
+Here, the input type  to the second pattern is narrowed by the type narr owing
+requirements of left of the and. We would define type narrowing semantics for all
+patterns as follows. The narrowed type  of a pattern P is defined as follows:
+1. If P is a type pattern, the narrowed type  is the type of the type pattern's type.
+2. If P is a declaration pattern, the narrowed type  is the type of the declaration
+pattern's type.
+3. If P is a recursive pattern that gives an explicit type, the narrowed type  is that type.
+4. If P is matched via the rules for  ITuple, the narrowed type  is the type
+System.Runtime.CompilerServices.ITuple.
+5. If P is a constant pattern where the constant is not the null constant and where the
+expression has no constant expr ession c onversion to the input type , the narrowed
+type is the type of the constant.
+6. If P is a relational pattern where the constant expression has no constant
+expression c onversion to the input type , the narrowed type  is the type of the
+constant.bool IsValidPercentage (object x) => x is >= 0 and <= 100; 
+bool IsValidPercentage (object x) => x is 
+    >= 0 and <= 100 or    // integer tests  
+    >= 0F and <= 100F or  // float tests  
+    >= 0D and <= 100D;    // double tests  
+Flowing type information from the left to the right of and
+bool isSmallByte (object o) => o is byte and < 100; 
+7. If P is an or pattern, the narrowed type  is the common type of the narrowed type
+of the subpatterns if such a common type exists. For this purpose, the common
+type algorithm considers only identity, boxing, and implicit reference conversions,
+and it considers all subpatterns of a sequence of or patterns (ignoring
+parenthesized patterns).
+8. If P is an and pattern, the narrowed type  is the narrowed type  of the right pattern.
+Moreover, the narrowed type  of the left pattern is the input type  of the right
+pattern.
+9. Otherwise the narrowed type  of P is P's input type.
+The addition of or and not patterns creates some interesting new problems around
+pattern variables and definite assignment. Since variables can normally be declared at
+most once, it would seem any pattern variable declared on one side of an or pattern
+would not be definitely assigned when the pattern matches. Similarly, a variable
+declared inside a not pattern would not be expected to be definitely assigned when the
+pattern matches. The simplest way to address this is to forbid declaring pattern variables
+in these contexts. However, this may be too restrictive. There are other approaches to
+consider.
+One scenario that is worth considering is this
+C#
+This does not work today because, for an is-pattern-expr ession , the pattern variables are
+considered definitely assigned  only where the is-pattern-expr ession  is true ("definitely
+assigned when true").
+Supporting this would be simpler (from the programmer's perspective) than also adding
+support for a negated-condition if statement. Even if we add such support,
+programmers would wonder why the above snippet does not work. On the other hand,
+the same scenario in a switch makes less sense, as there is no corresponding point in
+the program where definitely assigned when fals e would be meaningful. Would we
+permit this in an is-pattern-expr ession  but not in other contexts where patterns are
+permitted? That seems irregular.
+Related to this is the problem of definite assignment in a disjunctiv e-pattern.Variable definitions and definite assignment
+if (e is not int i) return; 
+M(i); // is i definitely assigned here?  C#
+We would only expect i to be definitely assigned when the input is not zero. But since
+we don't know whether the input is zero or not inside the block, i is not definitely
+assigned. However, what if we permit i to be declared in different mutually exclusive
+patterns?
+C#
+Here, the variable i is definitely assigned inside the block, and takes it value from the
+other element of the tuple when a zero element is found.
+It has also been suggested to permit variables to be (multiply) defined in every case of a
+case block:
+C#
+To make any of this work, we would have to carefully define where such multiple
+definitions are permitted and under what conditions such a variable is considered
+definitely assigned.
+Should we elect to defer such work until later (which I advise), we could say in C# 9
+beneath a not or or, pattern variables may not be declared.
+Then, we would have time to develop some experience that would provide insight into
+the possible value of relaxing that later.if (e is 0 or int i) 
+{ 
+    M(i); // is i definitely assigned here?  
+} 
+if ((e1, e2) is (0, int i) or (int i, 0)) 
+{ 
+    M(i);  
+} 
+    case (0, int x): 
+    case (int x, 0): 
+        Console.WriteLine(x);  
+Diagnostics, subsumption, and exhaustivenessThese new pattern forms introduce many new opportunities for diagnosable
+programmer error. We will need to decide what kinds of errors we will diagnose, and
+how to do so. Here are some examples:
+C#
+This case can never match (because the input cannot be both an int and a double). We
+already have an error when we detect a case that can never match, but its wording ("The
+switch case has already been handled by a previous case" and "The pattern has already
+been handled by a previous arm of the switch expression") may be misleading in new
+scenarios. We may have to modify the wording to just say that the pattern will never
+match the input.
+C#
+Similarly, this would be an error because a value cannot be both 1 and 2.
+C#
+This case is possible to match, but the or 1 at the end adds no meaning to the pattern.
+I suggest we should aim to produce an error whenever some conjunct or disjunct of a
+compound pattern does not either define a pattern variable or affect the set of matched
+values.
+C#
+Here, 0 or 1 or adds nothing to the second case, as those values would have been
+handled by the first case. This too deserves an error.
+C#case >= 0 and <= 100D: 
+case 1 and 2: 
+case 1 or 2 or 3 or 1: 
+case < 2: break; 
+case 0 or 1 or 2 or 3 or 4 or 5: break; 
+byte b = ...;  
+int x = b switch { <100 => 0, 100 => 1, 101 => 2, >101 => 3 }; A switch expression such as this should be considered exhaustiv e (it handles all possible
+input values).
+In C# 8.0, a switch expression with an input of type byte is only considered exhaustive if
+it contains a final arm whose pattern matches everything (a discard-pattern or var-
+pattern). Even a switch expression that has an arm for every distinct byte value is not
+considered exhaustive in C# 8. In order to properly handle exhaustiveness of relational
+patterns, we will have to handle this case too. This will technically be a breaking change,
+but no user is likely to notice.Init Only Setters
+Article •02/01/2023
+This proposal adds the concept of init only properties and indexers to C#. These
+properties and indexers can be set at the point of object creation but become effectively
+get only once object creation has completed. This allows for a much more flexible
+immutable model in C#.
+The underlying mechanisms for building immutable data in C# haven't changed since
+1.0. They remain:
+1. Declaring fields as readonly.
+2. Declaring properties that contain only a get accessor.
+These mechanisms are effective at allowing the construction of immutable data but they
+do so by adding cost to the boilerplate code of types and opting such types out of
+features like object and collection initializers. This means developers must choose
+between ease of use and immutability.
+A simple immutable object like Point requires twice as much boiler plate code to
+support construction as it does to declare the type. The bigger the type the bigger the
+cost of this boiler plate:
+C#７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+MotivationThe init accessor makes immutable objects more flexible by allowing the caller to
+mutate the members during the act of construction. That means the object's immutable
+properties can participate in object initializers and thus removes the need for all
+constructor boilerplate in the type. The Point type is now simply:
+C#
+The consumer can then use object initializers to create the object
+C#
+An init only property (or indexer) is declared by using the init accessor in place of the
+set accessor:
+C#struct Point 
+{ 
+    public int X { get; } 
+    public int Y { get; } 
+    public Point(int x, int y) 
+    { 
+        this.X = x; 
+        this.Y = y; 
+    } 
+} 
+struct Point 
+{ 
+    public int X { get; init; } 
+    public int Y { get; init; } 
+} 
+var p = new Point() { X = 42, Y = 13 }; 
+Detailed Design
+init accessors
+class Student 
+{ 
+    public string FirstName { get; init; } An instance property containing an init accessor is considered settable in the following
+circumstances, except when in a local function or lambda:
+During an object initializer
+During a with expression initializer
+Inside an instance constructor of the containing or derived type, on this or base
+Inside the init accessor of any property, on this or base
+Inside attribute usages with named parameters
+The times above in which the init accessors are settable are collectively referred to in
+this document as the construction phase of the object.
+This means the Student class can be used in the following ways:
+C#
+The rules around when init accessors are settable extend across type hierarchies. If the
+member is accessible and the object is known to be in the construction phase then the
+member is settable. That specifically allows for the following:
+C#    public string LastName { get; init; } 
+} 
+var s = new Student()  
+{ 
+    FirstName = "Jared", 
+    LastName = "Parosns" , 
+}; 
+s.LastName = "Parsons" ; // Error: LastName is not settable  
+class Base 
+{ 
+    public bool Value { get; init; } 
+} 
+class Derived : Base 
+{ 
+    public Derived() 
+    { 
+        // Not allowed with get only properties but allowed with init  
+        Value = true; 
+    } 
+} 
+class Consumption  
+{ At the point an init accessor is invoked, the instance is known to be in the open
+construction phase. Hence an init accessor is allowed to take the following actions in
+addition to what a normal set accessor can do:
+1. Call other init accessors available through this or base
+2. Assign readonly fields declared on the same type through this
+C#
+The ability to assign readonly fields from an init accessor is limited to those fields
+declared on the same type as the accessor. It cannot be used to assign readonly fields
+in a base type. This rule ensures that type authors remain in control over the mutability
+behavior of their type. Developers who do not wish to utilize init cannot be impacted
+from other types choosing to do so:
+C#    void Example() 
+    { 
+        var d = new Derived() { Value = true }; 
+    } 
+} 
+class Complex 
+{ 
+    readonly  int Field1;  
+    int Field2;  
+    int Prop1 { get; init ; } 
+    int Prop2 
+    { 
+        get => 42; 
+        init 
+        {  
+            Field1 = 13; // okay 
+            Field2 = 13; // okay 
+            Prop1 = 13; // okay 
+        }  
+    } 
+} 
+class Base 
+{ 
+    internal  readonly  int Field; 
+    internal  int Property  
+    { 
+        get => Field;  
+        init => Field = value; // Okay When init is used in a virtual property then all the overrides must also be marked as
+init. Likewise it is not possible to override a simple set with init.
+C#
+An interface declaration can also participate in init style initialization via the
+following pattern:
+C#    } 
+    internal  int OtherProperty { get; init; } 
+} 
+class Derived : Base 
+{ 
+    internal  readonly  int DerivedField;  
+    internal  int DerivedProperty  
+    { 
+        get => DerivedField;  
+        init 
+        {  
+            DerivedField = 42;  // Okay 
+            Property = 0;       // Okay 
+            Field = 13;         // Error Field is readonly  
+        }  
+    } 
+    public Derived() 
+    { 
+        Property = 42;  // Okay  
+        Field = 13;     // Error Field is readonly  
+    } 
+} 
+class Base 
+{ 
+    public virtual int Property { get; init; } 
+} 
+class C1 : Base 
+{ 
+    public override  int Property { get; init; } 
+} 
+class C2 : Base 
+{ 
+    // Error: Property must have init to override Base.Property  
+    public override  int Property { get; set; } 
+} Restrictions of this feature:
+The init accessor can only be used on instance properties
+A property cannot contain both an init and set accessor
+All overrides of a property must have init if the base had init. This rule also
+applies to interface implementation.
+init accessors (both auto-implemented accessors and manually-implemented
+accessors) are permitted on properties of readonly structs, as well as readonly
+properties. init accessors are not permitted to be marked readonly themselves, in
+both readonly and non- readonly struct types.
+C#interface  IPerson 
+{ 
+    string Name { get; init; } 
+} 
+class Init 
+{ 
+    void M<T>() where T : IPerson, new() 
+    { 
+        var local = new T() 
+        {  
+            Name = "Jared" 
+        };  
+        local.Name = "Jraed"; // Error  
+    } 
+} 
+Readonly structs
+readonly  struct ReadonlyStruct1  
+{ 
+    public int Prop1 { get; init; } // Allowed  
+} 
+struct ReadonlyStruct2  
+{ 
+    public readonly  int Prop2 { get; init; } // Allowed  
+    public int Prop3 { get; readonly  init; } // Error  
+} 
+Metadata encodingProperty init accessors will be emitted as a standard set accessor with the return type
+marked with a modreq of IsExternalInit. This is a new type which will have the
+following definition:
+C#
+The compiler will match the type by full name. There is no requirement that it appear in
+the core library. If there are multiple types by this name then the compiler will tie break
+in the following order:
+1. The one defined in the project being compiled
+2. The one defined in corelib
+If neither of these exist then a type ambiguity error will be issued.
+The design for IsExternalInit is futher covered in this issue
+One of the main pivot points in how this feature is encoded will come down to the
+following question:
+Is it a binary breaking change to replace init with set?
+Replacing init with set and thus making a property fully writable is never a source
+breaking change on a non-virtual property. It simply expands the set of scenarios where
+the property can be written. The only behavior in question is whether or not this remains
+a binary breaking change.
+If we want to make the change of init to set a source and binary compatible change
+then it will force our hand on the modreq vs. attributes decision below because it will
+rule out modreqs as a solution. If on the other hand this is seen as a non-interesting
+then this will make the modreq vs. attribute decision less impactful.namespace  System.Runtime.CompilerServices  
+{ 
+    public sealed class IsExternalInit  
+    { 
+    } 
+} 
+Questions
+Breaking changesResolution  This scenario is not seen as compelling by LDM.
+The emit strategy for init property accessors must choose between using attributes or
+modreqs when emitting during metadata. These have different trade offs that need to
+be considered.
+Annotating a property set accessor with a modreq declaration means CLI compliant
+compilers will ignore the accessor unless it understands the modreq. That means only
+compilers aware of init will read the member. Compilers unaware of init will ignore
+the set accessor and hence will not accidentally treat the property as read / write.
+The downside of modreq is init becomes a part of the binary signature of the set
+accessor. Adding or removing init will break binary compatbility of the application.
+Using attributes to annotate the set accessor means that only compilers which
+understand the attribute will know to limit access to it. A compiler unaware of init will
+see it as a simple read / write property and allow access.
+This would seemingly mean this decision is a choice between extra safety at the expense
+of binary compatibility. Digging in a bit the extra safety is not exactly what it seems. It
+will not protect against the following circumstances:
+1. Reflection over public members
+2. The use of dynamic
+3. Compilers that don't recognize modreqs
+It should also be considered that, when we complete the IL verification rules for .NET 5,
+init will be one of those rules. That means extra enforcement will be gained from
+simply verifying compilers emitting verifiable IL.
+The primary languages for .NET (C#, F# and VB) will all be updated to recognize these
+init accessors. Hence the only realistic scenario here is when a C# 9 compiler emits
+init properties and they are seen by an older toolset such as C# 8, VB 15, etc ... C# 8.
+That is the trade off to consider and weigh against binary compatibility.
+Note This discussion primarily applies to members only, not to fields. While init fields
+were rejected by LDM they are still interesting to consider for the modreq vs. attribute
+discussion. The init feature for fields is a relaxation of the existing restriction of
+readonly. That means if we emit the fields as readonly + an attribute there is no risk ofModreqs vs. attributesolder compilers mis-using the field because they would already recognize readonly.
+Hence using a modreq here doesn't add any extra protection.
+Resolution  The feature will use a modreq to encode the property init setter. The
+compelling factors were (in no particular order):
+Desire to discourage older compilers from violating init semantics
+Desire to make adding or removing init in a virtual declaration or interface
+both a source and binary breaking change.
+Given there was also no significant support for removing init to be a binary
+compatible change it made the choice of using modreq straight forward.
+There were three syntax forms which got significant consideration during our LDM
+meeting:
+C#
+Resolution  There was no syntax which was overwhelmingly favored in LDM.
+One point which got significant attention was how the choice of syntax would impact
+our ability to do init members as a general feature in the future. Choosing option 1
+would mean that it would be difficult to define a property which had an init style get
+method in the future. Eventually it was decided that if we decided to go forward with
+general init members in future, we could allow init to be a modifier in the property
+accessor list as well as a short hand for init set. Essentially the following two
+declarations would be identical.
+C#init vs. initonly
+// 1. Use init  
+int Option1 { get; init; } 
+// 2. Use init set  
+int Option2 { get; init set; } 
+// 3. Use initonly  
+int Option3 { get; initonly; }  
+int Property1 { get; init; } 
+int Property1 { get; init set; } The decision was made to move forward with init as a standalone accessor in the
+property accessor list.
+Consider the following scenario. A type declares an init only member which is not set
+in the constructor. Should the code which constructs the object get a warning if they
+failed to initialize the value?
+At that point it is clear the field will never be set and hence has a lot of similarities with
+the warning around failing to initialize private data. Hence a warning would seemingly
+have some value here?
+There are significant downsides to this warning though:
+1. It complicates the compatibility story of changing readonly to init.
+2. It requires carrying additional metadata around to denote the members which are
+required to be initialized by the caller.
+Further if we believe there is value here in the overall scenario of forcing object creators
+to be warned / error'd about specific fields then this likely makes sense as a general
+feature. There is no reason it should be limited to just init members.
+Resolution  There will be no warning on consumption of init fields and properties.
+LDM wants to have a broader discussion on the idea of required fields and properties.
+That may cause us to come back and reconsider our position on init members and
+validation.
+In the same way init can serve as a property accessor it could also serve as a
+designation on fields to give them similar behaviors as init properties. That would
+allow for the field to be assigned before construction was complete by the type, derived
+types, or object initializers.
+C#Warn on failed init
+Allow init as a field modifier
+class Student 
+{ 
+    public init string FirstName;  
+    public init string LastName;  
+} In metadata these fields would be marked in the same way as readonly fields but with
+an additional attribute or modreq to indicate they are init style fields.
+Resolution  LDM agrees this proposal is sound but overall the scenario felt disjoint from
+properties. The decision was to proceed only with init properties for now. This has a
+suitable level of flexibility as an init property can mutate a readonly field on the
+declaring type of the property. This will be reconsidered if there is significant customer
+feedback that justifies the scenario.
+In the same way the readonly modifier can be applied to a struct to automatically
+declare all fields as readonly, the init only modifier can be declared on a struct or
+class to automatically mark all fields as init. This means the following two type
+declarations are equivalent:
+C#
+Resolution  This feature is too cute here and conflicts with the readonly struct feature
+on which it is based. The readonly struct feature is simple in that it applies readonly to
+all members: fields, methods, etc ... The init struct feature would only apply to
+properties. This actually ends up making it confusing for users.var s = new Student()  
+{ 
+    FirstName = "Jarde", 
+    LastName = "Parsons" , 
+} 
+s.FirstName = "Jared"; // Error FirstName is readonly  
+Allow init as a type modifier
+struct Point 
+{ 
+    public init int X; 
+    public init int Y; 
+} 
+// vs.  
+init struct Point 
+{ 
+    public int X; 
+    public int Y; 
+} Given that init is only valid on certain aspects of a type, we rejected the idea of having
+it as a type modifier.
+The init feature is designed to be compatible with existing get only properties.
+Specifically it is meant to be a completely additive change for a property which is get
+only today but desires more flexbile object creation semantics.
+For example consider the following type:
+C#
+Adding init to these properties is a non-breaking change:
+C#Considerations
+Compatibility
+class Name 
+{ 
+    public string First { get; } 
+    public string Last { get; } 
+    public Name(string first, string last) 
+    { 
+        First = first;  
+        Last = last;  
+    } 
+} 
+class Name 
+{ 
+    public string First { get; init; } 
+    public string Last { get; init; } 
+    public Name(string first, string last) 
+    { 
+        First = first;  
+        Last = last;  
+    } 
+} 
+IL verificationWhen .NET Core decides to re-implement IL verification, the rules will need to be
+adjusted to account for init members. This will need to be included in the rule changes
+for non-mutating acess to readonly data.
+The IL verification rules will need to be broken into two parts:
+1. Allowing init members to set a readonly field.
+2. Determining when an init member can be legally called.
+The first is a simple adjustment to the existing rules. The IL verifier can be taught to
+recognize init members and from there it just needs to consider a readonly field to be
+settable on this in such a member.
+The second rule is more complicated. In the simple case of object initializers the rule is
+straight forward. It should be legal to call init members when the result of a new
+expression is still on the stack. That is until the value has been stored in a local, array
+element or field or passed as an argument to another method it will still be legal to call
+init members. This ensures that once the result of the new expression is published to a
+named identifier (other than this) then it will no longer be legal to call init members.
+The more complicated case though is when we mix init members, object initializers
+and await. That can cause the newly created object to be temporarily hoisted into a
+state machine and hence put into a field.
+C#
+Here the result of new Student() will be hoised into a state machine as a field before the
+set of Name occurs. The compiler will need to mark such hoisted fields in a way that the
+IL verifier understands they're not user accessible and hence doesn't violate the
+intended semantics of init.
+The init modifier could be extended to apply to all instance members. This would
+generalize the concept of init during object construction and allow types to declare
+helper methods that could partipate in the construction process to initialize init fields
+and properties.var student = new Student()  
+{ 
+    Name = await SomeMethod()  
+}; 
+init membersSuch members would have all the restricions that an init accessor does in this design.
+The need is questionable though and this can be safely added in a future version of the
+language in a compatible manner.
+One potential implementation of init properties is to make init completely separate
+from set. That means that a property can potentially have three different accessors:
+get, set, and init.
+This has the potential advantage of allowing the use of modreq to enforce correctness
+while maintaining binary compatibility. The implementation would roughly be the
+following:
+1. An init accessor is always emitted if there is a set. When not defined by the
+developer it is simply a reference to set.
+2. The set of a property in an object initializer will always use init if present but fall
+back to set if it's missing.
+This means that a developer can always safely delete init from a property.
+The downside of this design is that is only useful if init is always  emitted when there is
+a set. The language can't know if init was deleted in the past, it has to assume it was
+and hence the init must always be emitted. That would cause a significant metadata
+expansion and is simply not worth the cost of the compatibility here.Generate three accessorsTarget-typed new expressions
+Article •06/23/2023
+Do not require type specification for constructors when the type is known.
+Allow field initialization without duplicating the type.
+C#
+Allow omitting the type when it can be inferred from usage.
+C#
+Instantiate an object without spelling out the type.
+C#７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+Motivation
+Dictionary< string, List<int>> field = new() { 
+    { "item1", new() { 1, 2, 3 } } 
+}; 
+XmlReader.Create(reader, new() { IgnoreWhitespace = true }); 
+private readonly  static object s_syncObj = new(); A new syntactic form, target_typed_new  of the object_cr eation_expr ession  is accepted in
+which the type is optional.
+antlr
+A target_typed_new  expression does not have a type. However, there is a new object
+creation c onversion that is an implicit conversion from expression, that exists from a
+target_typed_new  to every type.
+Given a target type T, the type T0 is T's underlying type if T is an instance of
+System.Nullable. Otherwise T0 is T. The meaning of a target_typed_new  expression that
+is converted to the type T is the same as the meaning of a corresponding
+object_cr eation_expr ession  that specifies T0 as the type.
+It is a compile-time error if a target_typed_new  is used as an operand of a unary or
+binary operator, or if it is used where it is not subject to an object cr eation c onversion.
+Open Issue:  should we allow delegates and tuples as the target-type?
+The above rules include delegates (a reference type) and tuples (a struct type). Although
+both types are constructible, if the type is inferable, an anonymous function or a tuple
+literal can already be used.
+C#Specification
+object_creation_expression  
+    : 'new' type '(' argument_list? ')' object_or_collection_initializer?  
+    | 'new' type object_or_collection_initializer  
+    | target_typed_new  
+    ; 
+target_typed_new  
+    : 'new' '(' argument_list? ')' object_or_collection_initializer?  
+    ; 
+(int a, int b) t = new(1, 2); // "new" is redundant  
+Action a = new(() => {}); // "new" is redundant  
+(int a, int b) t = new(); // OK; same as (0, 0)  
+Action a = new(); // no constructor found  
+MiscellaneousThe following are consequences of the specification:
+throw new() is allowed (the target type is System.Exception)
+Target-typed new is not allowed with binary operators.
+It is disallowed when there is no type to target: unary operators, collection of a
+foreach, in a using, in a deconstruction, in an await expression, as an anonymous
+type property ( new { Prop = new() }), in a lock statement, in a sizeof, in a fixed
+statement, in a member access ( new().field), in a dynamically dispatched
+operation ( someDynamic.Method(new())), in a LINQ query, as the operand of the is
+operator, as the left operand of the ?? operator, ...
+It is also disallowed as a ref.
+The following kinds of types are not permitted as targets of the conversion
+Enum types:  new() will work (as new Enum() works to give the default value),
+but new(1) will not work as enum types do not have a constructor.
+Interface types:  This would work the same as the corresponding creation
+expression for C OM types.
+Array types:  arrays need a special syntax to provide the length.
+dynamic:  we don't allow new dynamic(), so we don't allow new() with dynamic
+as a target type.
+tuples:  These have the same meaning as an object creation using the
+underlying type.
+All the other types that are not permitted in the object_cr eation_expr ession  are
+excluded as well, for instance, pointer types.
+There were some concerns with target-typed new creating new categories of breaking
+changes, but we already have that with null and default, and that has not been a
+significant problem.
+Most of complaints about types being too long to duplicate in field initialization is
+about type ar guments  not the type itself, we could infer only type arguments like new
+Dictionary(...) (or similar) and infer type arguments locally from arguments or the
+collection initializer.Drawbacks
+Alternatives
+QuestionsShould we forbid usages in expression trees? (no)
+How the feature interacts with dynamic arguments? (no special treatment)
+How IntelliSense should work with new()? (only when there is a single target-type)
+LDM-2017-10-18
+LDM-2018-05-21
+LDM-2018-06-25
+LDM-2018-08-22
+LDM-2018-10-17
+LDM-2020-03-25Design meetings
+Module Initializers
+Article •06/23/2023
+Although the .NET platform has a feature  that directly supports writing initialization
+code for the assembly (technically, the module), it is not exposed in C#. This is a rather
+niche scenario, but once you run into it the solutions appear to be pretty painful. There
+are reports of a number of customers  (inside and outside Microsoft) struggling with
+the problem, and there are no doubt more undocumented cases.
+Enable libraries to do eager, one-time initialization when loaded, with minimal
+overhead and without the user needing to explicitly call anything
+One particular pain point of current static constructor approaches is that the
+runtime must do additional checks on usage of a type with a static constructor, in
+order to decide whether the static constructor needs to be run or not. This adds
+measurable overhead.
+Enable source generators to run some global initialization logic without the user
+needing to explicitly call anything
+A method can be designated as a module initializer by decorating it with a
+[ModuleInitializer] attribute.
+C#７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+Motivation
+Detailed designThe attribute can be used like this:
+C#
+Some requirements are imposed on the method targeted with this attribute:
+1. The method must be static.
+2. The method must be parameterless.
+3. The method must return void.
+4. The method must not be generic or be contained in a generic type.
+5. The method must be accessible from the containing module.
+This means the method's effective accessibility must be internal or public.
+This also means the method cannot be a local function.
+When one or more valid methods with this attribute are found in a compilation, the
+compiler will emit a module initializer which calls each of the attributed methods. The
+calls will be emitted in a reserved, but deterministic order.
+Why should we not do this?
+Perhaps the existing third-party tooling for "injecting" module initializers is
+sufficient for users who have been asking for this feature.using System;  
+namespace  System.Runtime.CompilerServices  
+{ 
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false) ] 
+    public sealed class ModuleInitializerAttribute  : Attribute  { } 
+} 
+using System.Runtime.CompilerServices;  
+class C 
+{ 
+    [ModuleInitializer ] 
+    internal  static void M1() 
+    { 
+        // ... 
+    } 
+} 
+Drawbacks
+Design meetings
+April 8th, 2020
+Extending Partial Methods
+Article •06/23/2023
+This proposal aims to remove all restrictions around the signatures of partial methods
+in C#. The goal being to expand the set of scenarios in which these methods can work
+with source generators as well as being a more general declaration form for C#
+methods.
+See also the original partial methods specification ( §14.6.9 ).
+C# has limited support for developers splitting methods into declarations and
+definitions / implementations.
+C#７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+Motivation
+partial class C 
+{ 
+    // The declaration of C.M  
+    partial void M(string message ); 
+} 
+partial class C 
+{ 
+    // The definition of C.M  
+    partial void M(string message ) => Console.WriteLine(message);  
+} One behavior of partial methods is that when the definition is absent then the
+language will simply erase any calls to the partial method. Essentially it behaves like a
+call to a [Conditional] method where the condition was evaluated to false.
+C#
+The original motivation for this feature was source generation in the form of designer
+generated code. Users were constantly editing the generated code because they wanted
+to hook some aspect of the generated code. Most notably parts of the Windows Forms
+startup process, after components were initialized.
+Editing the generated code was error prone because any action which caused the
+designer to regenerate the code would cause the user edit to be erased. The partial
+method feature eased this tension because it allowed designers to emit hooks in the
+form of partial methods.
+Designers could emit hooks like partial void OnComponentInit() and developers could
+define declarations for them or not define them. In either case though the generated
+code would compile and developers who were interested in the process could hook in
+as needed.
+This does mean that partial methods have several restrictions:
+1. Must have a void return type.
+2. Cannot have out parameters.
+3. Cannot have any accessibility (implicitly private).
+These restrictions exist because the language must be able to emit code when the call
+site is erased. Given they can be erased private is the only possible accessibility
+because the member can't be exposed in assembly metadata. These restrictions also
+serve to limit the set of scenarios in which partial methods can be applied.partial class D 
+{ 
+    partial void M(string message ); 
+    void Example() 
+    { 
+        M(GetIt()); // Call to M and GetIt erased at compile time  
+    } 
+    string GetIt() => "Hello World" ; 
+} The proposal here is to remove all of the existing restrictions around partial methods.
+Essentially let them have out, non-void return types or any type of accessibility. Such
+partial declarations would then have the added requirement that a definition must
+exist. That means the language does not have to consider the impact of erasing the call
+sites.
+This would expand the set of generator scenarios that partial methods could
+participate in and hence link in nicely with our source generators feature. For example a
+regex could be defined using the following pattern:
+C#
+This gives both the developer a simple declarative way of opting into generators as well
+as giving generators a very easy set of declarations to look through in the source code
+to drive their generated output.
+Compare that with the difficulty that a generator would have hooking up the following
+snippet of code.
+C#
+Given that the compiler doesn't allow generators to modify code hooking up this
+pattern would be pretty much impossible for generators. They would need to resort to
+reflection in the IsMatch implementation, or asking users to change their call sites to a
+new method + refactor the regex to pass the string literal as an argument. It's pretty
+messy.
+The language will change to allow partial methods to be annotated with an explicit
+accessibility modifier. This means they can be labeled as private, public, etc ...
+When a partial method has an explicit accessibility modifier though the language will
+require that the declaration has a matching definition even when the accessibility is[RegexGenerated( "(dog|cat|fish)" )] 
+partial bool IsPetMatch (string input); 
+var regex = new RegularExpression( "(dog|cat|fish)" ); 
+if (regex.IsMatch(someInput))  
+{ 
+} 
+Detailed Designprivate:
+C#
+Further the language will remove all restrictions on what can appear on a partial
+method which has an explicit accessibility. Such declarations can contain non-void
+return types, out parameters, extern modifier, etc ... These signatures will have the full
+expressivity of the C# language.
+C#
+This explicitly allows for partial methods to participate in overrides and interface
+implementations:
+C#partial class C 
+{ 
+    // Okay because no definition is required here  
+    partial void M1(); 
+    // Okay because M2 has a definition  
+    private partial void M2(); 
+    // Error: partial method M3 must have a definition  
+    private partial void M3(); 
+} 
+partial class C 
+{ 
+    private partial void M2() { } 
+} 
+partial class D 
+{ 
+    // Okay 
+    internal  partial bool TryParse (string s, out int i);  
+} 
+partial class D 
+{ 
+    internal  partial bool TryParse (string s, out int i) { }
+} 
+interface  IStudent  
+{ 
+    string GetName(); 
+} The compiler will change the error it emits when a partial method contains an illegal
+element to essentially say:
+Cannot use ref on a partial method that lacks explicit accessibility
+This will help point developers in the right direction when using this feature.
+Restrictions:
+partial declarations with explicit accessibility must have a definition
+partial declarations and definition signatures must match on all method and
+parameter modifiers. The only aspects which can differ are parameter names and
+attribute lists (this is not new but rather an existing requirement of partial
+methods).
+Given that we're expanding partial to be more friendly to source generators should we
+also expand it to work on all class members? For example should we be able to declare
+partial constructors, operators, etc ...
+Resolution  The idea is sound but at this point in the C# 9 schedule we're trying to avoid
+unnecessary feature creep. W ant to solve the immediate problem of expanding the
+feature to work with modern source generators.
+Extending partial to support other members will be considered for the C# 10 release.
+Seems likely that we will consider this extension.partial class C : IStudent  
+{ 
+    public virtual partial string GetName();  
+} 
+partial class C 
+{ 
+    public virtual partial string GetName() => "Jarde"; 
+} 
+Questions
+partial on all members
+Use abstract instead of partialThe crux of this proposal is essentially ensuring that a declaration has a corresponding
+definition / implementation. Given that should we use abstract since it's already a
+language keyword that forces the developer to think about having an implementation?
+Resolution  There was a healthy discussion about this but eventually it was decided
+against. Y es the requirements are familiar but the concepts are significantly different.
+Could easily lead the developer to believe they were creating virtual slots when they
+were not doing so.Static anonymous functions
+Article •06/23/2023
+Allow a 'static' modifier on lambdas and anonymous methods, which disallows capture
+of locals or instance state from containing scopes.
+Avoid unintentionally capturing state from the enclosing context, which can result in
+unexpected retention of captured objects or unexpected additional allocations.
+A lambda or anonymous method may have a static modifier. The static modifier
+indicates that the lambda or anonymous method is a static anon ymous f unction .
+A static anon ymous f unction  cannot capture state from the enclosing scope. As a result,
+locals, parameters, and this from the enclosing scope are not available within a static
+anon ymous f unction .
+A static anon ymous f unction  cannot reference instance members from an implicit or
+explicit this or base reference.
+A static anon ymous f unction  may reference static members from the enclosing scope.
+A static anon ymous f unction  may reference constant definitions from the enclosing
+scope.７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+Motivation
+Detailed designnameof() in a static anon ymous f unction  may reference locals, parameters, or this or
+base from the enclosing scope.
+Accessibility rules for private members in the enclosing scope are the same for static
+and non- static anonymous functions.
+No guarantee is made as to whether a static anon ymous f unction  definition is emitted as
+a static method in metadata. This is left up to the compiler implementation to
+optimize.
+A non-static local function or anonymous function can capture state from an enclosing
+static anon ymous f unction  but cannot capture state outside the enclosing static
+anon ymous f unction .
+Removing the static modifier from an anonymous function in a valid program does
+not change the meaning of the program.Target-Typed Conditional Expression
+Article •06/23/2023
+For a conditional expression c ? e1 : e2, when
+1. there is no common type for e1 and e2, or
+2. for which a common type exists but one of the expressions e1 or e2 has no
+implicit conversion to that type
+we define a new implicit conditional expr ession c onversion that permits an implicit
+conversion from the conditional expression to any type T for which there is a
+conversion-from-expression from e1 to T and also from e2 to T. It is an error if a
+conditional expression neither has a common type between e1 and e2 nor is subject to
+a conditional expr ession c onversion.
+We change
+Better conversion from expression
+Given an implicit conversion C1 that converts from an expression E to a type T1,
+and an implicit conversion C2 that converts from an expression E to a type T2, C1
+is a better conversion than C2 if E does not exactly match T2 and at least one of
+the following holds:７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Conditional Expression Conversion
+Better Conversion from ExpressionE exactly matches T1 (§11.6.4.4 )
+T1 is a better conversion target than T2 (§11.6.4.6 )
+to
+Better conversion from expression
+Given an implicit conversion C1 that converts from an expression E to a type T1,
+and an implicit conversion C2 that converts from an expression E to a type T2, C1
+is a better conversion than C2 if E does not exactly match T2 and at least one of
+the following holds:
+E exactly matches T1 (§11.6.4.4 )
+C1 is not a conditional expr ession c onversion and C2 is a conditional
+expression c onversion.
+T1 is a better conversion target than T2 (§11.6.4.6 ) and either C1 and C2
+are both conditional expr ession c onversions  or neither is a conditional
+expression c onversion.
+The current C# language specification says
+A cast_expr ession  of the form (T)E, where T is a type and E is a unary_expr ession ,
+performs an explicit conversion ( §10.3 ) of the value of E to type T.
+In the presence of the conditional expr ession c onversion there may be more than one
+possible conversion from E to T. With the addition of conditional expr ession c onversion,
+we prefer any other conversion to a conditional expr ession c onversion, and use the
+conditional expr ession c onversion only as a last resort.
+The reason for the change to Better conversion fr om expr ession  is to handle a case such
+as this:
+C#
+Cast Expression
+Design Notes
+M(b ? 1 : 2); This approach does have two small downsides. First, it is not quite the same as the
+switch expression:
+C#
+This is still a breaking change, but its scope is less likely to affect real programs:
+C#
+This becomes ambiguous because the conversion to long is better for the first
+argument (because it does not use the conditional expr ession c onversion), but the
+conversion to short is better for the second argument (because short is a better
+conversion t arget than long). This breaking change seems less serious because it does
+not silently change the behavior of an existing program.
+The reason for the notes on the cast expression is to handle a case such as this:
+C#
+This program currently uses the explicit conversion from int to short, and we want to
+preserve the current language meaning of this program. The change would be
+unobservable at runtime, but with the following program the change would be
+observable:
+C#void M(short); 
+void M(long);
+M(b ? 1 : 2); // calls M(long)  
+M(b switch { true => 1, false => 2 }); // calls M(short)  
+M(b ? 1 : 2, 1); // calls M(long, long) without this feature; ambiguous with  
+this feature.  
+M(short, short); 
+M(long, long); 
+_ = (short)(b ? 1 : 2); 
+_ = (A)(b ? c : d);  where c is of type C, d is of type D, and there is an implicit user-defined conversion
+from C to D, and an implicit user-defined conversion from D to A, and an implicit user-
+defined conversion from C to A. If this code is compiled before C# 9.0, when b is true
+we convert from c to D then to A. If we use the conditional expr ession c onversion, then
+when b is true we convert from c to A directly, which executes a different sequence of
+user code. Therefore we treat the conditional expr ession c onversion as a last resort in a
+cast, to preserve existing behavior.Covariant returns
+Article •02/23/2022
+Support covariant r eturn types . Specifically, permit the override of a method to declare a
+more derived return type than the method it overrides, and similarly to permit the
+override of a read-only property to declare a more derived type. Override declarations
+appearing in more derived types would be required to provide a return type at least as
+specific as that appearing in overrides in its base types. Callers of the method or
+property would statically receive the more refined return type from an invocation.
+It is a common pattern in code that different method names have to be invented to
+work around the language constraint that overrides must return the same type as the
+overridden method.
+This would be useful in the factory pattern. For example, in the R oslyn code base we
+would have
+C#
+C#７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+Motivation
+class Compilation  ... 
+{ 
+    public virtual Compilation WithOptions (Options options )... 
+} This is a specification for covariant return types  in C#. Our intent is to permit the
+override of a method to return a more derived return type than the method it overrides,
+and similarly to permit the override of a read-only property to return a more derived
+return type. Callers of the method or property would statically receive the more refined
+return type from an invocation, and overrides appearing in more derived types would be
+required to provide a return type at least as specific as that appearing in overrides in its
+base types.
+The existing constraint on class override ( §14.6.5 ) methods
+The override method and the overridden base method have the same return
+type.
+is modified to
+The override method must have a return type that is convertible by an identity
+conversion or (if the method has a value return - not a ref return ) implicit
+reference conversion to the return type of the overridden base method.
+And the following additional requirements are appended to that list:
+The override method must have a return type that is convertible by an identity
+conversion or (if the method has a value return - not a ref return ) implicit
+reference conversion to the return type of every override of the overridden
+base method that is declared in a (direct or indirect) base type of the override
+method.
+The override method's return type must be at least as accessible as the
+override method (Accessibility domains - §7.5.3 ).class CSharpCompilation  : Compilation  
+{ 
+    public override  CSharpCompilation WithOptions (Options options )... 
+} 
+Detailed design
+Class Method Override
+This constraint permits an override method in a private class to have a private return
+type. However it requires a public override method in a public type to have a public
+return type.
+The existing constraint on class override ( §14.7.6 ) properties
+An overriding property declaration shall specify the exact same accessibility
+modifiers and name as the inherited property, and there shall be an identity
+conversion between the type of the overriding and the inherited property . If the
+inherited property has only a single accessor (i.e., if the inherited property is read-
+only or write-only), the overriding property shall include only that accessor. If the
+inherited property includes both accessors (i.e., if the inherited property is read-
+write), the overriding property can include either a single accessor or both accessors.
+is modified to
+An overriding property declaration shall specify the exact same accessibility
+modifiers and name as the inherited property, and there shall be an identity
+conversion or (if the inherit ed pr oper ty is r ead-only and has a v alue r eturn - not a
+ref return ) implicit r eference conv ersion fr om the type o f the ov erriding
+proper ty to the type o f the inherit ed pr oper ty. If the inherited property has only a
+single accessor (i.e., if the inherited property is read-only or write-only), the
+overriding property shall include only that accessor. If the inherited property
+includes both accessors (i.e., if the inherited property is read-write), the overriding
+property can include either a single accessor or both accessors. The ov erriding
+proper ty's type must be at least as accessible as the ov erriding pr oper ty
+(Accessibility domains - §7.5.3 ).
+The r emainder o f the dr aft speci fication belo w propos es a f urther ext ension t o
+covariant r eturns of interface methods t o be c onsider ed lat er.
+Adding to the kinds of members that are permitted in an interface with the addition of
+the DIM feature in C# 8.0, we further add support for override members along with
+covariant returns. These follow the rules of override members as specified for classes,
+with the following differences:Class Property and Indexer Override
+Interface Method, Property, and Indexer OverrideThe following text in classes:
+The method overridden by an override declaration is known as the overridden b ase
+method . For an override method M declared in a class C, the overridden base
+method is determined by examining each base class of C, starting with the direct
+base class of C and continuing with each successive direct base class, until in a
+given base class type at least one accessible method is located which has the same
+signature as M after substitution of type arguments.
+is given the corresponding specification for interfaces:
+The method overridden by an override declaration is known as the overridden b ase
+method . For an override method M declared in an interface I, the overridden base
+method is determined by examining each direct or indirect base interface of I,
+collecting the set of interfaces declaring an accessible method which has the same
+signature as M after substitution of type arguments. If this set of interfaces has a
+most der ived type , to which there is an identity or implicit reference conversion from
+every type in this set, and that type contains a unique such method declaration,
+then that is the overridden b ase method .
+We similarly permit override properties and indexers in interfaces as specified for
+classes in 15.7.6 Vir tual, s ealed, o verride, and abstr act ac cessors.
+Name lookup in the presence of class override declarations currently modify the result
+of name lookup by imposing on the found member details from the most derived
+override declaration in the class hierarchy starting from the type of the identifier's
+qualifier (or this when there is no qualifier). For example, in 12.6.2.2 C orresponding
+paramet ers we have
+For virtual methods and indexers defined in classes, the parameter list is picked from
+the first declaration or override of the function member found when starting with
+the static type of the receiver, and searching through its base classes.
+to this we add
+For virtual methods and indexers defined in interfaces, the parameter list is picked
+from the declaration or override of the function member found in the most derivedName Lookuptype among those types containing the declaration of override of the function
+member. It is a compile-time error if no unique such type exists.
+For the result type of a property or indexer access, the existing text
+If I identifies an instance property, then the result is a property access with an
+associated instance expression of E and an associated type that is the type of
+the property. If T is a class type, the associated type is picked from the first
+declaration or override of the property found when starting with T, and
+searching through its base classes.
+is augmented with
+If T is an interface type, the associated type is picked from the declaration or
+override of the property found in the most derived of T or its direct or indirect base
+interfaces. It is a compile-time error if no unique such type exists.
+A similar change should be made in 12.7.7.3 Index er ac cess
+In 12.7.6 In vocation expr essions  we augment the existing text
+Otherwise, the result is a value, with an associated type of the return type of
+the method or delegate. If the invocation is of an instance method, and the
+receiver is of a class type T, the associated type is picked from the first
+declaration or override of the method found when starting with T and
+searching through its base classes.
+with
+If the invocation is of an instance method, and the receiver is of an interface type T,
+the associated type is picked from the declaration or override of the method found
+in the most derived interface from among T and its direct and indirect base
+interfaces. It is a compile-time error if no unique such type exists.
+This section of the specification
+For purposes of interface mapping, a class member A matches an interface member
+B when:Implicit Interface ImplementationsA and B are methods, and the name, type, and formal parameter lists of A
+and B are identical.
+A and B are properties, the name and type of A and B are identical, and A
+has the same accessors as B (A is permitted to have additional accessors if it is
+not an explicit interface member implementation).
+A and B are events, and the name and type of A and B are identical.
+A and B are indexers, the type and formal parameter lists of A and B are
+identical, and A has the same accessors as B (A is permitted to have
+additional accessors if it is not an explicit interface member implementation).
+is modified as follows:
+For purposes of interface mapping, a class member A matches an interface member
+B when:
+A and B are methods, and the name and formal parameter lists of A and B
+are identical, and the return type of A is convertible to the return type of B via
+an identity of implicit reference convertion to the return type of B.
+A and B are properties, the name of A and B are identical, A has the same
+accessors as B (A is permitted to have additional accessors if it is not an
+explicit interface member implementation), and the type of A is convertible to
+the return type of B via an identity conversion or, if A is a readonly property,
+an implicit reference conversion.
+A and B are events, and the name and type of A and B are identical.
+A and B are indexers, the formal parameter lists of A and B are identical, A
+has the same accessors as B (A is permitted to have additional accessors if it is
+not an explicit interface member implementation), and the type of A is
+convertible to the return type of B via an identity conversion or, if A is a
+readonly indexer, an implicit reference conversion.
+This is technically a breaking change, as the program below prints "C1.M" today, but
+would print "C2.M" under the proposed revision.
+c#
+using System;  
+interface  I1 { object M(); } 
+class C1 : I1 { public object M() { return "C1.M"; } } 
+class C2 : C1, I1 { public new string M() { return "C2.M"; } } 
+class Program Due to this breaking change, we might consider not supporting covariant return types
+on implicit implementations.
+We will need a rule that an explicit int erface implementation must declar e a return
+type no less deriv ed than the r eturn type declar ed in any ov erride in its b ase
+interfaces.
+TBD
+The specification does not say how the caller gets the more refined return type.
+Presumably that would be done in a way similar to the way that callers get the most
+derived override's parameter specifications.
+If we have the following interfaces:
+C#
+Note that in I3, the methods I1.M() and I2.M() have been “merged”. When
+implementing I3, it is necessary to implement them both together.
+Generally, we require an explicit implementation to refer to the original method. The
+question is, in a class
+C#{ 
+    static void Main() 
+    { 
+        I1 i = new C2(); 
+        Console.WriteLine(i.M());
+    } 
+} 
+Constraints on Interface Implementation
+API Compatibility Implications
+Open Issues
+interface  I1 { I1 M(); } 
+interface  I2 { I2 M(); } 
+interface  I3: I1, I2 { override  I3 M(); } What does that mean here? What should N be?
+I suggest that we permit implementing either I1.M or I2.M (but not both), and treat
+that as an implementation of both.
+[ ] Every language change must pay for itself.
+[ ] We should ensure that the performance is reasonable, even in the case of deep
+inheritance hierarchies
+[ ] We should ensure that artifacts of the translation strategy do not affect
+language semantics, even when consuming new IL from old compilers.
+We could relax the language rules slightly to allow, in source,
+C#class C : I1, I2, I3 
+{ 
+    C IN.M();  
+} 
+Drawbacks
+Alternatives
+abstract  class Cloneable  
+{ 
+    public abstract  Cloneable Clone(); 
+} 
+class Digit : Cloneable
+{ 
+    public override  Cloneable Clone() 
+    { 
+        return this.Clone();  
+    } 
+    public new Digit Clone() // Error: 'Digit' already defines a member  
+called 'Clone' with the same parameter types  
+    { 
+        return this; 
+    } 
+} 
+Unresolved questions[ ] How will APIs that have been compiled to use this feature work in older versions
+of the language?
+some discussion at https://github.com/dotnet/roslyn/issues/357 .
+https://github.com/dotnet/csharplang/blob/master/meetings/2020/LDM-2020-01-
+08.md
+Offline discussion toward a decision to support overriding of class methods only in
+C# 9.0.Design meetings
+Extension GetEnumerator support for
+foreach loops.
+Article •06/23/2023
+Allow foreach loops to recognize an extension method GetEnumerator method that
+otherwise satisfies the foreach pattern, and loop over the expression when it would
+otherwise be an error.
+This will bring foreach inline with how other features in C# are implemented, including
+async and pattern-based deconstruction.
+The spec change is relatively straightforward. W e modify The foreach statement section
+to this text:
+The compile-time processing of a foreach statement first determines the collection
+type, enumer ator type  and element type  of the expression. This determination
+proceeds as follows:
+If the type X of expression  is an array type then there is an implicit reference
+conversion from X to the IEnumerable interface (since System.Array
+implements this interface). The collection type  is the IEnumerable interface, the７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+Motivation
+Detailed designenumer ator type  is the IEnumerator interface and the element type  is the
+element type of the array type X.
+If the type X of expression  is dynamic then there is an implicit conversion from
+expression  to the IEnumerable interface ( §10.2.10 ). The collection type  is the
+IEnumerable interface and the enumer ator type  is the IEnumerator interface. If
+the var identifier is given as the local_v ariable_type  then the element type  is
+dynamic, otherwise it is object.
+Otherwise, determine whether the type X has an appropriate GetEnumerator
+method:
+Perform member lookup on the type X with identifier GetEnumerator and
+no type arguments. If the member lookup does not produce a match, or it
+produces an ambiguity, or produces a match that is not a method group,
+check for an enumerable interface as described below. It is recommended
+that a warning be issued if member lookup produces anything except a
+method group or no match.
+Perform overload resolution using the resulting method group and an
+empty argument list. If overload resolution results in no applicable methods,
+results in an ambiguity, or results in a single best method but that method
+is either static or not public, check for an enumerable interface as described
+below. It is recommended that a warning be issued if overload resolution
+produces anything except an unambiguous public instance method or no
+applicable methods.
+If the return type E of the GetEnumerator method is not a class, struct or
+interface type, an error is produced and no further steps are taken.
+Member lookup is performed on E with the identifier Current and no type
+arguments. If the member lookup produces no match, the result is an error,
+or the result is anything except a public instance property that permits
+reading, an error is produced and no further steps are taken.
+Member lookup is performed on E with the identifier MoveNext and no type
+arguments. If the member lookup produces no match, the result is an error,
+or the result is anything except a method group, an error is produced and
+no further steps are taken.
+Overload resolution is performed on the method group with an empty
+argument list. If overload resolution results in no applicable methods,
+results in an ambiguity, or results in a single best method but that method
+is either static or not public, or its return type is not bool, an error is
+produced and no further steps are taken.
+The collection type  is X, the enumer ator type  is E, and the element type  is
+the type of the Current property.
+Otherwise, check for an enumerable interface:
+If among all the types Ti for which there is an implicit conversion from X to
+IEnumerable<Ti>, there is a unique type T such that T is not dynamic and
+for all the other Ti there is an implicit conversion from IEnumerable<T> to
+IEnumerable<Ti>, then the collection type  is the interface IEnumerable<T>,
+the enumer ator type  is the interface IEnumerator<T>, and the element type
+is T.
+Otherwise, if there is more than one such type T, then an error is produced
+and no further steps are taken.
+Otherwise, if there is an implicit conversion from X to the
+System.Collections.IEnumerable interface, then the collection type  is this
+interface, the enumer ator type  is the interface
+System.Collections.IEnumerator, and the element type  is object.
+Otherwise, determine whether the type 'X' has an appropriate GetEnumerator
+extension method:
+Perform extension method lookup on the type X with identifier
+GetEnumerator. If the member lookup does not produce a match, or it
+produces an ambiguity, or produces a match which is not a method group,
+an error is produced and no further steps are taken. It is recommended that
+a warning be issues if member lookup produces anything except a method
+group or no match.
+Perform overload resolution using the resulting method group and a single
+argument of type X. If overload resolution produces no applicable
+methods, results in an ambiguity, or results in a single best method but that
+method is not accessible, an error is produced an no further steps are taken.
+This resolution permits the first argument to be passed by ref if X is a
+struct type, and the ref kind is in.
+If the return type E of the GetEnumerator method is not a class, struct or
+interface type, an error is produced and no further steps are taken.
+Member lookup is performed on E with the identifier Current and no type
+arguments. If the member lookup produces no match, the result is an error,
+or the result is anything except a public instance property that permits
+reading, an error is produced and no further steps are taken.
+Member lookup is performed on E with the identifier MoveNext and no type
+arguments. If the member lookup produces no match, the result is an error,or the result is anything except a method group, an error is produced and
+no further steps are taken.
+Overload resolution is performed on the method group with an empty
+argument list. If overload resolution results in no applicable methods,
+results in an ambiguity, or results in a single best method but that method
+is either static or not public, or its return type is not bool, an error is
+produced and no further steps are taken.
+The collection type  is X, the enumer ator type  is E, and the element type  is
+the type of the Current property.
+Otherwise, an error is produced and no further steps are taken.
+For await foreach, the rules are similarly modified. The only change that is required to
+that spec is removing the Extension methods do not contribute. line from the
+description, as the rest of that spec is based on the above rules with different names
+substituted for the pattern methods.
+Every change adds additional complexity to the language, and this potentially allows
+things that weren't designed to be foreached to be foreached, like Range.
+Doing nothing.
+None at this point.Drawbacks
+Alternatives
+Unresolved questionsLambda discard parameters
+Article •06/23/2023
+Allow discards ( _) to be used as parameters of lambdas and anonymous methods. For
+example:
+lambdas: (_, _) => 0, (int _, int _) => 0
+anonymous methods: delegate(int _, int _) { return 0; }
+Unused parameters do not need to be named. The intent of discards is clear, i.e. they
+are unused/discarded.
+Method parameters - §14.6.2  In the parameter list of a lambda or anonymous method
+with more than one parameter named _, such parameters are discard parameters. Note:
+if a single parameter is named _ then it is a regular parameter for backwards
+compatibility reasons.
+Discard parameters do not introduce any names to any scopes. Note this implies they
+do not cause any _ (underscore) names to be hidden.
+Simple names ( §11.7.4 ) If K is zero and the simple_name  appears within a block  and if
+the block 's (or an enclosing block 's) local variable declaration space (Declarations -７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+Motivation
+Detailed design
+§7.3 ) contains a local variable, parameter (with the exception of discard parameters) or
+constant with name I, then the simple_name  refers to that local variable, parameter or
+constant and is classified as a variable or value.
+Scopes - §7.7  With the exception of discard parameters, the scope of a parameter
+declared in a lambda_expr ession  (§11.16 ) is the anon ymous_f unction_body  of that
+lambda_expr ession  With the exception of discard parameters, the scope of a parameter
+declared in an anon ymous_method_expr ession  (§11.16 ) is the block  of that
+anon ymous_method_expr ession .
+Corresponding parameters - §11.6.2.2
+Related spec sections
+Attributes on local functions
+Article •06/23/2023
+Local function declarations are now permitted to have attributes ( §21 ). Parameters
+and type parameters on local functions are also allowed to have attributes.
+Attributes with a specified meaning when applied to a method, its parameters, or its
+type parameters will have the same meaning when applied to a local function, its
+parameters, or its type parameters, respectively.
+A local function can be made conditional in the same sense as a conditional method
+(§21.5.3 ) by decorating it with a [ConditionalAttribute]. A conditional local function
+must also be static. All restrictions on conditional methods also apply to conditional
+local functions, including that the return type must be void.
+The extern modifier is now permitted on local functions. This makes the local function
+external in the same sense as an external method ( §14.6.8 ).
+Similarly to an external method, the local-f unction-body  of an external local function
+must be a semicolon. A semicolon local-f unction-body  is only permitted on an external
+local function.
+An external local function must also be static.７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Attributes
+Extern
+The local functions grammar  is modified as follows:Syntax
+local-function-header  
+    : attributes? local-function-modifiers? return-type identifier type-
+parameter-list?  
+        ( formal-parameter-list? ) type-parameter-constraints-clauses  
+    ; 
+local-function-modifiers  
+    : (async | unsafe | static | extern)*  
+    ; 
+local-function-body  
+    : block  
+    | arrow-expression-body  
+    | ';'  
+    ; Native-sized integers
+Article •07/22/2022
+Language support for a native-sized signed and unsigned integer types.
+The motivation is for interop scenarios and for low-level libraries.
+The identifiers nint and nuint are new contextual keywords that represent native
+signed and unsigned integer types. The identifiers are only treated as keywords when
+name lookup does not find a viable result at that program location.
+C#
+The types nint and nuint are represented by the underlying types System.IntPtr and
+System.UIntPtr with compiler surfacing additional conversions and operations for those
+types as native ints.
+Constant expressions may be of type nint or nuint. There is no direct syntax for native
+int literals. Implicit or explicit casts of other integral constant values can be used instead:７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+Design
+nint x = 3;
+string y = nameof(nuint);
+_ = nint.Equals(x, 3);
+Constantsconst nint i = (nint)42;.
+nint constants are in the range [ int.MinValue, int.MaxValue ].
+nuint constants are in the range [ uint.MinValue, uint.MaxValue ].
+There are no MinValue or MaxValue fields on nint or nuint because, other than
+nuint.MinValue, those values cannot be emitted as constants.
+Constant folding is supported for all unary operators { +, -, ~ } and binary operators {
++, -, *, /, %, ==, !=, <, <=, >, >=, &, |, ^, <<, >> }. Constant folding operations are
+evaluated with Int32 and UInt32 operands rather than native ints for consistent
+behavior regardless of compiler platform. If the operation results in a constant value in
+32-bits, constant folding is performed at compile-time. Otherwise the operation is
+executed at runtime and not considered a constant.
+There is an identity conversion between nint and IntPtr, and between nuint and
+UIntPtr. There is an identity conversion between compound types that differ by native
+ints and underlying types only: arrays, Nullable<>, constructed types, and tuples.
+The tables below cover the conversions between special types. (The IL for each
+conversion includes the variants for unchecked and checked contexts if different.)
+General notes on the table below:
+conv.u is a zero-extending conversion to native integer and conv.i is sign-
+extending conversion to native integer.
+checked contexts for both widening  and narrowing  are:
+conv.ovf.* for signed to *
+conv.ovf.*.un for unsigned to *
+unchecked contexts for widening  are:
+conv.i* for signed to * (where * is the target width)
+conv.u* for unsigned to * (where * is the target width)
+unchecked contexts for narrowing  are:
+conv.i* for any to signed * (where * is the target width)
+conv.u* for any to unsigned * (where * is the target width)
+Taking a few examples:Conversionssbyte to nint and sbyte to nuint use conv.i while byte to nint and byte to
+nuint use conv.u because they are all widening .
+nint to byte and nuint to byte use conv.u1 while nint to sbyte and nuint to
+sbyte use conv.i1. For byte, sbyte, short, and ushort the "stack type" is int32.
+So conv.i1 is effectively "downcast to a signed byte and then sign-extend up to
+int32" while conv.u1 is effectively "downcast to an unsigned byte and then zero-
+extend up to int32".
+checked void* to nint uses conv.ovf.i.un the same way that checked void* to
+long uses conv.ovf.i8.un.
+Operand Target Conv ersion IL
+object nint Unboxing unbox
+void* nint PointerT oVoid nop / conv.ovf.i.un
+sbyte nint ImplicitNumeric conv.i
+byte nint ImplicitNumeric conv.u
+short nint ImplicitNumeric conv.i
+ushort nint ImplicitNumeric conv.u
+int nint ImplicitNumeric conv.i
+uint nint ExplicitNumeric conv.u / conv.ovf.i.un
+long nint ExplicitNumeric conv.i / conv.ovf.i
+ulong nint ExplicitNumeric conv.i / conv.ovf.i.un
+char nint ImplicitNumeric conv.u
+float nint ExplicitNumeric conv.i / conv.ovf.i
+double nint ExplicitNumeric conv.i / conv.ovf.i
+decimalnint ExplicitNumeric long decimal.op_Explicit(decimal) conv.i / ...
+conv.ovf.i
+IntPtr nint Identity
+UIntPtrnint None
+objectnuint Unboxing unbox
+void* nuint PointerT oVoid nopOperand Target Conv ersion IL
+sbyte nuint ExplicitNumeric conv.i / conv.ovf.u
+byte nuint ImplicitNumeric conv.u
+short nuint ExplicitNumeric conv.i / conv.ovf.u
+ushortnuint ImplicitNumeric conv.u
+int nuint ExplicitNumeric conv.i / conv.ovf.u
+uint nuint ImplicitNumeric conv.u
+long nuint ExplicitNumeric conv.u / conv.ovf.u
+ulong nuint ExplicitNumeric conv.u / conv.ovf.u.un
+char nuint ImplicitNumeric conv.u
+float nuint ExplicitNumeric conv.u / conv.ovf.u
+doublenuint ExplicitNumeric conv.u / conv.ovf.u
+decimalnuint ExplicitNumeric ulong decimal.op_Explicit(decimal) conv.u / ...
+conv.ovf.u.un
+IntPtrnuint None
+UIntPtrnuint Identity
+Enumeration nint ExplicitEnumeration
+Enumeration nuintExplicitEnumeration
+Operand Target Conv ersion IL
+nint object Boxing box
+nint void* PointerT oVoid nop / conv.ovf.u
+nint nuint ExplicitNumeric conv.u (can be omitted) / conv.ovf.u
+nint sbyte ExplicitNumeric conv.i1 / conv.ovf.i1
+nint byte ExplicitNumeric conv.u1 / conv.ovf.u1
+nint short ExplicitNumeric conv.i2 / conv.ovf.i2
+nint ushort ExplicitNumeric conv.u2 / conv.ovf.u2
+nint int ExplicitNumeric conv.i4 / conv.ovf.i4Operand Target Conv ersion IL
+nint uint ExplicitNumeric conv.u4 / conv.ovf.u4
+nint long ImplicitNumeric conv.i8
+nint ulong ExplicitNumeric conv.i8 / conv.ovf.u8
+nint char ExplicitNumeric conv.u2 / conv.ovf.u2
+nint float ImplicitNumeric conv.r4
+nint double ImplicitNumeric conv.r8
+nint decimal ImplicitNumeric conv.i8 decimal decimal.op_Implicit(long)
+nint IntPtr Identity
+nint UIntPtr None
+nint Enumeration ExplicitEnumeration
+nuint object Boxing box
+nuint void* PointerT oVoid nop
+nuint nint ExplicitNumeric conv.i(can be omitted) / conv.ovf.i.un
+nuint sbyte ExplicitNumeric conv.i1 / conv.ovf.i1.un
+nuint byte ExplicitNumeric conv.u1 / conv.ovf.u1.un
+nuint short ExplicitNumeric conv.i2 / conv.ovf.i2.un
+nuint ushort ExplicitNumeric conv.u2 / conv.ovf.u2.un
+nuint int ExplicitNumeric conv.i4 / conv.ovf.i4.un
+nuint uint ExplicitNumeric conv.u4 / conv.ovf.u4.un
+nuint long ExplicitNumeric conv.u8 / conv.ovf.i8.un
+nuint ulong ImplicitNumeric conv.u8
+nuint char ExplicitNumeric conv.u2 / conv.ovf.u2.un
+nuint float ImplicitNumeric conv.r.un conv.r4
+nuint double ImplicitNumeric conv.r.un conv.r8
+nuint decimal ImplicitNumeric conv.u8 decimal decimal.op_Implicit(ulong)Operand Target Conv ersion IL
+nuint IntPtr None
+nuint UIntPtr Identity
+nuint Enumeration ExplicitEnumeration
+Conversion from A to Nullable<B> is:
+an implicit nullable conversion if there is an identity conversion or implicit
+conversion from A to B;
+an explicit nullable conversion if there is an explicit conversion from A to B;
+otherwise invalid.
+Conversion from Nullable<A> to B is:
+an explicit nullable conversion if there is an identity conversion or implicit or
+explicit numeric conversion from A to B;
+otherwise invalid.
+Conversion from Nullable<A> to Nullable<B> is:
+an identity conversion if there is an identity conversion from A to B;
+an explicit nullable conversion if there is an implicit or explicit numeric conversion
+from A to B;
+otherwise invalid.
+The predefined operators are as follows. These operators are considered during
+overload resolution based on normal rules for implicit conversions if at least one o f the
+operands is o f type nint or nuint.
+(The IL for each operator includes the variants for unchecked and checked contexts if
+different.)
+Unar y Operat or Signatur e IL
++ nint operator +(nint value) nop
++ nuint operator +(nuint value) nop
+- nint operator -(nint value) negOperatorsUnar y Operat or Signatur e IL
+~ nint operator ~(nint value) not
+~ nuint operator ~(nuint value) not
+Binar y Operat or Signatur e IL
++ nint operator +(nint left, nint right) add / add.ovf
++ nuint operator +(nuint left, nuint right) add / add.ovf.un
+- nint operator -(nint left, nint right) sub / sub.ovf
+- nuint operator -(nuint left, nuint right) sub / sub.ovf.un
+* nint operator *(nint left, nint right) mul / mul.ovf
+* nuint operator *(nuint left, nuint right) mul / mul.ovf.un
+/ nint operator /(nint left, nint right) div
+/ nuint operator /(nuint left, nuint right) div.un
+% nint operator %(nint left, nint right) rem
+% nuint operator %(nuint left, nuint right) rem.un
+== bool operator ==(nint left, nint right) beq / ceq
+== bool operator ==(nuint left, nuint right) beq / ceq
+!= bool operator !=(nint left, nint right) bne
+!= bool operator !=(nuint left, nuint right) bne
+< bool operator <(nint left, nint right) blt / clt
+< bool operator <(nuint left, nuint right) blt.un / clt.un
+<= bool operator <=(nint left, nint right) ble
+<= bool operator <=(nuint left, nuint right) ble.un
+> bool operator >(nint left, nint right) bgt / cgt
+> bool operator >(nuint left, nuint right) bgt.un / cgt.un
+>= bool operator >=(nint left, nint right) bge
+>= bool operator >=(nuint left, nuint right) bge.unBinar y Operat or Signatur e IL
+& nint operator &(nint left, nint right) and
+& nuint operator &(nuint left, nuint right) and
+| nint operator |(nint left, nint right) or
+| nuint operator |(nuint left, nuint right) or
+^ nint operator ^(nint left, nint right) xor
+^ nuint operator ^(nuint left, nuint right) xor
+<< nint operator <<(nint left, int right) shl
+<< nuint operator <<(nuint left, int right) shl
+>> nint operator >>(nint left, int right) shr
+>> nuint operator >>(nuint left, int right) shr.un
+For some binary operators, the IL operators support additional operand types (see
+ECMA-335  III.1.5 Operand type table). But the set of operand types supported by C#
+is limited for simplicity and for consistency with existing operators in the language.
+Lifted versions of the operators, where the arguments and return types are nint? and
+nuint?, are supported.
+Compound assignment operations x op= y where x or y are native ints follow the
+same rules as with other primitive types with pre-defined operators. Specifically the
+expression is bound as x = (T)(x op y) where T is the type of x and where x is only
+evaluated once.
+The shift operators should mask the number of bits to shift - to 5 bits if sizeof(nint) is
+4, and to 6 bits if sizeof(nint) is 8. (see §11.10 ) in C# spec).
+The C#9 compiler will report errors binding to predefined native integer operators when
+compiling with an earlier language version, but will allow use of predefined conversions
+to and from native integers.
+csc -langversion:9 -t:library A.cs
+C#
+public class A
+{csc -langversion:8 -r:A.dll B.cs
+C#
+There are no predefined operators in C# for pointer addition or subtraction with native
+integer offsets. Instead, nint and nuint values are promoted to long and ulong and
+pointer arithmetic uses predefined operators for those types.
+C#
+The binar y numer ic promotions  informative text (see §11.4.7.3 ) in C# spec) is updated
+as follows:
+…    public static nint F;
+}
+class B : A
+{
+    static void Main()
+    {
+        F = F + 1; // error: nint operator+ not available with -
+langversion:8
+        F = (System.IntPtr)F + 1; // ok
+    }
+}
+Pointer arithmetic
+static T* AddLeftS( nint x, T* y) => x + y;   // T* operator +(long left, T*  
+right)
+static T* AddLeftU( nuint x, T* y) => x + y;  // T* operator +(ulong left, T*  
+right)
+static T* AddRightS(T* x, nint y) => x + y;  // T* operator +(T* left, long  
+right)
+static T* AddRightU(T* x, nuint y) => x + y; // T* operator +(T* left, ulong  
+right)
+static T* SubRightS(T* x, nint y) => x - y;  // T* operator -(T* left, long  
+right)
+static T* SubRightU(T* x, nuint y) => x - y; // T* operator -(T* left, ulong  
+right)
+Binary numeric promotions
+Otherwise, if either operand is of type ulong, the other operand is converted
+to type ulong, or a binding-time error occurs if the other operand is of type
+sbyte, short, int, nint, or long.
+Other wise, if either operand is o f type nuint, the other operand is conv erted
+to type nuint, or a binding-time err or occur s if the other operand is o f type
+sbyte, short, int, nint, or long.
+Otherwise, if either operand is of type long, the other operand is converted to
+type long.
+Otherwise, if either operand is of type uint and the other operand is of type
+sbyte, short, nint, or int, both operands are converted to type long.
+Otherwise, if either operand is of type uint, the other operand is converted to
+type uint.
+Other wise, if either operand is o f type nint, the other operand is conv erted
+to type nint.
+Otherwise, both operands are converted to type int.
+The conversions and operators are synthesized by the compiler and are not part of the
+underlying IntPtr and UIntPtr types. As a result those conversions and operators are
+not av ailable  from the runtime binder for dynamic.
+C#
+The only constructor for nint or nuint is the parameter-less constructor.
+The following members of System.IntPtr and System.UIntPtr are explicitly ex cluded
+from nint or nuint:
+C#Dynamic
+nint x = 2;
+nint y = x + x; // ok
+dynamic d = x;
+nint z = d + x; // RuntimeBinderException: '+' cannot be applied  
+'System.IntPtr' and 'System.IntPtr'
+Type members
+// constructors
+// arithmetic operatorsThe remaining members of System.IntPtr and System.UIntPtr are implicitly included  in
+nint and nuint. For .NET Framework 4.7.2:
+C#
+Interfaces implemented by System.IntPtr and System.UIntPtr are implicitly included  in
+nint and nuint, with occurrences of the underlying types replaced by the
+corresponding native integer types. For instance if IntPtr implements ISerializable,
+IEquatable<IntPtr>, IComparable<IntPtr>, then nint implements ISerializable,
+IEquatable<nint>, IComparable<nint>.
+nint and System.IntPtr, and nuint and System.UIntPtr, are considered equivalent for
+overriding, hiding, and implementing.
+Overloads cannot differ by nint and System.IntPtr, and nuint and System.UIntPtr,
+alone. Overrides and implementations may differ by nint and System.IntPtr, or nuint
+and System.UIntPtr, alone. Methods hide other methods that differ by nint and
+System.IntPtr, or nuint and System.UIntPtr, alone.
+nint and nuint expressions used as array indices are emitted without conversion.
+C#// implicit and explicit conversions
+public static readonly  IntPtr Zero; // use 0 instead
+public static int Size { get; }     // use sizeof() instead
+public static IntPtr Add(IntPtr pointer, int offset);
+public static IntPtr Subtract (IntPtr pointer, int offset);
+public int ToInt32();
+public long ToInt64();
+public void* ToPointer();
+public override  bool Equals(object obj);
+public override  int GetHashCode ();
+public override  string ToString ();
+public string ToString (string format);
+Overriding, hiding, and implementing
+Miscellaneous
+static object GetItem(object[] array, nint index)
+{nint and nuint cannot be used as an enum base type from C#.
+C#
+Reads and writes are atomic for nint and nuint.
+Fields may be marked volatile for types nint and nuint. ECMA-334  15.5.4 does not
+include enum with base type System.IntPtr or System.UIntPtr however.
+default(nint) and new nint() are equivalent to (nint)0; default(nuint) and new
+nuint() are equivalent to (nuint)0.
+typeof(nint) is typeof(IntPtr); typeof(nuint) is typeof(UIntPtr).
+sizeof(nint) and sizeof(nuint) are supported but require compiling in an unsafe
+context (as required for sizeof(IntPtr) and sizeof(UIntPtr)). The values are not
+compile-time constants. sizeof(nint) is implemented as sizeof(IntPtr) rather than
+IntPtr.Size; sizeof(nuint) is implemented as sizeof(UIntPtr) rather than
+UIntPtr.Size.
+Compiler diagnostics for type references involving nint or nuint report nint or nuint
+rather than IntPtr or UIntPtr.
+nint and nuint are represented in metadata as System.IntPtr and System.UIntPtr.
+Type references that include nint or nuint are emitted with a
+System.Runtime.CompilerServices.NativeIntegerAttribute to indicate which parts of the
+type reference are native ints.
+C#    return array[index]; // ok
+}
+enum E : nint // error: byte, sbyte, short, ushort, int, uint, long, or  
+ulong expected
+{
+}
+Metadata
+namespace  System.Runtime.CompilerServices
+{
+    [AttributeUsage(The encoding of type references with NativeIntegerAttribute is covered in
+NativeIntegerAttribute.md .
+An alternative to the "type erasure" approach above is to introduce new types:
+System.NativeInt and System.NativeUInt.
+C#
+Distinct types would allow overloading distinct from IntPtr and would allow distinct
+parsing and ToString(). But there would be more work for the CLR to handle these
+types efficiently which defeats the primary purpose of the feature - efficiency. And
+interop with existing native int code that uses IntPtr would be more difficult.
+Another alternative is to add more native int support for IntPtr in the framework but
+without any specific compiler support. Any new conversions and arithmetic operations        AttributeTargets.Class |
+        AttributeTargets.Event |
+        AttributeTargets.Field |
+        AttributeTargets.GenericParameter |
+        AttributeTargets.Parameter |
+        AttributeTargets.Property |
+        AttributeTargets.ReturnValue,
+        AllowMultiple = false,
+        Inherited = false) ]
+    public sealed class NativeIntegerAttribute  : Attribute
+    {
+        public NativeIntegerAttribute ()
+        {
+            TransformFlags = new[] { true };
+        }
+        public NativeIntegerAttribute (bool[] flags )
+        {
+            TransformFlags = flags;
+        }
+        public readonly  bool[] TransformFlags;
+    }
+}
+Alternatives
+public readonly  struct NativeInt
+{
+    public IntPtr Value;
+}would be supported by the compiler automatically. But the language would not provide
+keywords, constants, or checked operations.
+https://github.com/dotnet/csharplang/blob/master/meetings/2017/LDM-2017-05-
+26.md
+https://github.com/dotnet/csharplang/blob/master/meetings/2017/LDM-2017-06-
+13.md
+https://github.com/dotnet/csharplang/blob/master/meetings/2017/LDM-2017-07-
+05.md#native-int-and-intptr-operators
+https://github.com/dotnet/csharplang/blob/master/meetings/2019/LDM-2019-10-
+23.md
+https://github.com/dotnet/csharplang/blob/master/meetings/2020/LDM-2020-03-
+25.mdDesign meetings
+６ Collaborat e with us on
+GitHub
+The source for this content can
+be found on GitHub, where you
+can also create and review
+issues and pull requests. For
+more information, see our
+contributor guide .C# featur e specification
+feedb ack
+The C# feature specifications are
+open source. Provide feedback here.
+ Open a documentation issue
+ Provide product feedbackFunction Pointers
+Article •03/24/2022
+This proposal provides language constructs that expose IL opcodes that cannot
+currently be accessed efficiently, or at all, in C# today: ldftn and calli. These IL
+opcodes can be important in high performance code and developers need an efficient
+way to access them.
+The motivations and background for this feature are described in the following issue (as
+is a potential implementation of the feature):
+https://github.com/dotnet/csharplang/issues/191
+This is an alternate design proposal to compiler intrinsics
+The language will allow for the declaration of function pointers using the delegate*
+syntax. The full syntax is described in detail in the next section but it is meant to
+resemble the syntax used by Func and Action type declarations.
+C#７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+Motivation
+Detailed Design
+Function pointersThese types are represented using the function pointer type as outlined in ECMA-335.
+This means invocation of a delegate* will use calli where invocation of a delegate will
+use callvirt on the Invoke method. S yntactically though invocation is identical for
+both constructs.
+The ECMA-335 definition of method pointers includes the calling convention as part of
+the type signature (section 7.1). The default calling convention will be managed.
+Unmanaged calling conventions can be specified by putting an unmanaged keyword afer
+the delegate* syntax, which will use the runtime platform default. Specific unmanaged
+conventions can then be specified in brackets to the unmanaged keyword by specifying
+any type starting with CallConv in the System.Runtime.CompilerServices namespace,
+leaving off the CallConv prefix. These types must come from the program's core library,
+and the set of valid combinations is platform-dependent.
+C#
+Conversions between delegate* types is done based on their signature including the
+calling convention.unsafe class Example {
+    void Example(Action<int> a, delegate *<int, void> f) {
+        a(42);
+        f(42);
+    }
+}
+//This method has a managed calling convention. This is the same as leaving  
+the managed keyword off.
+delegate * managed< int, int>;
+// This method will be invoked using whatever the default unmanaged calling  
+convention on the runtime
+// platform is. This is platform and architecture dependent and is  
+determined by the CLR at runtime.
+delegate * unmanaged <int, int>;
+// This method will be invoked using the cdecl calling convention
+// Cdecl maps to System.Runtime.CompilerServices.CallConvCdecl
+delegate * unmanaged [Cdecl] < int, int>;
+// This method will be invoked using the stdcall calling convention, and  
+suppresses GC transition
+// Stdcall maps to System.Runtime.CompilerServices.CallConvStdcall
+// SuppressGCTransition maps to  
+System.Runtime.CompilerServices.CallConvSuppressGCTransition
+delegate * unmanaged [Stdcall, SuppressGCTransition] < int, int>;C#
+A delegate* type is a pointer type which means it has all of the capabilities and
+restrictions of a standard pointer type:
+Only valid in an unsafe context.
+Methods which contain a delegate* parameter or return type can only be called
+from an unsafe context.
+Cannot be converted to object.
+Cannot be used as a generic argument.
+Can implicitly convert delegate* to void*.
+Can explicitly convert from void* to delegate*.
+Restrictions:
+Custom attributes cannot be applied to a delegate* or any of its elements.
+A delegate* parameter cannot be marked as params
+A delegate* type has all of the restrictions of a normal pointer type.
+Pointer arithmetic cannot be performed directly on function pointer types.
+The full function pointer syntax is represented by the following grammar:
+antlrunsafe class Example {
+    void Conversions () {
+        delegate *<int, int, int> p1 = ...;
+        delegate * managed< int, int, int> p2 = ...;
+        delegate * unmanaged <int, int, int> p3 = ...;
+        p1 = p2; // okay p1 and p2 have compatible signatures
+        Console.WriteLine(p2 == p1); // True
+        p2 = p3; // error: calling conventions are incompatible
+    }
+}
+Function pointer syntax
+pointer_type
+    : ...
+    | funcptr_type
+    ;
+funcptr_type
+    : 'delegate'  '*' calling_convention_specifier? '<' 
+funcptr_parameter_list funcptr_return_type '>'If no calling_convention_specifier is provided, the default is managed. The precise
+metadata encoding of the calling_convention_specifier and what identifiers are
+valid in the unmanaged_calling_convention is covered in Metadata R epresentation of
+Calling Conventions .
+C#    ;
+calling_convention_specifier
+    : 'managed'
+    | 'unmanaged'  ('[' unmanaged_calling_convention ']')?
+    ;
+unmanaged_calling_convention
+    : 'Cdecl'
+    | 'Stdcall'
+    | 'Thiscall'
+    | 'Fastcall'
+    | identifier ( ',' identifier)*
+    ;
+funptr_parameter_list
+    : (funcptr_parameter ',')*
+    ;
+funcptr_parameter
+    : funcptr_parameter_modifier? type
+    ;
+funcptr_return_type
+    : funcptr_return_modifier? return_type
+    ;
+funcptr_parameter_modifier
+    : 'ref'
+    | 'out'
+    | 'in'
+    ;
+funcptr_return_modifier
+    : 'ref'
+    | 'ref readonly'
+    ;
+delegate  int Func1(string s);
+delegate  Func1 Func2(Func1 f);
+// Function pointer equivalent without calling convention
+delegate *<string, int>;
+delegate *<delegate *<string, int>, delegate *<string, int>>;In an unsafe context, the set of available implicit conversions (Implicit conversions) is
+extended to include the following implicit pointer conversions:
+Existing c onversions  - (§22.5 )
+From funcptr_type  F0 to another funcptr_type  F1, provided all of the following are
+true:
+F0 and F1 have the same number of parameters, and each parameter D0n in
+F0 has the same ref, out, or in modifiers as the corresponding parameter
+D1n in F1.
+For each value parameter (a parameter with no ref, out, or in modifier), an
+identity conversion, implicit reference conversion, or implicit pointer conversion
+exists from the parameter type in F0 to the corresponding parameter type in
+F1.
+For each ref, out, or in parameter, the parameter type in F0 is the same as
+the corresponding parameter type in F1.
+If the return type is by value (no ref or ref readonly), an identity, implicit
+reference, or implicit pointer conversion exists from the return type of F1 to the
+return type of F0.
+If the return type is by reference ( ref or ref readonly), the return type and ref
+modifiers of F1 are the same as the return type and ref modifiers of F0.
+The calling convention of F0 is the same as the calling convention of F1.
+Method groups will now be allowed as arguments to an address-of expression. The type
+of such an expression will be a delegate* which has the equivalent signature of the
+target method and a managed calling convention:
+C#// Function pointer equivalent with calling convention
+delegate * managed< string, int>;
+delegate *<delegate * managed< string, int>, delegate *<string, int>>;
+Function pointer conversions
+Allow address-of to target methods
+unsafe class Util {
+    public static void Log() { }
+    void Use() {
+        delegate *<void> ptr1 = &Util.Log;In an unsafe context, a method M is compatible with a function pointer type F if all of
+the following are true:
+M and F have the same number of parameters, and each parameter in M has the
+same ref, out, or in modifiers as the corresponding parameter in F.
+For each value parameter (a parameter with no ref, out, or in modifier), an
+identity conversion, implicit reference conversion, or implicit pointer conversion
+exists from the parameter type in M to the corresponding parameter type in F.
+For each ref, out, or in parameter, the parameter type in M is the same as the
+corresponding parameter type in F.
+If the return type is by value (no ref or ref readonly), an identity, implicit
+reference, or implicit pointer conversion exists from the return type of F to the
+return type of M.
+If the return type is by reference ( ref or ref readonly), the return type and ref
+modifiers of F are the same as the return type and ref modifiers of M.
+The calling convention of M is the same as the calling convention of F. This
+includes both the calling convention bit, as well as any calling convention flags
+specified in the unmanaged identifier.
+M is a static method.
+In an unsafe context, an implicit conversion exists from an address-of expression whose
+target is a method group E to a compatible function pointer type F if E contains at
+least one method that is applicable in its normal form to an argument list constructed
+by use of the parameter types and modifiers of F, as described in the following.
+A single method M is selected corresponding to a method invocation of the form
+E(A) with the following modifications:
+The arguments list A is a list of expressions, each classified as a variable and
+with the type and modifier ( ref, out, or in) of the corresponding
+funcptr_p aramet er_list  of F.
+The candidate methods are only those methods that are applicable in their
+normal form, not those applicable in their expanded form.
+The candidate methods are only those methods that are static.
+If the algorithm of overload resolution produces an error, then a compile-time
+error occurs. Otherwise, the algorithm produces a single best method M having the        // Error: type "delegate*<void>" not compatible with "delegate*
+<int>";
+        delegate *<int> ptr2 = &Util.Log;
+   }
+}same number of parameters as F and the conversion is considered to exist.
+The selected method M must be compatible (as defined above) with the function
+pointer type F. Otherwise, a compile-time error occurs.
+The result of the conversion is a function pointer of type F.
+This means developers can depend on overload resolution rules to work in conjunction
+with the address-of operator:
+C#
+The address-of operator will be implemented using the ldftn instruction.
+Restrictions of this feature:
+Only applies to methods marked as static.
+Non-static local functions cannot be used in &. The implementation details of
+these methods are deliberately not specified by the language. This includes
+whether they are static vs. instance or exactly what signature they are emitted with.
+The section in unsafe code on operators is modified as such:
+In an unsafe context, several constructs are available for operating on all
+_pointer_type_s that are not _funcptr_type_s:
+The * operator may be used to perform pointer indirection ( §22.6.2 ).
+The -> operator may be used to access a member of a struct through a
+pointer ( §22.6.3 ).
+The [] operator may be used to index a pointer ( §22.6.4 ).
+The & operator may be used to obtain the address of a variable ( §22.6.5 ).unsafe class Util {
+    public static void Log() { }
+    public static void Log(string p1) { }
+    public static void Log(int i) { };
+    void Use() {
+        delegate *<void> a1 = &Log; // Log()
+        delegate *<int, void> a2 = &Log; // Log(int i)
+        // Error: ambiguous conversion from method group Log to "void*"
+        void* v = &Log;
+    }
+Operators on Function Pointer Types
+The ++ and -- operators may be used to increment and decrement pointers
+(§22.6.6 ).
+The + and - operators may be used to perform pointer arithmetic ( §22.6.7 ).
+The ==, !=, <, >, <=, and => operators may be used to compare pointers
+(§22.6.8 ).
+The stackalloc operator may be used to allocate memory from the call stack
+(§22.8 ).
+The fixed statement may be used to temporarily fix a variable so its address
+can be obtained ( §22.7 ).
+In an unsafe context, several constructs are available for operating on all
+_funcptr_type_s:
+The & operator may be used to obtain the address of static methods ( Allow
+address-of to target methods )
+The ==, !=, <, >, <=, and => operators may be used to compare pointers
+(§22.6.8 ).
+Additionally, we modify all the sections in Pointers in expressions to forbid function
+pointer types, except Pointer comparison and The sizeof operator.
+The better function member specification will be changed to include the following line:
+A delegate* is more specific than void*
+This means that it is possible to overload on void* and a delegate* and still sensibly
+use the address-of operator.
+In unsafe code, the following changes are made to the type inference algorithms:
+§11.6.3.4
+The following is added:
+Better function member
+Type Inference
+Input types
+If E is an address-of method group and T is a function pointer type then all the
+parameter types of T are input types of E with type T.
+§11.6.3.5
+The following is added:
+If E is an address-of method group and T is a function pointer type then the return
+type of T is an output type of E with type T.
+§11.6.3.7
+The following bullet is added between bullets 2 and 3:
+If E is an address-of method group and T is a function pointer type with
+parameter types T1...Tk and return type Tb, and overload resolution of E
+with the types T1..Tk yields a single method with return type U, then a lower-
+bound infer ence is made from U to Tb.
+§11.6.4.4
+The following sub-bullet is added as a case to bullet 2:
+V is a function pointer type delegate*<V2..Vk, V1> and U is a function pointer
+type delegate*<U2..Uk, U1>, and the calling convention of V is identical to U,
+and the refness of Vi is identical to Ui.
+§11.6.3.10
+The following case is added to bullet 3:
+V is a function pointer type delegate*<V2..Vk, V1> and there is a function
+pointer type delegate*<U2..Uk, U1> such that U is identical to delegate*Output types
+Output type inferences
+Better conversion from expression
+Lower-bound inferences
+<U2..Uk, U1>, and the calling convention of V is identical to U, and the refness
+of Vi is identical to Ui.
+The first bullet of inference from Ui to Vi is modified to:
+If U is not a function pointer type and Ui is not known to be a reference type,
+or if U is a function pointer type and Ui is not known to be a function pointer
+type or a reference type, then an exact infer ence is made
+Then, added after the 3rd bullet of inference from Ui to Vi:
+Otherwise, if V is delegate*<V2..Vk, V1> then inference depends on the i-th
+parameter of delegate*<V2..Vk, V1>:
+If V1:
+If the return is by value, then a lower-bound infer ence is made.
+If the return is by reference, then an exact infer ence is made.
+If V2..Vk:
+If the parameter is by value, then an upper -bound infer ence is made.
+If the parameter is by reference, then an exact infer ence is made.
+§11.6.3.11
+The following case is added to bullet 2:
+U is a function pointer type delegate*<U2..Uk, U1> and V is a function pointer
+type which is identical to delegate*<V2..Vk, V1>, and the calling convention of
+U is identical to V, and the refness of Ui is identical to Vi.
+The first bullet of inference from Ui to Vi is modified to:
+If U is not a function pointer type and Ui is not known to be a reference type,
+or if U is a function pointer type and Ui is not known to be a function pointer
+type or a reference type, then an exact infer ence is made
+Then added after the 3rd bullet of inference from Ui to Vi:
+Otherwise, if U is delegate*<U2..Uk, U1> then inference depends on the i-th
+parameter of delegate*<U2..Uk, U1>:Upper-bound inferences
+If U1:
+If the return is by value, then an upper -bound infer ence is made.
+If the return is by reference, then an exact infer ence is made.
+If U2..Uk:
+If the parameter is by value, then a lower-bound infer ence is made.
+If the parameter is by reference, then an exact infer ence is made.
+Function pointer signatures have no parameter flags location, so we must encode
+whether parameters and the return type are in, out, or ref readonly by using
+modreqs.
+We reuse System.Runtime.InteropServices.InAttribute, applied as a modreq to the ref
+specifier on a parameter or return type, to mean the following:
+If applied to a parameter ref specifier, this parameter is treated as in.
+If applied to the return type ref specifier, the return type is treated as ref
+readonly.
+We use System.Runtime.InteropServices.OutAttribute, applied as a modreq to the ref
+specifier on a parameter type, to mean that the parameter is an out parameter.
+It is an error to apply OutAttribute as a modreq to a return type.
+It is an error to apply both InAttribute and OutAttribute as a modreq to a
+parameter type.
+If either are specified via modopt, they are ignored.
+Calling conventions are encoded in a method signature in metadata by a combination
+of the CallKind flag in the signature and zero or more modopts at the start of theMetadata representation of in, out, and ref
+readonly parameters and return types
+in
+out
+Errors
+Metadata Representation of Calling Conventionssignature. ECMA-335 currently declares the following elements in the CallKind flag:
+antlr
+Of these, function pointers in C# will support all but varargs.
+In addition, the runtime (and eventually 335) will be updated to include a new CallKind
+on new platforms. This does not have a formal name currently, but this document will
+use unmanaged ext as a placeholder to stand for the new extensible calling convention
+format. With no modopts, unmanaged ext is the platform default calling convention,
+unmanaged without the square brackets.
+A calling_convention_specifier that is omitted, or specified as managed, maps to the
+default CallKind. This is default CallKind of any method not attributed with
+UnmanagedCallersOnly.
+C# recognizes 4 special identifiers that map to specific existing unmanaged CallKinds
+from ECMA 335. In order for this mapping to occur, these identifiers must be specified
+on their own, with no other identifiers, and this requirement is encoded into the spec for
+unmanaged_calling_conventions. These identifiers are Cdecl, Thiscall, Stdcall, and
+Fastcall, which correspond to unmanaged cdecl, unmanaged thiscall, unmanaged
+stdcall, and unmanaged fastcall, respectively. If more than one identifer is specified,
+or the single identifier is not of the specially recognized identifiers, we perform special
+name lookup on the identifier with the following rules:
+We prepend the identifier with the string CallConv
+We look only at types defined in the System.Runtime.CompilerServices namespace.
+We look only at types defined in the core library of the application, which is the
+library that defines System.Object and has no dependencies.
+We look only at public types.CallKind
+   : default
+   | unmanaged cdecl
+   | unmanaged fastcall
+   | unmanaged thiscall
+   | unmanaged stdcall
+   | varargs
+   ;
+Mapping the calling_convention_specifier to a CallKindIf lookup succeeds on all of the identifiers specified in an
+unmanaged_calling_convention, we encode the CallKind as unmanaged ext, and encode
+each of the resolved types in the set of modopts at the beginning of the function pointer
+signature. As a note, these rules mean that users cannot prefix these identifiers with
+CallConv, as that will result in looking up CallConvCallConvVectorCall.
+When interpreting metadata, we first look at the CallKind. If it is anything other than
+unmanaged ext, we ignore all modopts on the return type for the purposes of
+determining the calling convention, and use only the CallKind. If the CallKind is
+unmanaged ext, we look at the modopts at the start of the function pointer type, taking
+the union of all types that meet the following requirements:
+The is defined in the core library, which is the library that references no other
+libraries and defines System.Object.
+The type is defined in the System.Runtime.CompilerServices namespace.
+The type starts with the prefix CallConv.
+The type is public.
+These represent the types that must be found when performing lookup on the
+identifiers in an unmanaged_calling_convention when defining a function pointer type
+in source.
+It is an error to attempt to use a function pointer with a CallKind of unmanaged ext if
+the target runtime does not support the feature. This will be determined by looking for
+the presence of the
+System.Runtime.CompilerServices.RuntimeFeature.UnmanagedCallKind constant. If this
+constant is present, the runtime is considered to support the feature.
+System.Runtime.InteropServices.UnmanagedCallersOnlyAttribute is an attribute used by
+the CLR to indicate that a method should be called with a specific calling convention.
+Because of this, we introduce the following support for working with the attribute:
+It is an error to directly call a method annotated with this attribute from C#. Users
+must obtain a function pointer to the method and then invoke that pointer.
+It is an error to apply the attribute to anything other than an ordinary static
+method or ordinary static local function. The C# compiler will mark any non-static
+or static non-ordinary methods imported from metadata with this attribute as
+unsupported by the language.System.Runtime.InteropServices.UnmanagedCallersOnlyAttr
+ibuteIt is an error for a method marked with the attribute to have a parameter or return
+type that is not an unmanaged_type.
+It is an error for a method marked with the attribute to have type parameters, even
+if those type parameters are constrained to unmanaged.
+It is an error for a method in a generic type to be marked with the attribute.
+It is an error to convert a method marked with the attribute to a delegate type.
+It is an error to specify any types for UnmanagedCallersOnly.CallConvs that do not
+meet the requirements for calling convention modopts in metadata.
+When determining the calling convention of a method marked with a valid
+UnmanagedCallersOnly attribute, the compiler performs the following checks on the
+types specified in the CallConvs property to determine the effective CallKind and
+modopts that should be used to determine the calling convention:
+If no types are specified, the CallKind is treated as unmanaged ext, with no calling
+convention modopts at the start of the function pointer type.
+If there is one type specified, and that type is named CallConvCdecl,
+CallConvThiscall, CallConvStdcall, or CallConvFastcall, the CallKind is treated
+as unmanaged cdecl, unmanaged thiscall, unmanaged stdcall, or unmanaged
+fastcall, respectively, with no calling convention modopts at the start of the
+function pointer type.
+If multiple types are specified or the single type is not named one of the specially
+called out types above, the CallKind is treated as unmanaged ext, with the union of
+the types specified treated as modopts at the start of the function pointer type.
+The compiler then looks at this effective CallKind and modopt collection and uses
+normal metadata rules to determine the final calling convention of the function pointer
+type.
+https://github.com/dotnet/runtime/issues/38135  tracks adding this flag. Depending
+on the feedback from review, we will either use the property specified in the issue, or
+use the presence of UnmanagedCallersOnlyAttribute as the flag that determines whether
+the runtimes supports unmanaged ext.Open Questions
+Detecting runtime support for unmanaged ext
+ConsiderationsThe proposal could be extended to support instance methods by taking advantage of
+the EXPLICITTHIS CLI calling convention (named instance in C# code). This form of CLI
+function pointers puts the this parameter as an explicit first parameter of the function
+pointer syntax.
+C#
+This is sound but adds some complication to the proposal. P articularly because function
+pointers which differed by the calling convention instance and managed would be
+incompatible even though both cases are used to invoke managed methods with the
+same C# signature. Also in every case considered where this would be valuable to have
+there was a simple work around: use a static local function.
+C#
+Instead of requiring unsafe at every use of a delegate*, only require it at the point
+where a method group is converted to a delegate*. This is where the core safety issues
+come into play (knowing that the containing assembly cannot be unloaded while the
+value is alive). R equiring unsafe on the other locations can be seen as excessive.
+This is how the design was originally intended. But the resulting language rules felt very
+awkward. It's impossible to hide the fact that this is a pointer value and it kept peeking
+through even without the unsafe keyword. For example the conversion to object can'tAllow instance methods
+unsafe class Instance  {
+    void Use() {
+        delegate * instance<Instance, string> f = &ToString;
+        f(this);
+    }
+}
+unsafe class Instance  {
+    void Use() {
+        static string toString (Instance i ) => i.ToString();
+        delegate *<Instance, string> f = &toString;
+        f(this);
+    }
+}
+Don't require unsafe at declarationbe allowed, it can't be a member of a class, etc ... The C# design is to require unsafe
+for all pointer uses and hence this design follows that.
+Developers will still be capable of presenting a safe wrapper on top of delegate* values
+the same way that they do for normal pointer types today. Consider:
+C#
+Instead of using a new syntax element, delegate*, simply use existing delegate types
+with a * following the type:
+C#
+Handling calling convention can be done by annotating the delegate types with an
+attribute that specifies a CallingConvention value. The lack of an attribute would signify
+the managed calling convention.
+Encoding this in IL is problematic. The underlying value needs to be represented as a
+pointer yet it also must:
+1. Have a unique type to allow for overloads with different function pointer types.
+2. Be equivalent for OHI purposes across assembly boundaries.
+The last point is particularly problematic. This mean that every assembly which uses
+Func<int>* must encode an equivalent type in metadata even though Func<int>* is
+defined in an assembly though don't control. Additionally any other type which is
+defined with the name System.Func<T> in an assembly that is not mscorlib must be
+different than the version defined in mscorlib.
+One option that was explored was emitting such a pointer as mod_req(Func<int>) void*.
+This doesn't work though as a mod_req cannot bind to a TypeSpec and hence cannot
+target generic instantiations.unsafe struct Action {
+    delegate *<void> _ptr;
+    Action(delegate *<void> ptr) => _ptr = ptr;
+    public void Invoke() => _ptr();
+}
+Using delegates
+Func<object, object, bool>* ptr = & object.ReferenceEquals;The function pointer syntax can be cumbersome, particularly in complex cases like
+nested function pointers. Rather than have developers type out the signature every time
+the language could allow for named declarations of function pointers as is done with
+delegate.
+C#
+Part of the problem here is the underlying CLI primitive doesn't have names hence this
+would be purely a C# invention and require a bit of metadata work to enable. That is
+doable but is a significant about of work. It essentially requires C# to have a companion
+to the type def table purely for these names.
+Also when the arguments for named function pointers were examined we found they
+could apply equally well to a number of other scenarios. For example it would be just as
+convenient to declare named tuples to reduce the need to type out the full signature in
+all cases.
+C#
+After discussion we decided to not allow named declaration of delegate* types. If we
+find there is significant need for this based on customer usage feedback then we will
+investigate a naming solution that works for function pointers, tuples, generics, etc ...
+This is likely to be similar in form to other suggestions like full typedef support in the
+language.Named function pointers
+func* void Action();
+unsafe class NamedExample  {
+    void M(Action a ) {
+        a();
+    }
+}
+(int x, int y) Point;
+class NamedTupleExample  {
+    void M(Point p) {
+        Console.WriteLine(p.x);
+    }
+}
+Future ConsiderationsThis refers to the proposal  to allow for the declaration of delegate types which can
+only refer to static members. The advantage being that such delegate instances can
+be allocation free and better in performance sensitive scenarios.
+If the function pointer feature is implemented the static delegate proposal will likely
+be closed out. The proposed advantage of that feature is the allocation free nature.
+However recent investigations have found that is not possible to achieve due to
+assembly unloading. There must be a strong handle from the static delegate to the
+method it refers to in order to keep the assembly from being unloaded out from under
+it.
+To maintain every static delegate instance would be required to allocate a new handle
+which runs counter to the goals of the proposal. There were some designs where the
+allocation could be amortized to a single allocation per call-site but that was a bit
+complex and didn't seem worth the trade off.
+That means developers essentially have to decide between the following trade offs:
+1. Safety in the face of assembly unloading: this requires allocations and hence
+delegate is already a sufficient option.
+2. No safety in face of assembly unloading: use a delegate*. This can be wrapped in
+a struct to allow usage outside an unsafe context in the rest of the code.static delegates
+Suppress emitting of localsinit flag.
+Article •06/23/2023
+Allow suppressing emit of localsinit flag via SkipLocalsInitAttribute attribute.
+Per CLR spec local variables that do not contain references are not initialized to a
+particular value by the VM/JIT. R eading from such variables without initialization is type-
+safe, but otherwise the behavior is undefined and implementation specific. T ypically
+uninitialized locals contain whatever values were left in the memory that is now
+occupied by the stack frame. That could lead to nondeterministic behavior and hard to
+reproduce bugs.
+There are two ways to "assign" a local variable:
+by storing a value or
+by specifying localsinit flag which forces everything that is allocated form the
+local memory pool to be zero-initialized NO TE: this includes both local variables
+and stackalloc data.
+Use of uninitialized data is discouraged and is not allowed in verifiable code. While it
+might be possible to prove that by the means of flow analysis, it is permitted for the
+verification algorithm to be conservative and simply require that localsinit is set.７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+Motivation
+BackgroundHistorically C# compiler emits localsinit flag on all methods that declare locals.
+While C# employs definite-assignment analysis which is more strict than what CLR spec
+would require (C# also needs to consider scoping of locals), it is not strictly guaranteed
+that the resulting code would be formally verifiable:
+CLR and C# rules may not agree on whether passing a local as out argument is a
+use.
+CLR and C# rules may not agree on treatment of conditional branches when
+conditions are known (constant propagation).
+CLR could as well simply require localinits, since that is permitted.
+In high-performance application the cost of forced zero-initialization could be
+noticeable. It is particularly noticeable when stackalloc is used.
+In some cases JIT can elide initial zero-initialization of individual locals when such
+initialization is "killed" by subsequent assignments. Not all JIT s do this and such
+optimization has limits. It does not help with stackalloc.
+To illustrate that the problem is real - there is a known bug where a method not
+containing any IL locals would not have localsinit flag. The bug is already being
+exploited by users by putting stackalloc into such methods - intentionally to avoid
+initialization costs. That is despite the fact that absence of IL locals is an unstable
+metric and may vary depending on changes in codegen strategy. The bug should be
+fixed and users should get a more documented and reliable way of suppressing the flag.
+Allow specifying System.Runtime.CompilerServices.SkipLocalsInitAttribute as a way to
+tell the compiler to not emit localsinit flag.
+The end result of this will be that the locals may not be zero-initialized by the JIT, which
+is in most cases unobservable in C#.  
+In addition to that stackalloc data will not be zero-initialized. That is definitely
+observable, but also is the most motivating scenario.
+Permitted and recognized attribute targets are: Method, Property, Module, Class,
+Struct, Interface, Constructor. However compiler will not require that attribute is
+defined with the listed targets nor it will care in which assembly the attribute is defined.Problem
+Detailed designWhen attribute is specified on a container ( class, module, containing method for a
+nested method, ...), the flag affects all methods contained within the container.
+Synthesized methods "inherit" the flag from the logical container/owner.
+The flag affects only codegen strategy for actual method bodies. I.E. the flag has no
+effect on abstract methods and is not propagated to overriding/implementing methods.
+This is explicitly a compiler featur e and not a language featur e. 
+Similarly to compiler command line switches the feature controls implementation details
+of a particular codegen strategy and does not need to be required by the C# spec.
+Old/other compilers may not honor the attribute. Ignoring the attribute is
+compatible behavior. Only may result in a slight perf hit.
+The code without localinits flag may trigger verification failures. Users that ask
+for this feature are generally unconcerned with verifiability.
+Applying the attribute at higher levels than an individual method has nonlocal
+effect, which is observable when stackalloc is used. Y et, this is the most requested
+scenario.
+omit localinits flag when method is declared in unsafe context. That could cause
+silent and dangerous behavior change from deterministic to nondeterministic in a
+case of stackalloc.
+omit localinits flag always. Even worse than above.
+omit localinits flag unless stackalloc is used in the method body. Does not
+address the most requested scenario and may turn code unverifiable with no
+option to revert that back.
+Should the attribute be actually emitted to metadata?Drawbacks
+Alternatives
+Unresolved questions
+Design meetingsNone yet.Unconstrained type parameter
+annotations
+Article •06/23/2023
+Allow nullable annotations for type parameters that are not constrained to value types
+or reference types: T?.
+C#
+In C#8, ? annotations could only be applied to type parameters that were explicitly
+constrained to value types or reference types. In C#9, ? annotations can be applied to
+any type parameter, regardless of constraints.
+Unless a type parameter is explicitly constrained to value types, annotations can only be
+applied within a #nullable enable context.
+If a type parameter T is substituted with a reference type, then T? represents a nullable
+instance of that reference type.
+C#７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+static T? FirstOrDefault<T>( this IEnumerable<T> collection) { ... }  
+? annotationIf T is substituted with a value type, then T? represents an instance of T.
+C#
+If T is substituted with an annotated type U?, then T? represents the annotated type
+U? rather than U??.
+C#
+If T is substituted with a type U, then T? represents U?, even within a #nullable
+disable context.
+C#
+For return values, T? is equivalent to [MaybeNull]T; for argument values, T? is
+equivalent to [AllowNull]T. The equivalence is important when overriding or
+implementing interfaces from an assembly compiled with C#8.
+C#var s1 = new string[0].FirstOrDefault();  // string? s1  
+var s2 = new string?[0].FirstOrDefault(); // string? s2  
+var i1 = new int[0].FirstOrDefault();  // int i1  
+var i2 = new int?[0].FirstOrDefault(); // int? i2  
+var u1 = new U[0].FirstOrDefault();  // U? u1  
+var u2 = new U?[0].FirstOrDefault(); // U? u2  
+#nullable disable  
+var u3 = new U[0].FirstOrDefault();  // U? u3  
+public abstract  class A 
+{ 
+    [return: MaybeNull ] public abstract  T F1<T>();  
+    public abstract  void F2<T>([AllowNull] T t);  
+} 
+public class B : A 
+{ 
+    public override  T? F1<T>() where T : default { ... }       // matches  
+A.F1<T>()  
+    public override  void F2<T>(T? t) where T : default { ... } // matches  
+A.F2<T>()  
+} For compatibility with existing code where overridden and explicitly implemented
+generic methods could not include explicit constraint clauses, T? in an overridden or
+explicitly implemented method is treated as Nullable<T> where T is a value type.
+To allow annotations for type parameters constrained to reference types, C#8 allowed
+explicit where T : class and where T : struct constraints on the overridden or
+explicitly implemented method.
+C#
+To allow annotations for type parameters that are not constrained to reference types or
+value types, C#9 allows a new where T : default constraint.
+C#
+It is an error to use a default constraint other than on a method override or explicit
+implementation. It is an error to use a default constraint when the corresponding type
+parameter in the overridden or interface method is constrained to a reference type or
+value type.default constraint
+class A1 
+{ 
+    public virtual void F1<T>(T? t) where T : struct { } 
+    public virtual void F1<T>(T? t) where T : class { } 
+} 
+class B1 : A1 
+{ 
+    public override  void F1<T>(T? t) /*where T : struct*/  { } 
+    public override  void F1<T>(T? t) where T : class { } 
+} 
+class A2 
+{ 
+    public virtual void F2<T>(T? t) where T : struct { } 
+    public virtual void F2<T>(T? t) { }  
+} 
+class B2 : A2 
+{ 
+    public override  void F2<T>(T? t) /*where T : struct*/  { } 
+    public override  void F2<T>(T? t) where T : default { } 
+} https://github.com/dotnet/csharplang/blob/master/meetings/2019/LDM-2019-11-
+25.md
+https://github.com/dotnet/csharplang/blob/master/meetings/2020/LDM-2020-06-
+17.md#tDesign meetings
+Record structs
+Article •06/23/2023
+The syntax for a record struct is as follows:
+antlr
+Record struct types are value types, like other struct types. They implicitly inherit from
+the class System.ValueType. The modifiers and members of a record struct are subject to
+the same restrictions as those of structs (accessibility on type, modifiers on members,
+base(...) instance constructor initializers, definite assignment for this in constructor,
+destructors, ...). R ecord structs will also follow the same rules as structs for parameterless
+instance constructors and field initializers, but this document assumes that we will lift
+those restrictions for structs generally.
+See §15.4.9  See parameterless struct constructors  spec.
+Record structs cannot use ref modifier.
+At most one partial type declaration of a partial record struct may provide a
+parameter_list. The parameter_list may be empty.７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+record_struct_declaration  
+    : attributes? struct_modifier* 'partial' ? 'record'  'struct'  identifier  
+type_parameter_list?  
+      parameter_list? struct_interfaces? type_parameter_constraints_clause*  
+record_struct_body  
+    ; 
+record_struct_body  
+    : struct_body  
+    | ';' 
+    ; 
+Record struct parameters cannot use ref, out or this modifiers (but in and params
+are allowed).
+In addition to the members declared in the record struct body, a record struct type has
+additional synthesized members. Members are synthesized unless a member with a
+"matching" signature is declared in the record struct body or an accessible concrete
+non-virtual member with a "matching" signature is inherited. T wo members are
+considered matching if they have the same signature or would be considered "hiding" in
+an inheritance scenario. See Signatures and overloading §7.6 . It is an error for a
+member of a record struct to be named "Clone".
+It is an error for an instance field of a record struct to have an unsafe type.
+A record struct is not permitted to declare a destructor.
+The synthesized members are as follows:
+The synthesized equality members are similar as in a record class ( Equals for this type,
+Equals for object type, == and != operators for this type),  
+except for the lack of EqualityContract, null checks or inheritance.
+The record struct implements System.IEquatable<R> and includes a synthesized
+strongly-typed overload of Equals(R other) where R is the record struct. The method is
+public. The method can be declared explicitly. It is an error if the explicit declaration
+does not match the expected signature or accessibility.
+If Equals(R other) is user-defined (not synthesized) but GetHashCode is not, a warning is
+produced.
+C#
+The synthesized Equals(R) returns true if and only if for each instance field fieldN in
+the record struct the value of
+System.Collections.Generic.EqualityComparer<TN>.Default.Equals(fieldN,
+other.fieldN) where TN is the field type is true.Members of a record struct
+Equality members
+public readonly  bool Equals(R other); The record struct includes synthesized == and != operators equivalent to operators
+declared as follows:
+C#
+The Equals method called by the == operator is the Equals(R other) method specified
+above. The != operator delegates to the == operator. It is an error if the operators are
+declared explicitly.
+The record struct includes a synthesized override equivalent to a method declared as
+follows:
+C#
+It is an error if the override is declared explicitly. The synthesized override returns other
+is R temp && Equals(temp) where R is the record struct.
+The record struct includes a synthesized override equivalent to a method declared as
+follows:
+C#
+The method can be declared explicitly.
+A warning is reported if one of Equals(R) and GetHashCode() is explicitly declared but
+the other method is not explicit.
+The synthesized override of GetHashCode() returns an int result of combining the
+values of
+System.Collections.Generic.EqualityComparer<TN>.Default.GetHashCode(fieldN) for
+each instance field fieldN with TN being the type of fieldN.
+For example, consider the following record struct:
+C#public static bool operator ==(R r1, R r2)  
+    => r1.Equals(r2);  
+public static bool operator !=(R r1, R r2)  
+    => !(r1 == r2);  
+public override  readonly  bool Equals(object? obj); 
+public override  readonly  int GetHashCode (); For this record struct, the synthesized equality members would be something like:
+C#
+The record struct includes a synthesized method equivalent to a method declared as
+follows:
+C#
+The method does the following:
+1. for each of the record struct's printable members (non-static public field and
+readable property members), appends that member's name followed by " = "
+followed by the member's value separated with ", ",
+2. return true if the record struct has printable members.record struct R1(T1 P1, T2 P2 ); 
+struct R1 : IEquatable<R1>  
+{ 
+    public T1 P1 { get; set; } 
+    public T2 P2 { get; set; } 
+    public override  bool Equals(object? obj) => obj is R1 temp &&  
+Equals(temp);  
+    public bool Equals(R1 other ) 
+    { 
+        return 
+            EqualityComparer<T1>.Default.Equals(P1, other.P1) &&  
+            EqualityComparer<T2>.Default.Equals(P2, other.P2);  
+    } 
+    public static bool operator ==(R1 r1, R1 r2)  
+        => r1.Equals(r2);  
+    public static bool operator !=(R1 r1, R1 r2)  
+        => !(r1 == r2);     
+    public override  int GetHashCode () 
+    { 
+        return Combine(  
+            EqualityComparer<T1>.Default.GetHashCode(P1),  
+            EqualityComparer<T2>.Default.GetHashCode(P2));  
+    } 
+} 
+Printing members: PrintMembers and ToString methods
+private bool PrintMembers (System.Text.StringBuilder builder ); For a member that has a value type, we will convert its value to a string representation
+using the most efficient method available to the target platform. At present that means
+calling ToString before passing to StringBuilder.Append.
+If the record's printable members do not include a readable property with a non-
+readonly get accessor, then the synthesized PrintMembers is readonly. There is no
+requirement for the record's fields to be readonly for the PrintMembers method to be
+readonly.
+The PrintMembers method can be declared explicitly. It is an error if the explicit
+declaration does not match the expected signature or accessibility.
+The record struct includes a synthesized method equivalent to a method declared as
+follows:
+C#
+If the record struct's PrintMembers method is readonly, then the synthesized ToString()
+method is readonly.
+The method can be declared explicitly. It is an error if the explicit declaration does not
+match the expected signature or accessibility.
+The synthesized method:
+1. creates a StringBuilder instance,
+2. appends the record struct name to the builder, followed by " { ",
+3. invokes the record struct's PrintMembers method giving it the builder, followed by
+" " if it returned true,
+4. appends "}",
+5. returns the builder's contents with builder.ToString().
+For example, consider the following record struct:
+C#
+For this record struct, the synthesized printing members would be something like:
+C#public override  string ToString (); 
+record struct R1(T1 P1, T2 P2 ); In addition to the above members, record structs with a parameter list ("positional
+records") synthesize additional members with the same conditions as the members
+above.
+A record struct has a public constructor whose signature corresponds to the value
+parameters of the type declaration. This is called the primary constructor for the type. It
+is an error to have a primary constructor and a constructor with the same signaturestruct R1 : IEquatable<R1>  
+{ 
+    public T1 P1 { get; set; } 
+    public T2 P2 { get; set; } 
+    private bool PrintMembers (StringBuilder builder ) 
+    { 
+        builder.Append( nameof(P1)); 
+        builder.Append( " = "); 
+        builder.Append( this.P1); // or builder.Append(this.P1.ToString());  
+if P1 has a value type  
+        builder.Append( ", "); 
+        builder.Append( nameof(P2)); 
+        builder.Append( " = "); 
+        builder.Append( this.P2); // or builder.Append(this.P2.ToString());  
+if P2 has a value type  
+        return true; 
+    } 
+    public override  string ToString () 
+    { 
+        var builder = new StringBuilder();  
+        builder.Append( nameof(R1)); 
+        builder.Append( " { "); 
+        if (PrintMembers(builder))  
+            builder.Append( " "); 
+        builder.Append( "}"); 
+        return builder.ToString();  
+    } 
+} 
+Positional record struct members
+Primary Constructoralready present in the struct. If the type declaration does not include a parameter list, no
+primary constructor is generated.
+C#
+Instance field declarations for a record struct are permitted to include variable
+initializers. If there is no primary constructor, the instance initializers execute as part of
+the parameterless constructor. Otherwise, at runtime the primary constructor executes
+the instance initializers appearing in the record-struct-body.
+If a record struct has a primary constructor, any user-defined constructor must have an
+explicit this constructor initializer that calls the primary constructor or an explicitly
+declared constructor.
+Parameters of the primary constructor as well as members of the record struct are in
+scope within initializers of instance fields or properties. Instance members would be an
+error in these locations (similar to how instance members are in scope in regular
+constructor initializers today, but an error to use), but the parameters of the primary
+constructor would be in scope and useable and would shadow members. S tatic
+members would also be useable.
+A warning is produced if a parameter of the primary constructor is not read.
+The definite assignment rules for struct instance constructors apply to the primary
+constructor of record structs. For instance, the following is an error:
+C#record struct R1 
+{ 
+    public R1() { } // ok 
+} 
+record struct R2() 
+{ 
+    public R2() { } // error: 'R2' already defines constructor with same  
+parameter types  
+} 
+record struct Pos(int X) // definite assignment error in primary constructor  
+{ 
+    private int x; 
+    public int X { get { return x; } set { x = value; } } = X;  
+} For each record struct parameter of a record struct declaration there is a corresponding
+public property member whose name and type are taken from the value parameter
+declaration.
+For a record struct:
+A public get and init auto-property is created if the record struct has readonly
+modifier, get and set otherwise. Both kinds of set accessors ( set and init) are
+considered "matching". So the user may declare an init-only property in place of a
+synthesized mutable one. An inherited abstract property with matching type is
+overridden. No auto-property is created if the record struct has an instance field
+with expected name and type. It is an error if the inherited property does not have
+public get and set/init accessors. It is an error if the inherited property or field
+is hidden.  
+The auto-property is initialized to the value of the corresponding primary
+constructor parameter. Attributes can be applied to the synthesized auto-property
+and its backing field by using property: or field: targets for attributes
+syntactically applied to the corresponding record struct parameter.
+A positional record struct with at least one parameter synthesizes a public void-
+returning instance method called Deconstruct with an out parameter declaration for
+each parameter of the primary constructor declaration. Each parameter of the
+Deconstruct method has the same type as the corresponding parameter of the primary
+constructor declaration. The body of the method assigns each parameter of the
+Deconstruct method to the value from an instance member access to a member of the
+same name. If the instance members accessed in the body do not include a property
+with a non- readonly get accessor, then the synthesized Deconstruct method is
+readonly. The method can be declared explicitly. It is an error if the explicit declaration
+does not match the expected signature or accessibility, or is static.
+It is now valid for the receiver in a with expression to have a struct type.
+On the right hand side of the with expression is a member_initializer_list with a
+sequence of assignments to identi fier, which must be an accessible instance field orProperties
+Deconstruct
+Allow with expression on structsproperty of the receiver's type.
+For a receiver with struct type, the receiver is first copied, then each member_initializer
+is processed the same way as an assignment to a field or property access of the result of
+the conversion. Assignments are processed in lexical order.
+The existing syntax for record types allows record class with the same meaning as
+record:
+antlr
+See https://github.com/dotnet/csharplang/blob/master/meetings/2020/LDM-2020-10-
+05.md#changing-the-member-type-of-a-primary-constructor-parameter
+No auto-property is created if the record has or inherits an instance field with expected
+name and type.
+See parameterless struct constructors  spec.
+how to recognize record structs in metadata? (we don't have an unspeakable clone
+method to leverage...)Improvements on records
+Allow record class
+record_declaration  
+    : attributes? class_modifier* 'partial' ? 'record'  'class'? identifier  
+type_parameter_list?  
+      parameter_list? record_base? type_parameter_constraints_clause*  
+record_body  
+    ; 
+Allow user-defined positional members to be fields
+Allow parameterless constructors and member
+initia lizers in structs
+Open questionsconfirm that we want to keep PrintMembers design (separate method returning
+bool) (answer: yes)
+confirm we won't allow record ref struct (issue with IEquatable<RefStruct> and
+ref fields) (answer: yes)
+confirm implementation of equality members. Alternative is that synthesized bool
+Equals(R other), bool Equals(object? other) and operators all just delegate to
+ValueType.Equals. (answer: yes)
+confirm that we want to allow field initializers when there is a primary constructor.
+Do we also want to allow parameterless struct constructors while we're at it (the
+Activator issue was apparently fixed)? (answer: yes, updated spec should be
+reviewed in LDM)
+how much do we want to say about Combine method? (answer: as little as possible)
+should we disallow a user-defined constructor with a copy constructor signature?
+(answer: no, there is no notion of copy constructor in the record structs spec)
+confirm that we want to disallow members named "Clone". (answer: correct)
+double-check that synthesized Equals logic is functionally equivalent to runtime
+implementation (e.g. float.NaN) (answer: confirmed in LDM)
+could field- or property-targeting attributes be placed in the positional parameter
+list? (answer: yes, same as for record class)
+with on generics? (answer: out of scope for C# 10)
+should GetHashCode include a hash of the type itself, to get different values
+between record struct S1; and record struct S2;? (answer: no)AnsweredParameterless struct constructors
+Article •06/23/2023
+Support parameterless constructors and instance field initializers for struct types.
+Explicit parameterless constructors would give more control over minimally constructed
+instances of the struct type. Instance field initializers would allow simplified initialization
+across multiple constructors. T ogether these would close an obvious gap between
+struct and class declarations.
+Support for field initializers would also allow initialization of fields in record struct
+declarations without explicitly implementing the primary constructor.
+C#
+If struct field initializers are supported for constructors with parameters, it seems natural
+to extend that to parameterless constructors as well.
+C#７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+Summary
+Motivation
+record struct Person(string Name) 
+{ 
+    public object Id { get; init; } = GetNextId();  
+} Instance field declarations for a struct may include initializers.
+As with class field initializers §14.5.6.3 :
+A variable initializer for an instance field cannot reference the instance being
+created.
+An error is reported if a struct has field initializers and no declared instance constructors
+since the field initializers will not be run.
+C#
+A struct may declare a parameterless instance constructor.
+A parameterless instance constructor is valid for all struct kinds including struct,
+readonly struct, ref struct, and record struct.
+If no parameterless instance constructor is declared, the struct (see §15.4.9 ) ...
+implicitly has a parameterless instance constructor which always returns the value
+that results from setting all value type fields to their default value and all reference
+type fields to null.
+A parameterless instance struct constructor must be declared public.record struct Person() 
+{ 
+    public string Name { get; init; } 
+    public object Id { get; init; } = GetNextId();  
+} 
+Proposal
+Instance field initializers
+struct S { int F = 42; } // error: 'struct' with field initializers must  
+include an explicitly declared constructor  
+Constructors
+ModifiersC#
+Non-public constructors are ignored when importing types from metadata.
+Constructors can be declared extern or unsafe. Constructors cannot be partial.
+Instance variable initializer s (§14.11.3 ) is modified  as follows:
+When a class  instance constructor has no constructor initializer, or it has a
+constructor initializer of the form base(...), that constructor implicitly performs the
+initializations specified by the variable_initializer s of the instance fields declared in
+its class. This corresponds to a sequence of assignments that are executed
+immediately upon entry to the constructor and before the implicit invocation of the
+direct base class constructor.
+When a struct instance construct or has no construct or initializer , that construct or
+implicitly per forms the initializations specified by the variable_initializer s of the
+instance fields declar ed in its struct. This corr esponds t o a sequence o f
+assignments that ar e executed immediat ely upon entr y to the construct or.
+When a struct instance construct or has a this() construct or initializer that
+represents the default p aramet erless c onstr uctor, the declar ed construct or
+implicitly clear s all instance fields and per forms the initializations specified by the
+variable_initializer s of the instance fields declar ed in its struct. Immediat ely upon
+entry to the construct or, all v alue type fields ar e set t o their default v alue and all
+reference type fields ar e set t o null. Immediat ely af ter that, a sequence o f
+assignments corr esponding t o the variable_initializer s are executed.
+Instance fields (other than fixed fields) must be definitely assigned in struct instance
+constructors that do not have a this() initializer (see §15.4.9 ).
+C#struct S0 { }                   // ok 
+struct S1 { public S1() { } }   // ok 
+struct S2 { internal  S2() { } } // error: parameterless constructor must be  
+'public'  
+Executing field initializers
+Definite assignment
+A base() initializer is disallowed in struct constructors.
+The compiler will not emit a call to the base System.ValueType constructor from struct
+instance constructors.
+An error is reported if a record struct has field initializers and does not contain a
+primary constructor nor any instance constructors since the field initializers will not be
+run.
+C#struct S0 // ok 
+{ 
+    int x; 
+    object y; 
+} 
+struct S1 // error: 'struct' with field initializers must include an  
+explicitly declared constructor  
+{ 
+    int x = 1; 
+    object y; 
+} 
+struct S2 
+{ 
+    int x = 1; 
+    object y; 
+    public S2() { } // error: field 'y' must be assigned  
+} 
+struct S3 // ok 
+{ 
+    int x = 1; 
+    object y; 
+    public S3() { y = 2; } 
+} 
+No base() initializer
+record struct
+record struct R0;                  // ok 
+record struct R1 { int F = 42; }   // error: 'struct' with field  
+initializers must include an explicitly declared constructor  
+record struct R2() { int F = 42; } // ok 
+record struct R3(int F);           // ok A record struct with an empty parameter list will have a parameterless primary
+constructor.
+C#
+An explicit parameterless constructor in a record struct must have a this initializer
+that calls the primary constructor or an explicitly declared constructor.
+C#
+The implicitly-defined parameterless constructor will zero fields rather than calling any
+parameterless constructors for the field types. No warnings are reported that field
+constructors are ignored. No change fr om C#9.
+C#record struct R3();                // primary .ctor: public R3() { }  
+record struct R4() { int F = 42; } // primary .ctor: public R4() { F = 42; }  
+record struct R5(int F) 
+{ 
+    public R5() { }                  // error: must have 'this' initializer  
+that calls explicit .ctor  
+    public R5(object o) : this() { } // ok 
+    public int F =  F;  
+} 
+Fields
+struct S0 
+{ 
+    public S0() { } 
+} 
+struct S1 
+{ 
+    S0 F; // S0 constructor ignored  
+} 
+struct S<T> where T : struct 
+{ 
+    T F; // constructor (if any) ignored  
+} 
+default expressiondefault ignores the parameterless constructor and generates a zeroed instance. No
+change fr om C#9.
+C#
+Object creation invokes the parameterless constructor if public; otherwise the instance is
+zeroed. No change fr om C#9.
+C#
+A warning wave may report a warning for use of new() with a struct type that has
+constructors but no parameterless constructor. No warning will be reported when using
+substituting such a struct type for a type parameter with a new() or struct constraint.
+C#
+A local or field of a struct type that is not explicitly initialized is zeroed. The compiler
+reports a definite assignment error for an uninitialized struct that is not empty. No
+change fr om C#9.
+C#// struct S { public S() { } }  
+_ = default(S); // constructor ignored, no warning  
+new()
+// public struct PublicConstructor { public PublicConstructor() { } }  
+// public struct PrivateConstructor { private PrivateConstructor() { } }  
+_ = new PublicConstructor();  // call PublicConstructor::.ctor()  
+_ = new PrivateConstructor(); // initobj PrivateConstructor  
+struct S { public S(int i) { } } 
+static T CreateNew<T>() where T : new() => new T(); 
+_ = new S();        // warning: no constructor called  
+_ = CreateNew<S>(); // ok 
+Uninitialized values
+NoConstructor s1;  
+PublicConstructor s2;  Array allocation ignores any parameterless constructor and generates zeroed elements.
+No change fr om C#9.
+C#
+A parameter default value of new() binds to the parameterless constructor if public (and
+reports an error that the value is not constant); otherwise the instance is zeroed. No
+change fr om C#9.
+C#
+The new() and struct type parameter constraints require the parameterless constructor
+to be public if defined (see Satisfying constraints - §8.4.5 ).
+The compiler assumes all structs satisfy new() and struct constraints. No change fr om
+C#9.
+C#s1.ToString(); // error: use of unassigned local (unless type is empty)  
+s2.ToString(); // error: use of unassigned local (unless type is empty)  
+Array allocation
+// struct S { public S() { } }  
+var a = new S[1]; // constructor ignored, no warning  
+Parameter default value new()
+// public struct PublicConstructor { public PublicConstructor() { } }  
+// public struct PrivateConstructor { private PrivateConstructor() { } }  
+static void F1(PublicConstructor s1 = new()) { }  // error: default value  
+must be constant  
+static void F2(PrivateConstructor s2 = new()) { } // ok: initobj  
+Type parameter constraints: new() and struct
+// public struct PublicConstructor { public PublicConstructor() { } }  
+// public struct InternalConstructor { internal InternalConstructor() { } }  
+static T CreateNew<T>() where T : new() => new T(); 
+static T CreateStruct<T>() where T : struct => new T(); new T() is emitted as a call to System.Activator.CreateInstance<T>(), and the compiler
+assumes the implementation of CreateInstance<T>() invokes the public parameterless
+constructor if defined.
+With .NE T Framew ork, Activator.CreateInstance<T>() invokes the p aramet erless
+constr uctor if the c onstr aint is where T : new() but appear s to ignor e the p aramet erless
+constr uctor if the c onstr aint is where T : struct.
+Constructors with optional parameters are not considered parameterless constructors.
+No change fr om C#9.
+C#
+Explicit parameterless struct instance constructors will be emitted to metadata.
+Public parameterless struct instance constructors will be imported from metadata; non-
+public struct instance constructors will be ignored. No change fr om C#9.
+https://github.com/dotnet/roslyn/issues/1029_ = CreateNew<PublicConstructor>();      // ok 
+_ = CreateStruct<PublicConstructor>();   // ok 
+_ = CreateNew<InternalConstructor>();    // compiles; may fail at runtime  
+_ = CreateStruct<InternalConstructor>(); // compiles; may fail at runtime  
+Optional parameters
+struct S1 { public S1(string s = "") { } } 
+struct S2 { public S2(params object[] args) { } } 
+_ = new S1(); // ok: ignores constructor  
+_ = new S2(); // ok: ignores constructor  
+Metadata
+See also
+Design meetingshttps://github.com/dotnet/csharplang/blob/main/meetings/2021/LDM-2021-04-
+28.md#open-questions-in-record-and-parameterless-structs
+https://github.com/dotnet/csharplang/blob/main/meetings/2021/LDM-2021-03-
+10.md#parameterless-struct-constructors
+https://github.com/dotnet/csharplang/blob/main/meetings/2021/LDM-2021-01-
+27.md#field-initializers
+Global Using Directive
+Article •03/24/2022
+Syntax for a using directive is extended with an optional global keyword that can
+precede the using keyword:
+antlr
+The global_using_dir ectives are allowed only on the Compilation Unit level (cannot
+be used inside a namesp ace_declar ation ).
+The global_using_dir ectives, if any, must precede any using_dir ectives.７ Note
+This article is a feature specification. The specification represents the proposed
+feature specification. There may be some discrepancies between the feature
+specification and the completed implementation. Those differences are captured in
+the pertinent language design meeting (LDM) not es. Links to pertinent
+meetings are included at the bottom of the spec. Y ou can learn more about the
+process for merging feature speclets into the C# language standard in the article
+on the specifications .
+compilation_unit  
+    : extern_alias_directive* global_using_directive* using_directive*  
+global_attributes? namespace_member_declaration*  
+    ; 
+global_using_directive  
+    : global_using_alias_directive  
+    | global_using_namespace_directive  
+    | global_using_static_directive  
+    ; 
+global_using_alias_directive  
+    : 'global'  'using' identifier '=' namespace_or_type_name ';' 
+    ; 
+global_using_namespace_directive  
+    : 'global'  'using' namespace_name ';' 
+    ; 
+     
+global_using_static_directive  
+    : 'global'  'using' 'static'  type_name ';' 
+    ; The scope of a global_using_dir ectives extends over the
+namesp ace_member_declar ation s of all compilation units within the program. The
+scope of a global_using_dir ective specifically does not include other
+global_using_dir ectives. Thus, peer global_using_dir ectives or those from a different
+compilation unit do not affect each other, and the order in which they are written
+is insignificant. The scope of a global_using_dir ective specifically does not include
+using_dir ectives immediately contained in any compilation unit of the program.
+The effect of adding a global_using_dir ective to a program can be thought of as the
+effect of adding a similar using_dir ective that resolves to the same target namespace or
+type to every compilation unit of the program. However, the target of a
+global_using_dir ective is resolved in context of the compilation unit that contains it.
+These are the relevant bullet points with proposed additions (which are in bold ):
+The scope of name defined by an extern_alias_dir ective extends over the
+glob al_using_dir ectiv es, using_dir ectives, global_attr ibutes and
+namesp ace_member_declar ation s of its immediately containing compilation unit or
+namespace body. An extern_alias_dir ective does not contribute any new members
+to the underlying declaration space. In other words, an extern_alias_dir ective is not
+transitive, but, rather, affects only the compilation unit or namespace body in
+which it occurs.
+The scope o f a name defined or impor ted by a glob al_using_dir ectiv e extends
+over the glob al_attr ibut es and namesp ac e_member_declar ation s of all the
+c ompilation_unit s in the pr ogram.
+Changes are made to the algorithm determining the meaning of a
+namesp ace_or_type_name  as follows.
+This is the relevant bullet point with proposed additions (which are in bold ):
+If the namesp ace_or_type_name  is of the form I or of the form I<A1, ..., Ak>:
+If K is zero and the namesp ace_or_type_name  appears within a generic method
+declaration ( §14.6 ) and if that declaration includes a type parameter
+(§14.2.3 ) with name I, then the namesp ace_or_type_name  refers to that type
+parameter.§7.7 Scopes
+§7.8 Namespace and type names
+Otherwise, if the namesp ace_or_type_name  appears within a type declaration,
+then for each instance type T (§14.3.2 ), starting with the instance type of that
+type declaration and continuing with the instance type of each enclosing class
+or struct declaration (if any):
+If K is zero and the declaration of T includes a type parameter with name I,
+then the namesp ace_or_type_name  refers to that type parameter.
+Otherwise, if the namesp ace_or_type_name  appears within the body of the
+type declaration, and T or any of its base types contain a nested accessible
+type having name I and K type parameters, then the
+namesp ace_or_type_name  refers to that type constructed with the given type
+arguments. If there is more than one such type, the type declared within the
+more derived type is selected. Note that non-type members (constants,
+fields, methods, properties, indexers, operators, instance constructors,
+destructors, and static constructors) and type members with a different
+number of type parameters are ignored when determining the meaning of
+the namesp ace_or_type_name .
+If the previous steps were unsuccessful then, for each namespace N, starting
+with the namespace in which the namesp ace_or_type_name  occurs, continuing
+with each enclosing namespace (if any), and ending with the global namespace,
+the following steps are evaluated until an entity is located:
+If K is zero and I is the name of a namespace in N, then:
+If the location where the namesp ace_or_type_name  occurs is enclosed by a
+namespace declaration for N and the namespace declaration contains an
+extern_alias_dir ective or using_alias_dir ective that associates the name I
+with a namespace or type, or any namesp ace declaration for N in the
+program contains a glob al_using_alias_dir ectiv e that associat es the
+name I with a namesp ace or type,  then the namesp ace_or_type_name  is
+ambiguous and a compile-time error occurs.
+Otherwise, the namesp ace_or_type_name  refers to the namespace named
+I in N.
+Otherwise, if N contains an accessible type having name I and K type
+parameters, then:
+If K is zero and the location where the namesp ace_or_type_name  occurs is
+enclosed by a namespace declaration for N and the namespace
+declaration contains an extern_alias_dir ective or using_alias_dir ective that
+associates the name I with a namespace or type, or any namesp ace
+declaration for N in the pr ogram contains a glob al_using_alias_dir ectiv e
+that associat es the name I with a namesp ace or type,  then the
+namesp ace_or_type_name  is ambiguous and a compile-time error occurs.
+Otherwise, the namesp ace_or_type_name  refers to the type constructed
+with the given type arguments.
+Otherwise, if the location where the namesp ace_or_type_name  occurs is
+enclosed by a namespace declaration for N:
+If K is zero and the namespace declaration contains an
+extern_alias_dir ective or using_alias_dir ective that associates the name I
+with an imported namespace or type, or any namesp ace declaration for
+N in the pr ogram contains a glob al_using_alias_dir ectiv e that associat es
+the name I with an impor ted namesp ace or type,  then the
+namesp ace_or_type_name  refers to that namespace or type.
+Otherwise, if the namespaces and type declarations imported by the
+using_namesp ace_directives and using_alias_dir ectives of the namespace
+declaration and the namesp aces and type declarations impor ted by the
+glob al_using_namesp ac e_dir ectiv es and glob al_using_st atic_dir ectiv es of
+any namesp ace declaration for N in the pr ogram  contain exactly one
+accessible type having name I and K type parameters, then the
+namesp ace_or_type_name  refers to that type constructed with the given
+type arguments.
+Otherwise, if the namespaces and type declarations imported by the
+using_namesp ace_directives and using_alias_dir ectives of the namespace
+declaration and the namesp aces and type declarations impor ted by the
+glob al_using_namesp ac e_dir ectiv es and glob al_using_st atic_dir ectiv es of
+any namesp ace declaration for N in the pr ogram  contain more than one
+accessible type having name I and K type parameters, then the
+namesp ace_or_type_name  is ambiguous and an error occurs.
+Otherwise, the namesp ace_or_type_name  is undefined and a compile-time error
+occurs.
+Changes are made to the simple_name  evaluation rules as follows.
+This is the relevant bullet point with proposed additions (which are in bold ):
+Otherwise, for each namespace N, starting with the namespace in which the
+simple_name  occurs, continuing with each enclosing namespace (if any), and
+ending with the global namespace, the following steps are evaluated until an entity
+is located:
+If K is zero and I is the name of a namespace in N, then:Simple names §11.7.4
+If the location where the simple_name  occurs is enclosed by a namespace
+declaration for N and the namespace declaration contains an
+extern_alias_dir ective or using_alias_dir ective that associates the name I with
+a namespace or type, or any namesp ace declaration for N in the pr ogram
+contains a glob al_using_alias_dir ectiv e that associat es the name I with a
+namesp ace or type,  then the simple_name  is ambiguous and a compile-time
+error occurs.
+Otherwise, the simple_name  refers to the namespace named I in N.
+Otherwise, if N contains an accessible type having name I and K type
+parameters, then:
+If K is zero and the location where the simple_name  occurs is enclosed by a
+namespace declaration for N and the namespace declaration contains an
+extern_alias_dir ective or using_alias_dir ective that associates the name I with
+a namespace or type, or any namesp ace declaration for N in the pr ogram
+contains a glob al_using_alias_dir ectiv e that associat es the name I with a
+namesp ace or type,  then the simple_name  is ambiguous and a compile-time
+error occurs.
+Otherwise, the namesp ace_or_type_name  refers to the type constructed with
+the given type arguments.
+Otherwise, if the location where the simple_name  occurs is enclosed by a
+namespace declaration for N:
+If K is zero and the namespace declaration contains an extern_alias_dir ective
+or using_alias_dir ective that associates the name I with an imported
+namespace or type, or any namesp ace declaration for N in the pr ogram
+contains a glob al_using_alias_dir ectiv e that associat es the name I with an
+impor ted namesp ace or type,  then the simple_name  refers to that
+namespace or type.
+Otherwise, if the namespaces and type declarations imported by the
+using_namesp ace_directives and using_st atic_dir ectives of the namespace
+declaration and the namesp aces and type declarations impor ted by the
+glob al_using_namesp ac e_dir ectiv es and glob al_using_st atic_dir ectiv es of
+any namesp ace declaration for N in the pr ogram  contain exactly one
+accessible type or non-extension static member having name I and K type
+parameters, then the simple_name  refers to that type or member constructed
+with the given type arguments.
+Otherwise, if the namespaces and types imported by the
+using_namesp ace_directives of the namespace declaration and the
+namesp aces and type declarations impor ted by the
+glob al_using_namesp ac e_dir ectiv es and glob al_using_st atic_dir ectiv es ofany namesp ace declaration for N in the pr ogram  contain more than one
+accessible type or non-extension-method static member having name I and
+K type parameters, then the simple_name  is ambiguous and an error occurs.
+Changes are made to the algorithm to find the best type_name  C as follows. This is the
+relevant bullet point with proposed additions (which are in bold ):
+Starting with the closest enclosing namespace declaration, continuing with each
+enclosing namespace declaration, and ending with the containing compilation unit,
+successive attempts are made to find a candidate set of extension methods:
+If the given namespace or compilation unit directly contains non-generic type
+declarations Ci with eligible extension methods Mj, then the set of those
+extension methods is the candidate set.
+If types Ci imported by using_st atic_declar ations  and directly declared in
+namespaces imported by using_namesp ace_directives in the given namespace or
+compilation unit and, if containing compilation unit is r eached, impor ted by
+glob al_using_st atic_declar ations  and dir ectly declar ed in namesp aces
+impor ted by glob al_using_namesp ac e_dir ectiv es in the pr ogram  directly
+contain eligible extension methods Mj, then the set of those extension methods
+is the candidate set.
+A compilation_unit  defines the overall structure of a source file. A compilation unit
+consists of zero or mor e glob al_using_dir ectiv es follow ed by  zero or more
+using_dir ectives followed by zero or more global_attr ibutes followed by zero or more
+namesp ace_member_declar ation s.
+antlr
+A C# program consists of one or more compilation units, each contained in a separate
+source file. When a C# program is compiled, all of the compilation units are processed
+together. Thus, compilation units can depend on each other, possibly in a circular
+fashion.Extension method invocations §11.7.8.3
+Compilation units  §13.2
+compilation_unit  
+    : extern_alias_directive* global_using_directive* using_directive*  
+global_attributes? namespace_member_declaration*  
+    ; The global_using_dir ectives of a compilation unit affect the global_attr ibutes and
+namesp ace_member_declar ation s of all compilation units in the program.
+The scope of an extern_alias_dir ective extends over the glob al_using_dir ectiv es,
+using_dir ectives, global_attr ibutes and namesp ace_member_declar ation s of its
+immediately containing compilation unit or namespace body.
+The order in which using_alias_dir ectives are written has no significance, and resolution
+of the namesp ace_or_type_name  referenced by a using_alias_dir ective is not affected by
+the using_alias_dir ective itself or by other using_dir ectives in the immediately containing
+compilation unit or namespace body, and, if the using_alias_dir ectiv e is immediat ely
+contained in a compilation unit, is not affect ed by the glob al_using_dir ectiv es in the
+program . In other words, the namesp ace_or_type_name  of a using_alias_dir ective is
+resolved as if the immediately containing compilation unit or namespace body had no
+using_dir ectives and, if the using_alias_dir ectiv e is immediat ely contained in a
+compilation unit, the pr ogram had no glob al_using_dir ectiv es. A using_alias_dir ective
+may however be affected by extern_alias_dir ectives in the immediately containing
+compilation unit or namespace body.
+A global_using_alias_dir ective introduces an identifier that serves as an alias for a
+namespace or type within the program.
+antlr
+Within member declarations in any compilation unit of a program that contains a
+global_using_alias_dir ective, the identifier introduced by the global_using_alias_dir ective
+can be used to reference the given namespace or type.
+The identi fier of a global_using_alias_dir ective must be unique within the declaration
+space of any compilation unit of a program that contains the
+global_using_alias_dir ective.Extern aliases §13.4
+Using alias directives §13.5.2
+Global Using alias directives
+global_using_alias_directive  
+    : 'global'  'using' identifier '=' namespace_or_type_name ';' 
+    ; Just like regular members, names introduced by global_using_alias_dir ectives are hidden
+by similarly named members in nested scopes.
+The order in which global_using_alias_dir ectives are written has no significance, and
+resolution of the namesp ace_or_type_name  referenced by a global_using_alias_dir ective
+is not affected by the global_using_alias_dir ective itself or by other
+global_using_dir ectives or using_dir ectives in the program. In other words, the
+namesp ace_or_type_name  of a global_using_alias_dir ective is resolved as if the
+immediately containing compilation unit had no using_dir ectives and the entire
+containing program had no global_using_dir ectives. A global_using_alias_dir ective may
+however be affected by extern_alias_dir ectives in the immediately containing
+compilation unit.
+A global_using_alias_dir ective can create an alias for any namespace or type.
+Accessing a namespace or type through an alias yields exactly the same result as
+accessing that namespace or type through its declared name.
+Using aliases can name a closed constructed type, but cannot name an unbound generic
+type declaration without supplying type arguments.
+A global_using_namesp ace_directive imports the types contained in a namespace into
+the program, enabling the identifier of each type to be used without qualification.
+antlr
+Within member declarations in a program that contains a
+global_using_namesp ace_directive, the types contained in the given namespace can be
+referenced directly.
+A global_using_namesp ace_directive imports the types contained in the given
+namespace, but specifically does not import nested namespaces.
+Unlike a global_using_alias_dir ective, a global_using_namesp ace_directive may import
+types whose identifiers are already defined within a compilation unit of the program. In
+effect, in a given compilation unit, names imported by anyGlobal Using namespace directives
+global_using_namespace_directive  
+    : 'global'  'using' namespace_name ';' 
+    ; global_using_namesp ace_directive in the program are hidden by similarly named
+members in the compilation unit.
+When more than one namespace or type imported by
+global_using_namesp ace_directives or global_using_st atic_dir ectives in the same program
+contain types by the same name, references to that name as a type_name  are
+considered ambiguous.
+Furthermore, when more than one namespace or type imported by
+global_using_namesp ace_directives or global_using_st atic_dir ectives in the same program
+contain types or members by the same name, references to that name as a simple_name
+are considered ambiguous.
+The namesp ace_name  referenced by a global_using_namesp ace_directive is resolved in
+the same way as the namesp ace_or_type_name  referenced by a
+global_using_alias_dir ective. Thus, global_using_namesp ace_directives in the same
+program do not affect each other and can be written in any order.
+A global_using_st atic_dir ective imports the nested types and static members contained
+directly in a type declaration into the containing program, enabling the identifier of each
+member and type to be used without qualification.
+antlr
+Within member declarations in a program that contains a global_using_st atic_dir ective,
